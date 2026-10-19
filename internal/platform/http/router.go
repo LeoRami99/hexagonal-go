@@ -6,7 +6,6 @@ import (
 
 	authapp "hexagonal-go-backend/internal/modules/auth/application"
 	authhttp "hexagonal-go-backend/internal/modules/auth/delivery/http/v1"
-	courseshttp "hexagonal-go-backend/internal/modules/courses/delivery/http/v1"
 	usershttp "hexagonal-go-backend/internal/modules/users/delivery/http/v1"
 	userdomain "hexagonal-go-backend/internal/modules/users/domain"
 	"hexagonal-go-backend/internal/platform/config"
@@ -34,7 +33,7 @@ import (
 // @name                       Authorization
 // @description                Escribe "Bearer " seguido de tu token JWT
 
-func NewRouter(cfg config.Config, logger *slog.Logger, users *usershttp.Controller, auth *authhttp.Controller, tokens authapp.TokenProvider, courses ...*courseshttp.Controller) *gin.Engine {
+func NewRouter(cfg config.Config, logger *slog.Logger, users *usershttp.Controller, auth *authhttp.Controller, tokens authapp.TokenProvider) *gin.Engine {
 	if cfg.App.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -60,19 +59,5 @@ func NewRouter(cfg config.Config, logger *slog.Logger, users *usershttp.Controll
 	admin.GET("/users", users.List)
 	admin.PUT("/users/:id", users.Update)
 	admin.DELETE("/users/:id", users.Delete)
-	if len(courses) > 0 && courses[0] != nil {
-		catalog := v1.Group("/courses")
-		catalog.POST("", courses[0].CreateCourse)
-		catalog.GET("/:id", courses[0].GetCourse)
-		catalog.GET("/categories", courses[0].ListCategories)
-		catalog.GET("/templates", courses[0].ListTemplates)
-		catalog.GET("/templates/:id", courses[0].GetTemplate)
-		catalog.GET("/templates/:id/versions", courses[0].ListVersions)
-		catalog.GET("/versions/:id/syllabus", courses[0].GetSyllabus)
-		catalog.POST("/categories", courses[0].CreateCategory)
-		catalog.POST("/templates", courses[0].CreateTemplate)
-		catalog.POST("/templates/:id/versions", courses[0].CreateVersion)
-		catalog.PUT("/versions/:id/syllabus", courses[0].SetSyllabus)
-	}
 	return router
 }

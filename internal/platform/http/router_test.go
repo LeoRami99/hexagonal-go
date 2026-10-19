@@ -15,8 +15,6 @@ import (
 	authhttp "hexagonal-go-backend/internal/modules/auth/delivery/http/v1"
 	cache "hexagonal-go-backend/internal/modules/auth/infrastructure/cache/memory"
 	authsecurity "hexagonal-go-backend/internal/modules/auth/infrastructure/security"
-	courseshttp "hexagonal-go-backend/internal/modules/courses/delivery/http/v1"
-	coursedomain "hexagonal-go-backend/internal/modules/courses/domain"
 	usersapp "hexagonal-go-backend/internal/modules/users/application"
 	usershttp "hexagonal-go-backend/internal/modules/users/delivery/http/v1"
 	userdomain "hexagonal-go-backend/internal/modules/users/domain"
@@ -25,26 +23,6 @@ import (
 	"hexagonal-go-backend/internal/platform/config"
 	httpplatform "hexagonal-go-backend/internal/platform/http"
 )
-
-type catalogStub struct{ courseshttp.Service }
-
-func (catalogStub) CreateCourse(_ context.Context, item coursedomain.Course) (coursedomain.Course, error) {
-	item.Template.ID = "template-id"
-	item.Version.ID = "version-id"
-	return item, nil
-}
-func (catalogStub) GetCourse(_ context.Context, id string) (coursedomain.Course, error) {
-	return coursedomain.Course{Template: coursedomain.Template{ID: "template-id"}, Version: coursedomain.Version{ID: id}}, nil
-}
-
-func (catalogStub) ListTemplates(context.Context) ([]coursedomain.Template, error) {
-	return []coursedomain.Template{}, nil
-}
-
-func (catalogStub) CreateTemplate(_ context.Context, item coursedomain.Template) (coursedomain.Template, error) {
-	item.ID = "example-id"
-	return item, nil
-}
 
 type mailer struct{}
 
@@ -61,25 +39,7 @@ func TestLoginAndProtectedUsers(t *testing.T) {
 	}
 	auth := authapp.NewAuthService(repository, hasher, tokens, cache.New(), time.Minute, time.Hour)
 	cfg := config.Config{App: config.AppConfig{Env: "test"}, Security: config.SecurityConfig{RateLimit: 100}}
-	router := httpplatform.NewRouter(cfg, slog.New(slog.NewTextHandler(io.Discard, nil)), usershttp.NewController(users), authhttp.NewController(auth), tokens, courseshttp.NewController(catalogStub{}))
-
-	for _, tc := range []struct {
-		method, path, body string
-		want               int
-	}{
-		{http.MethodGet, "/api/v1/courses/templates", "", http.StatusOK},
-		{http.MethodGet, "/api/v1/courses/version-id", "", http.StatusOK},
-		{http.MethodPost, "/api/v1/courses", `{"template":{"code":"C1","title":"Course"},"version":{"tag":"v1","status":"DRAFT"},"modules":[{"title":"Module","sequence_order":1,"lessons":[{"title":"Lesson","sequence_order":1,"activities":[{"title":"Activity","type":"VIDEO","sequence_order":1,"resources":[{"type":"VIDEO","name":"Intro","url_storage_key":"courses/intro.mp4","position":1}]}]}]}]}`, http.StatusCreated},
-		{http.MethodPost, "/api/v1/courses/templates", `{"code":"C1","title":"Course"}`, http.StatusCreated},
-	} {
-		recorder := httptest.NewRecorder()
-		request := httptest.NewRequest(tc.method, tc.path, strings.NewReader(tc.body))
-		request.Header.Set("Content-Type", "application/json")
-		router.ServeHTTP(recorder, request)
-		if recorder.Code != tc.want {
-			t.Errorf("%s %s without token: status=%d body=%s", tc.method, tc.path, recorder.Code, recorder.Body.String())
-		}
-	}
+	router := httpplatform.NewRouter(cfg, slog.New(slog.NewTextHandler(io.Discard, nil)), usershttp.NewController(users), authhttp.NewController(auth), tokens)
 
 	login := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(`{"email":"admin@example.com","password":"password123"}`))

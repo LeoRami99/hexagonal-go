@@ -47,7 +47,7 @@ Cada handler del controlador HTTP debe tener su bloque de comentarios antes de l
 | :--- | :--- | :--- |
 | `@Summary` | Descripción breve (una línea) | `Obtener usuario por ID` |
 | `@Description` | Descripción detallada de lo que hace el endpoint | `Busca y retorna los datos del usuario especificado por su identificador único.` |
-| `@Tags` | Módulo o agrupación en la UI | `users`, `auth`, `courses` |
+| `@Tags` | Módulo o agrupación en la UI | `users`, `auth` |
 | `@Accept` | Formato recibido en el request | `json` |
 | `@Produce` | Formato entregado en el response | `json` |
 | `@Security` | Mecanismo de autenticación requerido | `BearerAuth` (omitir en endpoints públicos) |

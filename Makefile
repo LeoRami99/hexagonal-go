@@ -52,10 +52,10 @@ swagger:
 ent-generate:
 	GOTOOLCHAIN=go1.26.0 go generate ./internal/ent
 
-# Uso: make ent-schema NAME=Course
+# Uso: make ent-schema NAME=Product
 ent-schema:
 	@if [ -z "$(NAME)" ]; then \
-		echo "Error: indica el nombre del schema. Uso: make ent-schema NAME=Course"; \
+		echo "Error: indica el nombre del schema. Uso: make ent-schema NAME=Product"; \
 		exit 1; \
 	fi
 	@if ! printf '%s' "$(NAME)" | grep -Eq '^[A-Z][A-Za-z0-9]*$$'; then \
@@ -75,10 +75,10 @@ atlas-check:
 		exit 1; \
 	}
 
-# Uso: make migration-diff NAME=add_courses
+# Uso: make migration-diff NAME=add_products
 migration-diff: atlas-check
 	@if [ -z "$(NAME)" ]; then \
-		echo "Error: indica el nombre de la migración. Uso: make migration-diff NAME=add_courses"; \
+		echo "Error: indica el nombre de la migración. Uso: make migration-diff NAME=add_products"; \
 		exit 1; \
 	fi
 	@if ! printf '%s' "$(NAME)" | grep -Eq '^[a-z][a-z0-9_]*$$'; then \
@@ -136,10 +136,10 @@ docker-up:
 docker-down:
 	docker compose down
 
-# Uso: make module MODULE=courses
+# Uso: make module MODULE=products
 module:
 	@if [ -z "$(MODULE)" ]; then \
-		echo "Error: indica el nombre del módulo. Uso: make module MODULE=courses"; \
+		echo "Error: indica el nombre del módulo. Uso: make module MODULE=products"; \
 		exit 1; \
 	fi
 	@if ! printf '%s' "$(MODULE)" | grep -Eq '^[a-z][a-z0-9_]*$$'; then \

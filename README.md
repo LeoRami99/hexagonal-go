@@ -345,7 +345,7 @@ go-hexagonal-api/
 Para crear la estructura hexagonal de un módulo sin preparar cada directorio manualmente:
 
 ```bash
-make module MODULE=courses
+make module MODULE=products
 ```
 
 El nombre del módulo debe estar en `snake_case` y el comando no sobrescribe módulos existentes. Se generan las capas `domain`, `application`, `infrastructure` y `delivery/http/v1`, junto con archivos Go mínimos listos para completar.
@@ -353,10 +353,10 @@ El nombre del módulo debe estar en `snake_case` y el comando no sobrescribe mó
 Para crear un nuevo schema de Ent:
 
 ```bash
-make ent-schema NAME=Course
+make ent-schema NAME=Product
 ```
 
-`NAME` debe usar `PascalCase`. Este comando crea `internal/ent/schema/course.go` y ejecuta automáticamente `make ent-generate` para actualizar el cliente tipado. Después debes editar el schema generado para definir sus campos, relaciones e índices.
+`NAME` debe usar `PascalCase`. Este comando crea `internal/ent/schema/product.go` y ejecuta automáticamente `make ent-generate` para actualizar el cliente tipado. Después debes editar el schema generado para definir sus campos, relaciones e índices.
 
 Cuando solo modifiques un schema existente, regenera el cliente con:
 
@@ -393,7 +393,7 @@ Con `APP_ENV=development`, `make run` sincroniza automáticamente esos schemas c
 
 Las tecnologías de infraestructura pueden ser reemplazadas sin modificar el dominio.
 
-Los schemas de Ent viven en `internal/ent/schema`. Puedes crear uno con `make ent-schema NAME=Course`; después de modificarlo, regenera el cliente tipado con `make ent-generate`.
+Los schemas de Ent viven en `internal/ent/schema`. Puedes crear uno con `make ent-schema NAME=Product`; después de modificarlo, regenera el cliente tipado con `make ent-generate`.
 
 Los schemas de Ent son la fuente de verdad. En desarrollo la aplicación ejecuta `client.Schema.Create(ctx)`; en producción se aplican migraciones versionadas generadas con Atlas.
 
@@ -498,7 +498,7 @@ Flujo para preparar producción:
 
 ```bash
 # Generar una migración comparando los schemas Ent con el estado anterior.
-make migration-diff NAME=add_courses
+make migration-diff NAME=add_products
 
 # Revisar los archivos SQL generados y versionarlos.
 
@@ -1455,7 +1455,7 @@ make build
 make test
 make lint
 make ent-generate
-make migration-diff NAME=add_courses
+make migration-diff NAME=add_products
 make migrate-baseline VERSION=20260925003527
 make migrate-status
 make migrate-apply
