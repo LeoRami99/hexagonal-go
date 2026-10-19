@@ -16,6 +16,27 @@ type CoursesFilter struct {
 	Sort, Order string
 }
 
+type CreateCourseInput struct {
+	ProjectID    string
+	Title        string
+	Slug         string
+	Summary      string
+	Description  string
+	Level        string
+	ThumbnailURL string
+	Status       string
+}
+
+type UpdateCourseInput struct {
+	Title        *string
+	Slug         *string
+	Summary      *string
+	Description  *string
+	Level        *string
+	ThumbnailURL *string
+	Status       *string
+}
+
 
 type CoursesRepository interface {
 	Create(context.Context, *domain.Course) error
@@ -23,5 +44,14 @@ type CoursesRepository interface {
 	FindBySlug(context.Context, string) (*domain.Course, error)
 	List(context.Context, CoursesFilter) ([]domain.Course, int, error)
 	Update(context.Context, *domain.Course) error
+	Delete(context.Context, string) error
+}
+
+type CoursesService interface {
+	Create(context.Context, CreateCourseInput) (*domain.Course, error)
+	FindByID(context.Context, string) (*domain.Course, error)
+	FindBySlug(context.Context, string) (*domain.Course, error)
+	List(context.Context, CoursesFilter) ([]domain.Course, int, error)
+	Update(context.Context, UpdateCourseInput) (*domain.Course, error)
 	Delete(context.Context, string) error
 }
