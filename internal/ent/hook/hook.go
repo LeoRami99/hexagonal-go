@@ -8,6 +8,18 @@ import (
 	"hexagonal-go-backend/internal/ent"
 )
 
+// The CoursesFunc type is an adapter to allow the use of ordinary
+// function as Courses mutator.
+type CoursesFunc func(context.Context, *ent.CoursesMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CoursesFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CoursesMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CoursesMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)
