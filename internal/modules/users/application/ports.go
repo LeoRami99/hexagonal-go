@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"time"
 
 	"hexagonal-go-backend/internal/modules/users/domain"
 )
@@ -9,22 +10,36 @@ import (
 type UserFilter struct {
 	Page, Limit int
 	Search      string
-	Role        domain.Role
+	Status      domain.UserStatus
 	Active      *bool
 	Sort, Order string
 }
 
 type CreateUserInput struct {
-	TenantID    string
-	AuthID      string
-	Name, Email string
-	Role        domain.Role
+	AuthID       string
+	Name, Email  string
+	AvatarURL    string
+	IsSuperAdmin bool
 }
 
 type UpdateUserInput struct {
 	Name, Email string
+	AvatarURL   *string
 	Active      *bool
-	Role        domain.Role
+	Status      *domain.UserStatus
+}
+
+type UpdateProfileInput struct {
+	FirstName            *string
+	LastName             *string
+	Phone                *string
+	BirthDate            *time.Time
+	Gender               *domain.Gender
+	City                 *string
+	Address              *string
+	PhotoURL             *string
+	Bio                  *string
+	SociodemographicData map[string]any
 }
 
 type UserRepository interface {
@@ -35,6 +50,8 @@ type UserRepository interface {
 	List(context.Context, UserFilter) ([]domain.User, int, error)
 	Update(context.Context, *domain.User) error
 	Delete(context.Context, string) error
+	GetProfile(context.Context, string) (*domain.UserProfile, error)
+	UpsertProfile(context.Context, *domain.UserProfile) error
 }
 
 type UserService interface {
@@ -43,6 +60,8 @@ type UserService interface {
 	List(context.Context, UserFilter) ([]domain.User, int, error)
 	Update(context.Context, string, UpdateUserInput) (*domain.User, error)
 	Delete(context.Context, string) error
+	GetProfile(context.Context, string) (*domain.UserProfile, error)
+	UpdateProfile(context.Context, string, UpdateProfileInput) (*domain.UserProfile, error)
 }
 
 type MailMessage struct{ To, Subject, Body string }

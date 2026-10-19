@@ -6,8 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hexagonal-go-backend/internal/ent/project"
+	"hexagonal-go-backend/internal/ent/tenantmembership"
 	"hexagonal-go-backend/internal/ent/tenants"
-	"hexagonal-go-backend/internal/ent/tenantsettings"
 	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -55,27 +56,23 @@ func (_c *TenantsCreate) SetName(v string) *TenantsCreate {
 	return _c
 }
 
-// SetBranding sets the "branding" field.
-func (_c *TenantsCreate) SetBranding(v map[string]interface{}) *TenantsCreate {
-	_c.mutation.SetBranding(v)
+// SetSlug sets the "slug" field.
+func (_c *TenantsCreate) SetSlug(v string) *TenantsCreate {
+	_c.mutation.SetSlug(v)
 	return _c
 }
 
-// SetDomains sets the "domains" field.
-func (_c *TenantsCreate) SetDomains(v []string) *TenantsCreate {
-	_c.mutation.SetDomains(v)
+// SetContactEmail sets the "contact_email" field.
+func (_c *TenantsCreate) SetContactEmail(v string) *TenantsCreate {
+	_c.mutation.SetContactEmail(v)
 	return _c
 }
 
-// SetLimits sets the "limits" field.
-func (_c *TenantsCreate) SetLimits(v map[string]interface{}) *TenantsCreate {
-	_c.mutation.SetLimits(v)
-	return _c
-}
-
-// SetFeatures sets the "features" field.
-func (_c *TenantsCreate) SetFeatures(v map[string]interface{}) *TenantsCreate {
-	_c.mutation.SetFeatures(v)
+// SetNillableContactEmail sets the "contact_email" field if the given value is not nil.
+func (_c *TenantsCreate) SetNillableContactEmail(v *string) *TenantsCreate {
+	if v != nil {
+		_c.SetContactEmail(*v)
+	}
 	return _c
 }
 
@@ -93,29 +90,54 @@ func (_c *TenantsCreate) SetNillableStatus(v *tenants.Status) *TenantsCreate {
 	return _c
 }
 
+// SetSettings sets the "settings" field.
+func (_c *TenantsCreate) SetSettings(v map[string]interface{}) *TenantsCreate {
+	_c.mutation.SetSettings(v)
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *TenantsCreate) SetID(v string) *TenantsCreate {
 	_c.mutation.SetID(v)
 	return _c
 }
 
-// SetSettingsID sets the "settings" edge to the TenantSettings entity by ID.
-func (_c *TenantsCreate) SetSettingsID(id string) *TenantsCreate {
-	_c.mutation.SetSettingsID(id)
-	return _c
-}
-
-// SetNillableSettingsID sets the "settings" edge to the TenantSettings entity by ID if the given value is not nil.
-func (_c *TenantsCreate) SetNillableSettingsID(id *string) *TenantsCreate {
-	if id != nil {
-		_c = _c.SetSettingsID(*id)
+// SetNillableID sets the "id" field if the given value is not nil.
+func (_c *TenantsCreate) SetNillableID(v *string) *TenantsCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
 	return _c
 }
 
-// SetSettings sets the "settings" edge to the TenantSettings entity.
-func (_c *TenantsCreate) SetSettings(v *TenantSettings) *TenantsCreate {
-	return _c.SetSettingsID(v.ID)
+// AddProjectIDs adds the "projects" edge to the Project entity by IDs.
+func (_c *TenantsCreate) AddProjectIDs(ids ...string) *TenantsCreate {
+	_c.mutation.AddProjectIDs(ids...)
+	return _c
+}
+
+// AddProjects adds the "projects" edges to the Project entity.
+func (_c *TenantsCreate) AddProjects(v ...*Project) *TenantsCreate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddProjectIDs(ids...)
+}
+
+// AddMembershipIDs adds the "memberships" edge to the TenantMembership entity by IDs.
+func (_c *TenantsCreate) AddMembershipIDs(ids ...string) *TenantsCreate {
+	_c.mutation.AddMembershipIDs(ids...)
+	return _c
+}
+
+// AddMemberships adds the "memberships" edges to the TenantMembership entity.
+func (_c *TenantsCreate) AddMemberships(v ...*TenantMembership) *TenantsCreate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddMembershipIDs(ids...)
 }
 
 // Mutation returns the TenantsMutation object of the builder.
@@ -165,6 +187,10 @@ func (_c *TenantsCreate) defaults() {
 		v := tenants.DefaultStatus
 		_c.mutation.SetStatus(v)
 	}
+	if _, ok := _c.mutation.ID(); !ok {
+		v := tenants.DefaultID()
+		_c.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -183,12 +209,30 @@ func (_c *TenantsCreate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Tenants.name": %w`, err)}
 		}
 	}
+	if _, ok := _c.mutation.Slug(); !ok {
+		return &ValidationError{Name: "slug", err: errors.New(`ent: missing required field "Tenants.slug"`)}
+	}
+	if v, ok := _c.mutation.Slug(); ok {
+		if err := tenants.SlugValidator(v); err != nil {
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Tenants.slug": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.ContactEmail(); ok {
+		if err := tenants.ContactEmailValidator(v); err != nil {
+			return &ValidationError{Name: "contact_email", err: fmt.Errorf(`ent: validator failed for field "Tenants.contact_email": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Tenants.status"`)}
 	}
 	if v, ok := _c.mutation.Status(); ok {
 		if err := tenants.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Tenants.status": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.ID(); ok {
+		if err := tenants.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Tenants.id": %w`, err)}
 		}
 	}
 	return nil
@@ -238,35 +282,47 @@ func (_c *TenantsCreate) createSpec() (*Tenants, *sqlgraph.CreateSpec) {
 		_spec.SetField(tenants.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if value, ok := _c.mutation.Branding(); ok {
-		_spec.SetField(tenants.FieldBranding, field.TypeJSON, value)
-		_node.Branding = value
+	if value, ok := _c.mutation.Slug(); ok {
+		_spec.SetField(tenants.FieldSlug, field.TypeString, value)
+		_node.Slug = value
 	}
-	if value, ok := _c.mutation.Domains(); ok {
-		_spec.SetField(tenants.FieldDomains, field.TypeJSON, value)
-		_node.Domains = value
-	}
-	if value, ok := _c.mutation.Limits(); ok {
-		_spec.SetField(tenants.FieldLimits, field.TypeJSON, value)
-		_node.Limits = value
-	}
-	if value, ok := _c.mutation.Features(); ok {
-		_spec.SetField(tenants.FieldFeatures, field.TypeJSON, value)
-		_node.Features = value
+	if value, ok := _c.mutation.ContactEmail(); ok {
+		_spec.SetField(tenants.FieldContactEmail, field.TypeString, value)
+		_node.ContactEmail = &value
 	}
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(tenants.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
 	}
-	if nodes := _c.mutation.SettingsIDs(); len(nodes) > 0 {
+	if value, ok := _c.mutation.Settings(); ok {
+		_spec.SetField(tenants.FieldSettings, field.TypeJSON, value)
+		_node.Settings = value
+	}
+	if nodes := _c.mutation.ProjectsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   tenants.SettingsTable,
-			Columns: []string{tenants.SettingsColumn},
+			Table:   tenants.ProjectsTable,
+			Columns: []string{tenants.ProjectsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tenantsettings.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.MembershipsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tenants.MembershipsTable,
+			Columns: []string{tenants.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

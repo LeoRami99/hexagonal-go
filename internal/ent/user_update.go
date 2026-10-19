@@ -7,8 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"hexagonal-go-backend/internal/ent/predicate"
-	"hexagonal-go-backend/internal/ent/role"
-	"hexagonal-go-backend/internal/ent/securityevent"
+	"hexagonal-go-backend/internal/ent/tenantmembership"
 	"hexagonal-go-backend/internal/ent/user"
 	"hexagonal-go-backend/internal/ent/userprofile"
 	"time"
@@ -73,16 +72,36 @@ func (_u *UserUpdate) SetNillableEmail(v *string) *UserUpdate {
 	return _u
 }
 
-// SetRole sets the "role" field.
-func (_u *UserUpdate) SetRole(v user.Role) *UserUpdate {
-	_u.mutation.SetRole(v)
+// SetAvatarURL sets the "avatar_url" field.
+func (_u *UserUpdate) SetAvatarURL(v string) *UserUpdate {
+	_u.mutation.SetAvatarURL(v)
 	return _u
 }
 
-// SetNillableRole sets the "role" field if the given value is not nil.
-func (_u *UserUpdate) SetNillableRole(v *user.Role) *UserUpdate {
+// SetNillableAvatarURL sets the "avatar_url" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableAvatarURL(v *string) *UserUpdate {
 	if v != nil {
-		_u.SetRole(*v)
+		_u.SetAvatarURL(*v)
+	}
+	return _u
+}
+
+// ClearAvatarURL clears the value of the "avatar_url" field.
+func (_u *UserUpdate) ClearAvatarURL() *UserUpdate {
+	_u.mutation.ClearAvatarURL()
+	return _u
+}
+
+// SetIsSuperAdmin sets the "is_super_admin" field.
+func (_u *UserUpdate) SetIsSuperAdmin(v bool) *UserUpdate {
+	_u.mutation.SetIsSuperAdmin(v)
+	return _u
+}
+
+// SetNillableIsSuperAdmin sets the "is_super_admin" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableIsSuperAdmin(v *bool) *UserUpdate {
+	if v != nil {
+		_u.SetIsSuperAdmin(*v)
 	}
 	return _u
 }
@@ -140,34 +159,19 @@ func (_u *UserUpdate) SetProfile(v *UserProfile) *UserUpdate {
 	return _u.SetProfileID(v.ID)
 }
 
-// AddSecurityEventIDs adds the "security_events" edge to the SecurityEvent entity by IDs.
-func (_u *UserUpdate) AddSecurityEventIDs(ids ...string) *UserUpdate {
-	_u.mutation.AddSecurityEventIDs(ids...)
+// AddTenantMembershipIDs adds the "tenant_memberships" edge to the TenantMembership entity by IDs.
+func (_u *UserUpdate) AddTenantMembershipIDs(ids ...string) *UserUpdate {
+	_u.mutation.AddTenantMembershipIDs(ids...)
 	return _u
 }
 
-// AddSecurityEvents adds the "security_events" edges to the SecurityEvent entity.
-func (_u *UserUpdate) AddSecurityEvents(v ...*SecurityEvent) *UserUpdate {
+// AddTenantMemberships adds the "tenant_memberships" edges to the TenantMembership entity.
+func (_u *UserUpdate) AddTenantMemberships(v ...*TenantMembership) *UserUpdate {
 	ids := make([]string, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddSecurityEventIDs(ids...)
-}
-
-// AddPlatformRoleIDs adds the "platform_roles" edge to the Role entity by IDs.
-func (_u *UserUpdate) AddPlatformRoleIDs(ids ...string) *UserUpdate {
-	_u.mutation.AddPlatformRoleIDs(ids...)
-	return _u
-}
-
-// AddPlatformRoles adds the "platform_roles" edges to the Role entity.
-func (_u *UserUpdate) AddPlatformRoles(v ...*Role) *UserUpdate {
-	ids := make([]string, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddPlatformRoleIDs(ids...)
+	return _u.AddTenantMembershipIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -181,46 +185,25 @@ func (_u *UserUpdate) ClearProfile() *UserUpdate {
 	return _u
 }
 
-// ClearSecurityEvents clears all "security_events" edges to the SecurityEvent entity.
-func (_u *UserUpdate) ClearSecurityEvents() *UserUpdate {
-	_u.mutation.ClearSecurityEvents()
+// ClearTenantMemberships clears all "tenant_memberships" edges to the TenantMembership entity.
+func (_u *UserUpdate) ClearTenantMemberships() *UserUpdate {
+	_u.mutation.ClearTenantMemberships()
 	return _u
 }
 
-// RemoveSecurityEventIDs removes the "security_events" edge to SecurityEvent entities by IDs.
-func (_u *UserUpdate) RemoveSecurityEventIDs(ids ...string) *UserUpdate {
-	_u.mutation.RemoveSecurityEventIDs(ids...)
+// RemoveTenantMembershipIDs removes the "tenant_memberships" edge to TenantMembership entities by IDs.
+func (_u *UserUpdate) RemoveTenantMembershipIDs(ids ...string) *UserUpdate {
+	_u.mutation.RemoveTenantMembershipIDs(ids...)
 	return _u
 }
 
-// RemoveSecurityEvents removes "security_events" edges to SecurityEvent entities.
-func (_u *UserUpdate) RemoveSecurityEvents(v ...*SecurityEvent) *UserUpdate {
+// RemoveTenantMemberships removes "tenant_memberships" edges to TenantMembership entities.
+func (_u *UserUpdate) RemoveTenantMemberships(v ...*TenantMembership) *UserUpdate {
 	ids := make([]string, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveSecurityEventIDs(ids...)
-}
-
-// ClearPlatformRoles clears all "platform_roles" edges to the Role entity.
-func (_u *UserUpdate) ClearPlatformRoles() *UserUpdate {
-	_u.mutation.ClearPlatformRoles()
-	return _u
-}
-
-// RemovePlatformRoleIDs removes the "platform_roles" edge to Role entities by IDs.
-func (_u *UserUpdate) RemovePlatformRoleIDs(ids ...string) *UserUpdate {
-	_u.mutation.RemovePlatformRoleIDs(ids...)
-	return _u
-}
-
-// RemovePlatformRoles removes "platform_roles" edges to Role entities.
-func (_u *UserUpdate) RemovePlatformRoles(v ...*Role) *UserUpdate {
-	ids := make([]string, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemovePlatformRoleIDs(ids...)
+	return _u.RemoveTenantMembershipIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -276,9 +259,9 @@ func (_u *UserUpdate) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.Role(); ok {
-		if err := user.RoleValidator(v); err != nil {
-			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
+	if v, ok := _u.mutation.AvatarURL(); ok {
+		if err := user.AvatarURLValidator(v); err != nil {
+			return &ValidationError{Name: "avatar_url", err: fmt.Errorf(`ent: validator failed for field "User.avatar_url": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.Status(); ok {
@@ -310,8 +293,14 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.Role(); ok {
-		_spec.SetField(user.FieldRole, field.TypeEnum, value)
+	if value, ok := _u.mutation.AvatarURL(); ok {
+		_spec.SetField(user.FieldAvatarURL, field.TypeString, value)
+	}
+	if _u.mutation.AvatarURLCleared() {
+		_spec.ClearField(user.FieldAvatarURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.IsSuperAdmin(); ok {
+		_spec.SetField(user.FieldIsSuperAdmin, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(user.FieldStatus, field.TypeEnum, value)
@@ -351,28 +340,28 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.SecurityEventsCleared() {
+	if _u.mutation.TenantMembershipsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.SecurityEventsTable,
-			Columns: []string{user.SecurityEventsColumn},
+			Table:   user.TenantMembershipsTable,
+			Columns: []string{user.TenantMembershipsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(securityevent.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedSecurityEventsIDs(); len(nodes) > 0 && !_u.mutation.SecurityEventsCleared() {
+	if nodes := _u.mutation.RemovedTenantMembershipsIDs(); len(nodes) > 0 && !_u.mutation.TenantMembershipsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.SecurityEventsTable,
-			Columns: []string{user.SecurityEventsColumn},
+			Table:   user.TenantMembershipsTable,
+			Columns: []string{user.TenantMembershipsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(securityevent.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -380,60 +369,15 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.SecurityEventsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.TenantMembershipsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.SecurityEventsTable,
-			Columns: []string{user.SecurityEventsColumn},
+			Table:   user.TenantMembershipsTable,
+			Columns: []string{user.TenantMembershipsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(securityevent.FieldID, field.TypeString),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.PlatformRolesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   user.PlatformRolesTable,
-			Columns: user.PlatformRolesPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeString),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedPlatformRolesIDs(); len(nodes) > 0 && !_u.mutation.PlatformRolesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   user.PlatformRolesTable,
-			Columns: user.PlatformRolesPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeString),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PlatformRolesIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   user.PlatformRolesTable,
-			Columns: user.PlatformRolesPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -503,16 +447,36 @@ func (_u *UserUpdateOne) SetNillableEmail(v *string) *UserUpdateOne {
 	return _u
 }
 
-// SetRole sets the "role" field.
-func (_u *UserUpdateOne) SetRole(v user.Role) *UserUpdateOne {
-	_u.mutation.SetRole(v)
+// SetAvatarURL sets the "avatar_url" field.
+func (_u *UserUpdateOne) SetAvatarURL(v string) *UserUpdateOne {
+	_u.mutation.SetAvatarURL(v)
 	return _u
 }
 
-// SetNillableRole sets the "role" field if the given value is not nil.
-func (_u *UserUpdateOne) SetNillableRole(v *user.Role) *UserUpdateOne {
+// SetNillableAvatarURL sets the "avatar_url" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableAvatarURL(v *string) *UserUpdateOne {
 	if v != nil {
-		_u.SetRole(*v)
+		_u.SetAvatarURL(*v)
+	}
+	return _u
+}
+
+// ClearAvatarURL clears the value of the "avatar_url" field.
+func (_u *UserUpdateOne) ClearAvatarURL() *UserUpdateOne {
+	_u.mutation.ClearAvatarURL()
+	return _u
+}
+
+// SetIsSuperAdmin sets the "is_super_admin" field.
+func (_u *UserUpdateOne) SetIsSuperAdmin(v bool) *UserUpdateOne {
+	_u.mutation.SetIsSuperAdmin(v)
+	return _u
+}
+
+// SetNillableIsSuperAdmin sets the "is_super_admin" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableIsSuperAdmin(v *bool) *UserUpdateOne {
+	if v != nil {
+		_u.SetIsSuperAdmin(*v)
 	}
 	return _u
 }
@@ -570,34 +534,19 @@ func (_u *UserUpdateOne) SetProfile(v *UserProfile) *UserUpdateOne {
 	return _u.SetProfileID(v.ID)
 }
 
-// AddSecurityEventIDs adds the "security_events" edge to the SecurityEvent entity by IDs.
-func (_u *UserUpdateOne) AddSecurityEventIDs(ids ...string) *UserUpdateOne {
-	_u.mutation.AddSecurityEventIDs(ids...)
+// AddTenantMembershipIDs adds the "tenant_memberships" edge to the TenantMembership entity by IDs.
+func (_u *UserUpdateOne) AddTenantMembershipIDs(ids ...string) *UserUpdateOne {
+	_u.mutation.AddTenantMembershipIDs(ids...)
 	return _u
 }
 
-// AddSecurityEvents adds the "security_events" edges to the SecurityEvent entity.
-func (_u *UserUpdateOne) AddSecurityEvents(v ...*SecurityEvent) *UserUpdateOne {
+// AddTenantMemberships adds the "tenant_memberships" edges to the TenantMembership entity.
+func (_u *UserUpdateOne) AddTenantMemberships(v ...*TenantMembership) *UserUpdateOne {
 	ids := make([]string, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddSecurityEventIDs(ids...)
-}
-
-// AddPlatformRoleIDs adds the "platform_roles" edge to the Role entity by IDs.
-func (_u *UserUpdateOne) AddPlatformRoleIDs(ids ...string) *UserUpdateOne {
-	_u.mutation.AddPlatformRoleIDs(ids...)
-	return _u
-}
-
-// AddPlatformRoles adds the "platform_roles" edges to the Role entity.
-func (_u *UserUpdateOne) AddPlatformRoles(v ...*Role) *UserUpdateOne {
-	ids := make([]string, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddPlatformRoleIDs(ids...)
+	return _u.AddTenantMembershipIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -611,46 +560,25 @@ func (_u *UserUpdateOne) ClearProfile() *UserUpdateOne {
 	return _u
 }
 
-// ClearSecurityEvents clears all "security_events" edges to the SecurityEvent entity.
-func (_u *UserUpdateOne) ClearSecurityEvents() *UserUpdateOne {
-	_u.mutation.ClearSecurityEvents()
+// ClearTenantMemberships clears all "tenant_memberships" edges to the TenantMembership entity.
+func (_u *UserUpdateOne) ClearTenantMemberships() *UserUpdateOne {
+	_u.mutation.ClearTenantMemberships()
 	return _u
 }
 
-// RemoveSecurityEventIDs removes the "security_events" edge to SecurityEvent entities by IDs.
-func (_u *UserUpdateOne) RemoveSecurityEventIDs(ids ...string) *UserUpdateOne {
-	_u.mutation.RemoveSecurityEventIDs(ids...)
+// RemoveTenantMembershipIDs removes the "tenant_memberships" edge to TenantMembership entities by IDs.
+func (_u *UserUpdateOne) RemoveTenantMembershipIDs(ids ...string) *UserUpdateOne {
+	_u.mutation.RemoveTenantMembershipIDs(ids...)
 	return _u
 }
 
-// RemoveSecurityEvents removes "security_events" edges to SecurityEvent entities.
-func (_u *UserUpdateOne) RemoveSecurityEvents(v ...*SecurityEvent) *UserUpdateOne {
+// RemoveTenantMemberships removes "tenant_memberships" edges to TenantMembership entities.
+func (_u *UserUpdateOne) RemoveTenantMemberships(v ...*TenantMembership) *UserUpdateOne {
 	ids := make([]string, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveSecurityEventIDs(ids...)
-}
-
-// ClearPlatformRoles clears all "platform_roles" edges to the Role entity.
-func (_u *UserUpdateOne) ClearPlatformRoles() *UserUpdateOne {
-	_u.mutation.ClearPlatformRoles()
-	return _u
-}
-
-// RemovePlatformRoleIDs removes the "platform_roles" edge to Role entities by IDs.
-func (_u *UserUpdateOne) RemovePlatformRoleIDs(ids ...string) *UserUpdateOne {
-	_u.mutation.RemovePlatformRoleIDs(ids...)
-	return _u
-}
-
-// RemovePlatformRoles removes "platform_roles" edges to Role entities.
-func (_u *UserUpdateOne) RemovePlatformRoles(v ...*Role) *UserUpdateOne {
-	ids := make([]string, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemovePlatformRoleIDs(ids...)
+	return _u.RemoveTenantMembershipIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -719,9 +647,9 @@ func (_u *UserUpdateOne) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.Role(); ok {
-		if err := user.RoleValidator(v); err != nil {
-			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
+	if v, ok := _u.mutation.AvatarURL(); ok {
+		if err := user.AvatarURLValidator(v); err != nil {
+			return &ValidationError{Name: "avatar_url", err: fmt.Errorf(`ent: validator failed for field "User.avatar_url": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.Status(); ok {
@@ -770,8 +698,14 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	if value, ok := _u.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.Role(); ok {
-		_spec.SetField(user.FieldRole, field.TypeEnum, value)
+	if value, ok := _u.mutation.AvatarURL(); ok {
+		_spec.SetField(user.FieldAvatarURL, field.TypeString, value)
+	}
+	if _u.mutation.AvatarURLCleared() {
+		_spec.ClearField(user.FieldAvatarURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.IsSuperAdmin(); ok {
+		_spec.SetField(user.FieldIsSuperAdmin, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(user.FieldStatus, field.TypeEnum, value)
@@ -811,28 +745,28 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.SecurityEventsCleared() {
+	if _u.mutation.TenantMembershipsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.SecurityEventsTable,
-			Columns: []string{user.SecurityEventsColumn},
+			Table:   user.TenantMembershipsTable,
+			Columns: []string{user.TenantMembershipsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(securityevent.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedSecurityEventsIDs(); len(nodes) > 0 && !_u.mutation.SecurityEventsCleared() {
+	if nodes := _u.mutation.RemovedTenantMembershipsIDs(); len(nodes) > 0 && !_u.mutation.TenantMembershipsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.SecurityEventsTable,
-			Columns: []string{user.SecurityEventsColumn},
+			Table:   user.TenantMembershipsTable,
+			Columns: []string{user.TenantMembershipsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(securityevent.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -840,60 +774,15 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.SecurityEventsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.TenantMembershipsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.SecurityEventsTable,
-			Columns: []string{user.SecurityEventsColumn},
+			Table:   user.TenantMembershipsTable,
+			Columns: []string{user.TenantMembershipsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(securityevent.FieldID, field.TypeString),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.PlatformRolesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   user.PlatformRolesTable,
-			Columns: user.PlatformRolesPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeString),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedPlatformRolesIDs(); len(nodes) > 0 && !_u.mutation.PlatformRolesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   user.PlatformRolesTable,
-			Columns: user.PlatformRolesPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeString),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PlatformRolesIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   user.PlatformRolesTable,
-			Columns: user.PlatformRolesPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

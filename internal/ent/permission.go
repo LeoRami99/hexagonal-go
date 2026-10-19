@@ -17,8 +17,10 @@ type Permission struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
-	// Action holds the value of the "action" field.
-	Action string `json:"action,omitempty"`
+	// Code holds the value of the "code" field.
+	Code string `json:"code,omitempty"`
+	// Module holds the value of the "module" field.
+	Module string `json:"module,omitempty"`
 	// Description holds the value of the "description" field.
 	Description *string `json:"description,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -32,7 +34,7 @@ type Permission struct {
 // PermissionEdges holds the relations/edges for other nodes in the graph.
 type PermissionEdges struct {
 	// Roles holds the value of the roles edge.
-	Roles []*Role `json:"roles,omitempty"`
+	Roles []*ProjectRole `json:"roles,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [1]bool
@@ -40,7 +42,7 @@ type PermissionEdges struct {
 
 // RolesOrErr returns the Roles value or an error if the edge
 // was not loaded in eager-loading.
-func (e PermissionEdges) RolesOrErr() ([]*Role, error) {
+func (e PermissionEdges) RolesOrErr() ([]*ProjectRole, error) {
 	if e.loadedTypes[0] {
 		return e.Roles, nil
 	}
@@ -52,7 +54,7 @@ func (*Permission) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case permission.FieldID, permission.FieldAction, permission.FieldDescription:
+		case permission.FieldID, permission.FieldCode, permission.FieldModule, permission.FieldDescription:
 			values[i] = new(sql.NullString)
 		case permission.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -77,11 +79,17 @@ func (_m *Permission) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.ID = value.String
 			}
-		case permission.FieldAction:
+		case permission.FieldCode:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field action", values[i])
+				return fmt.Errorf("unexpected type %T for field code", values[i])
 			} else if value.Valid {
-				_m.Action = value.String
+				_m.Code = value.String
+			}
+		case permission.FieldModule:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field module", values[i])
+			} else if value.Valid {
+				_m.Module = value.String
 			}
 		case permission.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -110,7 +118,7 @@ func (_m *Permission) Value(name string) (ent.Value, error) {
 }
 
 // QueryRoles queries the "roles" edge of the Permission entity.
-func (_m *Permission) QueryRoles() *RoleQuery {
+func (_m *Permission) QueryRoles() *ProjectRoleQuery {
 	return NewPermissionClient(_m.config).QueryRoles(_m)
 }
 
@@ -137,8 +145,11 @@ func (_m *Permission) String() string {
 	var builder strings.Builder
 	builder.WriteString("Permission(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
-	builder.WriteString("action=")
-	builder.WriteString(_m.Action)
+	builder.WriteString("code=")
+	builder.WriteString(_m.Code)
+	builder.WriteString(", ")
+	builder.WriteString("module=")
+	builder.WriteString(_m.Module)
 	builder.WriteString(", ")
 	if v := _m.Description; v != nil {
 		builder.WriteString("description=")

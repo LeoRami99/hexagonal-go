@@ -14,8 +14,10 @@ const (
 	Label = "permission"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldAction holds the string denoting the action field in the database.
-	FieldAction = "action"
+	// FieldCode holds the string denoting the code field in the database.
+	FieldCode = "code"
+	// FieldModule holds the string denoting the module field in the database.
+	FieldModule = "module"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -25,16 +27,17 @@ const (
 	// Table holds the table name of the permission in the database.
 	Table = "permissions"
 	// RolesTable is the table that holds the roles relation/edge. The primary key declared below.
-	RolesTable = "role_permissions"
-	// RolesInverseTable is the table name for the Role entity.
-	// It exists in this package in order to avoid circular dependency with the "role" package.
-	RolesInverseTable = "roles"
+	RolesTable = "project_role_permissions"
+	// RolesInverseTable is the table name for the ProjectRole entity.
+	// It exists in this package in order to avoid circular dependency with the "projectrole" package.
+	RolesInverseTable = "project_roles"
 )
 
 // Columns holds all SQL columns for permission fields.
 var Columns = []string{
 	FieldID,
-	FieldAction,
+	FieldCode,
+	FieldModule,
 	FieldDescription,
 	FieldCreatedAt,
 }
@@ -42,7 +45,7 @@ var Columns = []string{
 var (
 	// RolesPrimaryKey and RolesColumn2 are the table columns denoting the
 	// primary key for the roles relation (M2M).
-	RolesPrimaryKey = []string{"role_id", "permission_id"}
+	RolesPrimaryKey = []string{"project_role_id", "permission_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -56,8 +59,12 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// ActionValidator is a validator for the "action" field. It is called by the builders before save.
-	ActionValidator func(string) error
+	// CodeValidator is a validator for the "code" field. It is called by the builders before save.
+	CodeValidator func(string) error
+	// DefaultModule holds the default value on creation for the "module" field.
+	DefaultModule string
+	// ModuleValidator is a validator for the "module" field. It is called by the builders before save.
+	ModuleValidator func(string) error
 	// DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
 	DescriptionValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -76,9 +83,14 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByAction orders the results by the action field.
-func ByAction(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAction, opts...).ToFunc()
+// ByCode orders the results by the code field.
+func ByCode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCode, opts...).ToFunc()
+}
+
+// ByModule orders the results by the module field.
+func ByModule(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldModule, opts...).ToFunc()
 }
 
 // ByDescription orders the results by the description field.

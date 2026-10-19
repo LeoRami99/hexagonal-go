@@ -10,12 +10,15 @@ import (
 	"hexagonal-go-backend/internal/ent/coursemodules"
 	"hexagonal-go-backend/internal/ent/coursetemplates"
 	"hexagonal-go-backend/internal/ent/courseversions"
+	"hexagonal-go-backend/internal/ent/feature"
 	"hexagonal-go-backend/internal/ent/permission"
-	"hexagonal-go-backend/internal/ent/role"
-	"hexagonal-go-backend/internal/ent/securityevent"
+	"hexagonal-go-backend/internal/ent/project"
+	"hexagonal-go-backend/internal/ent/projectfeature"
+	"hexagonal-go-backend/internal/ent/projectmembership"
+	"hexagonal-go-backend/internal/ent/projectrole"
 	"hexagonal-go-backend/internal/ent/syllabi"
+	"hexagonal-go-backend/internal/ent/tenantmembership"
 	"hexagonal-go-backend/internal/ent/tenants"
-	"hexagonal-go-backend/internal/ent/tenantsettings"
 	"hexagonal-go-backend/internal/ent/user"
 	"hexagonal-go-backend/internal/ent/userprofile"
 	"reflect"
@@ -84,18 +87,21 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			coursecategories.Table: coursecategories.ValidColumn,
-			coursemodules.Table:    coursemodules.ValidColumn,
-			coursetemplates.Table:  coursetemplates.ValidColumn,
-			courseversions.Table:   courseversions.ValidColumn,
-			permission.Table:       permission.ValidColumn,
-			role.Table:             role.ValidColumn,
-			securityevent.Table:    securityevent.ValidColumn,
-			syllabi.Table:          syllabi.ValidColumn,
-			tenantsettings.Table:   tenantsettings.ValidColumn,
-			tenants.Table:          tenants.ValidColumn,
-			user.Table:             user.ValidColumn,
-			userprofile.Table:      userprofile.ValidColumn,
+			coursecategories.Table:  coursecategories.ValidColumn,
+			coursemodules.Table:     coursemodules.ValidColumn,
+			coursetemplates.Table:   coursetemplates.ValidColumn,
+			courseversions.Table:    courseversions.ValidColumn,
+			feature.Table:           feature.ValidColumn,
+			permission.Table:        permission.ValidColumn,
+			project.Table:           project.ValidColumn,
+			projectfeature.Table:    projectfeature.ValidColumn,
+			projectmembership.Table: projectmembership.ValidColumn,
+			projectrole.Table:       projectrole.ValidColumn,
+			syllabi.Table:           syllabi.ValidColumn,
+			tenantmembership.Table:  tenantmembership.ValidColumn,
+			tenants.Table:           tenants.ValidColumn,
+			user.Table:              user.ValidColumn,
+			userprofile.Table:       userprofile.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

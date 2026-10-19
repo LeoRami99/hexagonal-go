@@ -21,27 +21,34 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// FieldBranding holds the string denoting the branding field in the database.
-	FieldBranding = "branding"
-	// FieldDomains holds the string denoting the domains field in the database.
-	FieldDomains = "domains"
-	// FieldLimits holds the string denoting the limits field in the database.
-	FieldLimits = "limits"
-	// FieldFeatures holds the string denoting the features field in the database.
-	FieldFeatures = "features"
+	// FieldSlug holds the string denoting the slug field in the database.
+	FieldSlug = "slug"
+	// FieldContactEmail holds the string denoting the contact_email field in the database.
+	FieldContactEmail = "contact_email"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
-	// EdgeSettings holds the string denoting the settings edge name in mutations.
-	EdgeSettings = "settings"
+	// FieldSettings holds the string denoting the settings field in the database.
+	FieldSettings = "settings"
+	// EdgeProjects holds the string denoting the projects edge name in mutations.
+	EdgeProjects = "projects"
+	// EdgeMemberships holds the string denoting the memberships edge name in mutations.
+	EdgeMemberships = "memberships"
 	// Table holds the table name of the tenants in the database.
 	Table = "tenants"
-	// SettingsTable is the table that holds the settings relation/edge.
-	SettingsTable = "tenant_settings"
-	// SettingsInverseTable is the table name for the TenantSettings entity.
-	// It exists in this package in order to avoid circular dependency with the "tenantsettings" package.
-	SettingsInverseTable = "tenant_settings"
-	// SettingsColumn is the table column denoting the settings relation/edge.
-	SettingsColumn = "tenants_settings"
+	// ProjectsTable is the table that holds the projects relation/edge.
+	ProjectsTable = "projects"
+	// ProjectsInverseTable is the table name for the Project entity.
+	// It exists in this package in order to avoid circular dependency with the "project" package.
+	ProjectsInverseTable = "projects"
+	// ProjectsColumn is the table column denoting the projects relation/edge.
+	ProjectsColumn = "tenant_id"
+	// MembershipsTable is the table that holds the memberships relation/edge.
+	MembershipsTable = "tenant_memberships"
+	// MembershipsInverseTable is the table name for the TenantMembership entity.
+	// It exists in this package in order to avoid circular dependency with the "tenantmembership" package.
+	MembershipsInverseTable = "tenant_memberships"
+	// MembershipsColumn is the table column denoting the memberships relation/edge.
+	MembershipsColumn = "tenant_id"
 )
 
 // Columns holds all SQL columns for tenants fields.
@@ -50,11 +57,10 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldName,
-	FieldBranding,
-	FieldDomains,
-	FieldLimits,
-	FieldFeatures,
+	FieldSlug,
+	FieldContactEmail,
 	FieldStatus,
+	FieldSettings,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -76,6 +82,14 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
+	// SlugValidator is a validator for the "slug" field. It is called by the builders before save.
+	SlugValidator func(string) error
+	// ContactEmailValidator is a validator for the "contact_email" field. It is called by the builders before save.
+	ContactEmailValidator func(string) error
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() string
+	// IDValidator is a validator for the "id" field. It is called by the builders before save.
+	IDValidator func(string) error
 )
 
 // Status defines the type for the "status" enum field.
@@ -86,9 +100,10 @@ const DefaultStatus = StatusACTIVE
 
 // Status values.
 const (
-	StatusACTIVE   Status = "ACTIVE"
-	StatusINACTIVE Status = "INACTIVE"
-	StatusPENDING  Status = "PENDING"
+	StatusACTIVE    Status = "ACTIVE"
+	StatusINACTIVE  Status = "INACTIVE"
+	StatusSUSPENDED Status = "SUSPENDED"
+	StatusPENDING   Status = "PENDING"
 )
 
 func (s Status) String() string {
@@ -98,7 +113,7 @@ func (s Status) String() string {
 // StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
 func StatusValidator(s Status) error {
 	switch s {
-	case StatusACTIVE, StatusINACTIVE, StatusPENDING:
+	case StatusACTIVE, StatusINACTIVE, StatusSUSPENDED, StatusPENDING:
 		return nil
 	default:
 		return fmt.Errorf("tenants: invalid enum value for status field: %q", s)
@@ -128,21 +143,59 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
 }
 
+// BySlug orders the results by the slug field.
+func BySlug(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSlug, opts...).ToFunc()
+}
+
+// ByContactEmail orders the results by the contact_email field.
+func ByContactEmail(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContactEmail, opts...).ToFunc()
+}
+
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
-// BySettingsField orders the results by settings field.
-func BySettingsField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByProjectsCount orders the results by projects count.
+func ByProjectsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newSettingsStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborsCount(s, newProjectsStep(), opts...)
 	}
 }
-func newSettingsStep() *sqlgraph.Step {
+
+// ByProjects orders the results by projects terms.
+func ByProjects(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newProjectsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByMembershipsCount orders the results by memberships count.
+func ByMembershipsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newMembershipsStep(), opts...)
+	}
+}
+
+// ByMemberships orders the results by memberships terms.
+func ByMemberships(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMembershipsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newProjectsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(SettingsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2O, false, SettingsTable, SettingsColumn),
+		sqlgraph.To(ProjectsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ProjectsTable, ProjectsColumn),
+	)
+}
+func newMembershipsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(MembershipsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, MembershipsTable, MembershipsColumn),
 	)
 }

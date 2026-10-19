@@ -65,11 +65,6 @@ func IDContainsFold(id string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldID, id))
 }
 
-// TenantID applies equality check predicate on the "tenant_id" field. It's identical to TenantIDEQ.
-func TenantID(v string) predicate.User {
-	return predicate.User(sql.FieldEQ(FieldTenantID, v))
-}
-
 // AuthID applies equality check predicate on the "auth_id" field. It's identical to AuthIDEQ.
 func AuthID(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldAuthID, v))
@@ -85,6 +80,16 @@ func Email(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldEmail, v))
 }
 
+// AvatarURL applies equality check predicate on the "avatar_url" field. It's identical to AvatarURLEQ.
+func AvatarURL(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldAvatarURL, v))
+}
+
+// IsSuperAdmin applies equality check predicate on the "is_super_admin" field. It's identical to IsSuperAdminEQ.
+func IsSuperAdmin(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldIsSuperAdmin, v))
+}
+
 // Active applies equality check predicate on the "active" field. It's identical to ActiveEQ.
 func Active(v bool) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldActive, v))
@@ -98,71 +103,6 @@ func CreatedAt(v time.Time) predicate.User {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldUpdatedAt, v))
-}
-
-// TenantIDEQ applies the EQ predicate on the "tenant_id" field.
-func TenantIDEQ(v string) predicate.User {
-	return predicate.User(sql.FieldEQ(FieldTenantID, v))
-}
-
-// TenantIDNEQ applies the NEQ predicate on the "tenant_id" field.
-func TenantIDNEQ(v string) predicate.User {
-	return predicate.User(sql.FieldNEQ(FieldTenantID, v))
-}
-
-// TenantIDIn applies the In predicate on the "tenant_id" field.
-func TenantIDIn(vs ...string) predicate.User {
-	return predicate.User(sql.FieldIn(FieldTenantID, vs...))
-}
-
-// TenantIDNotIn applies the NotIn predicate on the "tenant_id" field.
-func TenantIDNotIn(vs ...string) predicate.User {
-	return predicate.User(sql.FieldNotIn(FieldTenantID, vs...))
-}
-
-// TenantIDGT applies the GT predicate on the "tenant_id" field.
-func TenantIDGT(v string) predicate.User {
-	return predicate.User(sql.FieldGT(FieldTenantID, v))
-}
-
-// TenantIDGTE applies the GTE predicate on the "tenant_id" field.
-func TenantIDGTE(v string) predicate.User {
-	return predicate.User(sql.FieldGTE(FieldTenantID, v))
-}
-
-// TenantIDLT applies the LT predicate on the "tenant_id" field.
-func TenantIDLT(v string) predicate.User {
-	return predicate.User(sql.FieldLT(FieldTenantID, v))
-}
-
-// TenantIDLTE applies the LTE predicate on the "tenant_id" field.
-func TenantIDLTE(v string) predicate.User {
-	return predicate.User(sql.FieldLTE(FieldTenantID, v))
-}
-
-// TenantIDContains applies the Contains predicate on the "tenant_id" field.
-func TenantIDContains(v string) predicate.User {
-	return predicate.User(sql.FieldContains(FieldTenantID, v))
-}
-
-// TenantIDHasPrefix applies the HasPrefix predicate on the "tenant_id" field.
-func TenantIDHasPrefix(v string) predicate.User {
-	return predicate.User(sql.FieldHasPrefix(FieldTenantID, v))
-}
-
-// TenantIDHasSuffix applies the HasSuffix predicate on the "tenant_id" field.
-func TenantIDHasSuffix(v string) predicate.User {
-	return predicate.User(sql.FieldHasSuffix(FieldTenantID, v))
-}
-
-// TenantIDEqualFold applies the EqualFold predicate on the "tenant_id" field.
-func TenantIDEqualFold(v string) predicate.User {
-	return predicate.User(sql.FieldEqualFold(FieldTenantID, v))
-}
-
-// TenantIDContainsFold applies the ContainsFold predicate on the "tenant_id" field.
-func TenantIDContainsFold(v string) predicate.User {
-	return predicate.User(sql.FieldContainsFold(FieldTenantID, v))
 }
 
 // AuthIDEQ applies the EQ predicate on the "auth_id" field.
@@ -360,24 +300,89 @@ func EmailContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldEmail, v))
 }
 
-// RoleEQ applies the EQ predicate on the "role" field.
-func RoleEQ(v Role) predicate.User {
-	return predicate.User(sql.FieldEQ(FieldRole, v))
+// AvatarURLEQ applies the EQ predicate on the "avatar_url" field.
+func AvatarURLEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldAvatarURL, v))
 }
 
-// RoleNEQ applies the NEQ predicate on the "role" field.
-func RoleNEQ(v Role) predicate.User {
-	return predicate.User(sql.FieldNEQ(FieldRole, v))
+// AvatarURLNEQ applies the NEQ predicate on the "avatar_url" field.
+func AvatarURLNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldAvatarURL, v))
 }
 
-// RoleIn applies the In predicate on the "role" field.
-func RoleIn(vs ...Role) predicate.User {
-	return predicate.User(sql.FieldIn(FieldRole, vs...))
+// AvatarURLIn applies the In predicate on the "avatar_url" field.
+func AvatarURLIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldAvatarURL, vs...))
 }
 
-// RoleNotIn applies the NotIn predicate on the "role" field.
-func RoleNotIn(vs ...Role) predicate.User {
-	return predicate.User(sql.FieldNotIn(FieldRole, vs...))
+// AvatarURLNotIn applies the NotIn predicate on the "avatar_url" field.
+func AvatarURLNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldAvatarURL, vs...))
+}
+
+// AvatarURLGT applies the GT predicate on the "avatar_url" field.
+func AvatarURLGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldAvatarURL, v))
+}
+
+// AvatarURLGTE applies the GTE predicate on the "avatar_url" field.
+func AvatarURLGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldAvatarURL, v))
+}
+
+// AvatarURLLT applies the LT predicate on the "avatar_url" field.
+func AvatarURLLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldAvatarURL, v))
+}
+
+// AvatarURLLTE applies the LTE predicate on the "avatar_url" field.
+func AvatarURLLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldAvatarURL, v))
+}
+
+// AvatarURLContains applies the Contains predicate on the "avatar_url" field.
+func AvatarURLContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldAvatarURL, v))
+}
+
+// AvatarURLHasPrefix applies the HasPrefix predicate on the "avatar_url" field.
+func AvatarURLHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldAvatarURL, v))
+}
+
+// AvatarURLHasSuffix applies the HasSuffix predicate on the "avatar_url" field.
+func AvatarURLHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldAvatarURL, v))
+}
+
+// AvatarURLIsNil applies the IsNil predicate on the "avatar_url" field.
+func AvatarURLIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldAvatarURL))
+}
+
+// AvatarURLNotNil applies the NotNil predicate on the "avatar_url" field.
+func AvatarURLNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldAvatarURL))
+}
+
+// AvatarURLEqualFold applies the EqualFold predicate on the "avatar_url" field.
+func AvatarURLEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldAvatarURL, v))
+}
+
+// AvatarURLContainsFold applies the ContainsFold predicate on the "avatar_url" field.
+func AvatarURLContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldAvatarURL, v))
+}
+
+// IsSuperAdminEQ applies the EQ predicate on the "is_super_admin" field.
+func IsSuperAdminEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldIsSuperAdmin, v))
+}
+
+// IsSuperAdminNEQ applies the NEQ predicate on the "is_super_admin" field.
+func IsSuperAdminNEQ(v bool) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldIsSuperAdmin, v))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
@@ -513,44 +518,21 @@ func HasProfileWith(preds ...predicate.UserProfile) predicate.User {
 	})
 }
 
-// HasSecurityEvents applies the HasEdge predicate on the "security_events" edge.
-func HasSecurityEvents() predicate.User {
+// HasTenantMemberships applies the HasEdge predicate on the "tenant_memberships" edge.
+func HasTenantMemberships() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, SecurityEventsTable, SecurityEventsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, TenantMembershipsTable, TenantMembershipsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasSecurityEventsWith applies the HasEdge predicate on the "security_events" edge with a given conditions (other predicates).
-func HasSecurityEventsWith(preds ...predicate.SecurityEvent) predicate.User {
+// HasTenantMembershipsWith applies the HasEdge predicate on the "tenant_memberships" edge with a given conditions (other predicates).
+func HasTenantMembershipsWith(preds ...predicate.TenantMembership) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		step := newSecurityEventsStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasPlatformRoles applies the HasEdge predicate on the "platform_roles" edge.
-func HasPlatformRoles() predicate.User {
-	return predicate.User(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, PlatformRolesTable, PlatformRolesPrimaryKey...),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasPlatformRolesWith applies the HasEdge predicate on the "platform_roles" edge with a given conditions (other predicates).
-func HasPlatformRolesWith(preds ...predicate.Role) predicate.User {
-	return predicate.User(func(s *sql.Selector) {
-		step := newPlatformRolesStep()
+		step := newTenantMembershipsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

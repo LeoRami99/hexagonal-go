@@ -7,8 +7,9 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"hexagonal-go-backend/internal/ent/predicate"
+	"hexagonal-go-backend/internal/ent/project"
+	"hexagonal-go-backend/internal/ent/tenantmembership"
 	"hexagonal-go-backend/internal/ent/tenants"
-	"hexagonal-go-backend/internal/ent/tenantsettings"
 	"math"
 
 	"entgo.io/ent"
@@ -20,11 +21,12 @@ import (
 // TenantsQuery is the builder for querying Tenants entities.
 type TenantsQuery struct {
 	config
-	ctx          *QueryContext
-	order        []tenants.OrderOption
-	inters       []Interceptor
-	predicates   []predicate.Tenants
-	withSettings *TenantSettingsQuery
+	ctx             *QueryContext
+	order           []tenants.OrderOption
+	inters          []Interceptor
+	predicates      []predicate.Tenants
+	withProjects    *ProjectQuery
+	withMemberships *TenantMembershipQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -61,9 +63,9 @@ func (_q *TenantsQuery) Order(o ...tenants.OrderOption) *TenantsQuery {
 	return _q
 }
 
-// QuerySettings chains the current query on the "settings" edge.
-func (_q *TenantsQuery) QuerySettings() *TenantSettingsQuery {
-	query := (&TenantSettingsClient{config: _q.config}).Query()
+// QueryProjects chains the current query on the "projects" edge.
+func (_q *TenantsQuery) QueryProjects() *ProjectQuery {
+	query := (&ProjectClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -74,8 +76,30 @@ func (_q *TenantsQuery) QuerySettings() *TenantSettingsQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(tenants.Table, tenants.FieldID, selector),
-			sqlgraph.To(tenantsettings.Table, tenantsettings.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, tenants.SettingsTable, tenants.SettingsColumn),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, tenants.ProjectsTable, tenants.ProjectsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryMemberships chains the current query on the "memberships" edge.
+func (_q *TenantsQuery) QueryMemberships() *TenantMembershipQuery {
+	query := (&TenantMembershipClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tenants.Table, tenants.FieldID, selector),
+			sqlgraph.To(tenantmembership.Table, tenantmembership.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, tenants.MembershipsTable, tenants.MembershipsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -270,26 +294,38 @@ func (_q *TenantsQuery) Clone() *TenantsQuery {
 		return nil
 	}
 	return &TenantsQuery{
-		config:       _q.config,
-		ctx:          _q.ctx.Clone(),
-		order:        append([]tenants.OrderOption{}, _q.order...),
-		inters:       append([]Interceptor{}, _q.inters...),
-		predicates:   append([]predicate.Tenants{}, _q.predicates...),
-		withSettings: _q.withSettings.Clone(),
+		config:          _q.config,
+		ctx:             _q.ctx.Clone(),
+		order:           append([]tenants.OrderOption{}, _q.order...),
+		inters:          append([]Interceptor{}, _q.inters...),
+		predicates:      append([]predicate.Tenants{}, _q.predicates...),
+		withProjects:    _q.withProjects.Clone(),
+		withMemberships: _q.withMemberships.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithSettings tells the query-builder to eager-load the nodes that are connected to
-// the "settings" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *TenantsQuery) WithSettings(opts ...func(*TenantSettingsQuery)) *TenantsQuery {
-	query := (&TenantSettingsClient{config: _q.config}).Query()
+// WithProjects tells the query-builder to eager-load the nodes that are connected to
+// the "projects" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TenantsQuery) WithProjects(opts ...func(*ProjectQuery)) *TenantsQuery {
+	query := (&ProjectClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withSettings = query
+	_q.withProjects = query
+	return _q
+}
+
+// WithMemberships tells the query-builder to eager-load the nodes that are connected to
+// the "memberships" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TenantsQuery) WithMemberships(opts ...func(*TenantMembershipQuery)) *TenantsQuery {
+	query := (&TenantMembershipClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withMemberships = query
 	return _q
 }
 
@@ -371,8 +407,9 @@ func (_q *TenantsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Tena
 	var (
 		nodes       = []*Tenants{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
-			_q.withSettings != nil,
+		loadedTypes = [2]bool{
+			_q.withProjects != nil,
+			_q.withMemberships != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -393,38 +430,78 @@ func (_q *TenantsQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Tena
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withSettings; query != nil {
-		if err := _q.loadSettings(ctx, query, nodes, nil,
-			func(n *Tenants, e *TenantSettings) { n.Edges.Settings = e }); err != nil {
+	if query := _q.withProjects; query != nil {
+		if err := _q.loadProjects(ctx, query, nodes,
+			func(n *Tenants) { n.Edges.Projects = []*Project{} },
+			func(n *Tenants, e *Project) { n.Edges.Projects = append(n.Edges.Projects, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withMemberships; query != nil {
+		if err := _q.loadMemberships(ctx, query, nodes,
+			func(n *Tenants) { n.Edges.Memberships = []*TenantMembership{} },
+			func(n *Tenants, e *TenantMembership) { n.Edges.Memberships = append(n.Edges.Memberships, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *TenantsQuery) loadSettings(ctx context.Context, query *TenantSettingsQuery, nodes []*Tenants, init func(*Tenants), assign func(*Tenants, *TenantSettings)) error {
+func (_q *TenantsQuery) loadProjects(ctx context.Context, query *ProjectQuery, nodes []*Tenants, init func(*Tenants), assign func(*Tenants, *Project)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[string]*Tenants)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
 	}
-	query.withFKs = true
-	query.Where(predicate.TenantSettings(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(tenants.SettingsColumn), fks...))
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(project.FieldTenantID)
+	}
+	query.Where(predicate.Project(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(tenants.ProjectsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.tenants_settings
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "tenants_settings" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.TenantID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "tenants_settings" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "tenant_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *TenantsQuery) loadMemberships(ctx context.Context, query *TenantMembershipQuery, nodes []*Tenants, init func(*Tenants), assign func(*Tenants, *TenantMembership)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[string]*Tenants)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(tenantmembership.FieldTenantID)
+	}
+	query.Where(predicate.TenantMembership(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(tenants.MembershipsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.TenantID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "tenant_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

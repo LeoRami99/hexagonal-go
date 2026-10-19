@@ -6,27 +6,31 @@ import (
 
 	auth "hexagonal-go-backend/internal/modules/auth/application"
 	usersapp "hexagonal-go-backend/internal/modules/users/application"
-	userdomain "hexagonal-go-backend/internal/modules/users/domain"
 
 	"github.com/gin-gonic/gin"
 )
 
 func Authenticate(tokens auth.TokenProvider, userRepo usersapp.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		parts := strings.SplitN(c.GetHeader("Authorization"), " ", 2)
-		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
-			unauthorized(c)
+		authHeader := strings.TrimSpace(c.GetHeader("Authorization"))
+		if authHeader == "" {
+			unauthorized(c, "Authorization header is missing")
 			return
 		}
-		claims, err := tokens.Parse(parts[1])
+
+		tokenStr := authHeader
+		if strings.HasPrefix(strings.ToLower(authHeader), "bearer ") {
+			tokenStr = strings.TrimSpace(authHeader[7:])
+		}
+
+		claims, err := tokens.Parse(tokenStr)
 		if err != nil {
-			unauthorized(c)
+			unauthorized(c, "Invalid or expired token")
 			return
 		}
 
 		userID := claims.Subject
-		role := string(claims.Role)
-		tenantID := claims.TenantID
+		isSuperAdmin := false
 
 		// Lectura únicamente: el usuario local lo provisiona el flujo de login.
 		if userRepo != nil {
@@ -37,43 +41,41 @@ func Authenticate(tokens auth.TokenProvider, userRepo usersapp.UserRepository) g
 				user, err = userRepo.FindByID(ctx, claims.Subject)
 			}
 			if err != nil || user == nil || !user.Active {
-				unauthorized(c)
+				unauthorized(c, "User account not found or disabled in database")
 				return
 			}
 			userID = user.ID
-			role = string(user.Role)
-			tenantID = user.TenantID
+			isSuperAdmin = user.IsSuperAdmin
 		}
 
 		c.Set("user_id", userID)
 		c.Set("auth_id", claims.Subject)
 		c.Set("subject", userID)
-		c.Set("role", role)
-		c.Set("tenant_id", tenantID)
+		c.Set("is_super_admin", isSuperAdmin)
 		c.Next()
 	}
 }
 
-func RequireRole(role userdomain.Role) gin.HandlerFunc {
+func RequireSuperAdminDirect() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.GetString("role") != string(role) {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": gin.H{"code": "FORBIDDEN", "message": "Insufficient permissions"}, "request_id": c.GetString("request_id")})
+		if !c.GetBool("is_super_admin") {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": gin.H{"code": "FORBIDDEN", "message": "Super admin privilege required"}, "request_id": c.GetString("request_id")})
 			return
 		}
 		c.Next()
 	}
 }
 
-func RequireTenant() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if c.GetString("tenant_id") == "" {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": gin.H{"code": "TENANT_REQUIRED", "message": "Tenant context required"}, "request_id": c.GetString("request_id")})
-			return
-		}
-		c.Next()
+func unauthorized(c *gin.Context, reason ...string) {
+	msg := "Missing or invalid token"
+	if len(reason) > 0 && reason[0] != "" {
+		msg = reason[0]
 	}
-}
-
-func unauthorized(c *gin.Context) {
-	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": gin.H{"code": "UNAUTHORIZED", "message": "Missing or invalid token"}, "request_id": c.GetString("request_id")})
+	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+		"error": gin.H{
+			"code":    "UNAUTHORIZED",
+			"message": msg,
+		},
+		"request_id": c.GetString("request_id"),
+	})
 }

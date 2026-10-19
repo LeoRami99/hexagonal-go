@@ -14,16 +14,25 @@ type authService struct {
 	users                 users.UserRepository
 	tokens                TokenProvider
 	cache                 Cache
+	ctxRepo               AuthContextRepository
 	idp                   IdentityProvider
 	accessTTL, refreshTTL time.Duration
 }
 
-func NewAuthService(userRepository users.UserRepository, tokens TokenProvider, cache Cache, accessTTL, refreshTTL time.Duration, idp ...IdentityProvider) AuthService {
+func NewAuthService(userRepository users.UserRepository, tokens TokenProvider, cache Cache, accessTTL, refreshTTL time.Duration, ctxRepo AuthContextRepository, idp ...IdentityProvider) AuthService {
 	var provider IdentityProvider
 	if len(idp) > 0 {
 		provider = idp[0]
 	}
-	return &authService{users: userRepository, tokens: tokens, cache: cache, idp: provider, accessTTL: accessTTL, refreshTTL: refreshTTL}
+	return &authService{
+		users:      userRepository,
+		tokens:     tokens,
+		cache:      cache,
+		ctxRepo:    ctxRepo,
+		idp:        provider,
+		accessTTL:  accessTTL,
+		refreshTTL: refreshTTL,
+	}
 }
 
 func (s *authService) Login(ctx context.Context, email, password string) (TokenPair, error) {
@@ -47,8 +56,6 @@ func (s *authService) Login(ctx context.Context, email, password string) (TokenP
 }
 
 // provision garantiza que exista el usuario local asociado a la identidad del IdP.
-// Es idempotente: si ya existe lo reutiliza y si la creación pierde una carrera
-// contra otra petición, vuelve a consultar en lugar de fallar.
 func (s *authService) provision(ctx context.Context, claims TokenClaims, email string) error {
 	u, err := s.users.FindByAuthID(ctx, claims.Subject)
 	if err == nil {
@@ -67,19 +74,12 @@ func (s *authService) provision(ctx context.Context, claims TokenClaims, email s
 		return s.users.Update(ctx, existing)
 	}
 
-	tenantID := claims.TenantID
-	if tenantID == "" {
-		tenantID = "default"
-	}
-	// El rol nunca se toma del token al provisionar: un usuario nuevo parte como RoleUser.
 	now := time.Now().UTC()
 	newUser := &userdomain.User{
 		ID:        identifier.New(),
-		TenantID:  tenantID,
 		AuthID:    claims.Subject,
 		Name:      email,
 		Email:     email,
-		Role:      userdomain.RoleUser,
 		Status:    userdomain.StatusActive,
 		Active:    true,
 		CreatedAt: now,
@@ -138,15 +138,37 @@ func (s *authService) Logout(ctx context.Context, token string) error {
 	return s.cache.Delete(ctx, "refresh:"+claims.TokenID)
 }
 
+func (s *authService) GetSessionContext(ctx context.Context, userID string) (*SessionContext, error) {
+	if s.ctxRepo != nil {
+		return s.ctxRepo.GetSessionContext(ctx, userID)
+	}
+	u, err := s.users.FindByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return &SessionContext{
+		User: UserInfo{
+			ID:           u.ID,
+			AuthID:       u.AuthID,
+			Name:         u.Name,
+			Email:        u.Email,
+			AvatarURL:    u.AvatarURL,
+			IsSuperAdmin: u.IsSuperAdmin,
+		},
+		Tenants:  []TenantContext{},
+		Projects: []ProjectMembershipContext{},
+	}, nil
+}
+
 func (s *authService) issue(ctx context.Context, user *userdomain.User) (TokenPair, error) {
 	now := time.Now().UTC()
 	accessExp, refreshExp := now.Add(s.accessTTL), now.Add(s.refreshTTL)
 	accessID, refreshID := identifier.New(), identifier.New()
-	accessToken, err := s.tokens.Generate(TokenClaims{Subject: user.ID, TenantID: user.TenantID, Role: user.Role, ExpiresAt: accessExp, TokenID: accessID})
+	accessToken, err := s.tokens.Generate(TokenClaims{Subject: user.ID, ExpiresAt: accessExp, TokenID: accessID})
 	if err != nil {
 		return TokenPair{}, err
 	}
-	refreshToken, err := s.tokens.Generate(TokenClaims{Subject: user.ID, TenantID: user.TenantID, Role: user.Role, ExpiresAt: refreshExp, TokenID: refreshID})
+	refreshToken, err := s.tokens.Generate(TokenClaims{Subject: user.ID, ExpiresAt: refreshExp, TokenID: refreshID})
 	if err != nil {
 		return TokenPair{}, err
 	}

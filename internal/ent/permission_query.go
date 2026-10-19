@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"hexagonal-go-backend/internal/ent/permission"
 	"hexagonal-go-backend/internal/ent/predicate"
-	"hexagonal-go-backend/internal/ent/role"
+	"hexagonal-go-backend/internal/ent/projectrole"
 	"math"
 
 	"entgo.io/ent"
@@ -24,7 +24,7 @@ type PermissionQuery struct {
 	order      []permission.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Permission
-	withRoles  *RoleQuery
+	withRoles  *ProjectRoleQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -62,8 +62,8 @@ func (_q *PermissionQuery) Order(o ...permission.OrderOption) *PermissionQuery {
 }
 
 // QueryRoles chains the current query on the "roles" edge.
-func (_q *PermissionQuery) QueryRoles() *RoleQuery {
-	query := (&RoleClient{config: _q.config}).Query()
+func (_q *PermissionQuery) QueryRoles() *ProjectRoleQuery {
+	query := (&ProjectRoleClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -74,7 +74,7 @@ func (_q *PermissionQuery) QueryRoles() *RoleQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(permission.Table, permission.FieldID, selector),
-			sqlgraph.To(role.Table, role.FieldID),
+			sqlgraph.To(projectrole.Table, projectrole.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, permission.RolesTable, permission.RolesPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
@@ -284,8 +284,8 @@ func (_q *PermissionQuery) Clone() *PermissionQuery {
 
 // WithRoles tells the query-builder to eager-load the nodes that are connected to
 // the "roles" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *PermissionQuery) WithRoles(opts ...func(*RoleQuery)) *PermissionQuery {
-	query := (&RoleClient{config: _q.config}).Query()
+func (_q *PermissionQuery) WithRoles(opts ...func(*ProjectRoleQuery)) *PermissionQuery {
+	query := (&ProjectRoleClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
@@ -299,12 +299,12 @@ func (_q *PermissionQuery) WithRoles(opts ...func(*RoleQuery)) *PermissionQuery 
 // Example:
 //
 //	var v []struct {
-//		Action string `json:"action,omitempty"`
+//		Code string `json:"code,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Permission.Query().
-//		GroupBy(permission.FieldAction).
+//		GroupBy(permission.FieldCode).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *PermissionQuery) GroupBy(field string, fields ...string) *PermissionGroupBy {
@@ -322,11 +322,11 @@ func (_q *PermissionQuery) GroupBy(field string, fields ...string) *PermissionGr
 // Example:
 //
 //	var v []struct {
-//		Action string `json:"action,omitempty"`
+//		Code string `json:"code,omitempty"`
 //	}
 //
 //	client.Permission.Query().
-//		Select(permission.FieldAction).
+//		Select(permission.FieldCode).
 //		Scan(ctx, &v)
 func (_q *PermissionQuery) Select(fields ...string) *PermissionSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -395,15 +395,15 @@ func (_q *PermissionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*P
 	}
 	if query := _q.withRoles; query != nil {
 		if err := _q.loadRoles(ctx, query, nodes,
-			func(n *Permission) { n.Edges.Roles = []*Role{} },
-			func(n *Permission, e *Role) { n.Edges.Roles = append(n.Edges.Roles, e) }); err != nil {
+			func(n *Permission) { n.Edges.Roles = []*ProjectRole{} },
+			func(n *Permission, e *ProjectRole) { n.Edges.Roles = append(n.Edges.Roles, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *PermissionQuery) loadRoles(ctx context.Context, query *RoleQuery, nodes []*Permission, init func(*Permission), assign func(*Permission, *Role)) error {
+func (_q *PermissionQuery) loadRoles(ctx context.Context, query *ProjectRoleQuery, nodes []*Permission, init func(*Permission), assign func(*Permission, *ProjectRole)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
 	byID := make(map[string]*Permission)
 	nids := make(map[string]map[*Permission]struct{})
@@ -416,7 +416,7 @@ func (_q *PermissionQuery) loadRoles(ctx context.Context, query *RoleQuery, node
 	}
 	query.Where(func(s *sql.Selector) {
 		joinT := sql.Table(permission.RolesTable)
-		s.Join(joinT).On(s.C(role.FieldID), joinT.C(permission.RolesPrimaryKey[0]))
+		s.Join(joinT).On(s.C(projectrole.FieldID), joinT.C(permission.RolesPrimaryKey[0]))
 		s.Where(sql.InValues(joinT.C(permission.RolesPrimaryKey[1]), edgeIDs...))
 		columns := s.SelectedColumns()
 		s.Select(joinT.C(permission.RolesPrimaryKey[1]))
@@ -449,7 +449,7 @@ func (_q *PermissionQuery) loadRoles(ctx context.Context, query *RoleQuery, node
 			}
 		})
 	})
-	neighbors, err := withInterceptors[[]*Role](ctx, query, qr, query.inters)
+	neighbors, err := withInterceptors[[]*ProjectRole](ctx, query, qr, query.inters)
 	if err != nil {
 		return err
 	}

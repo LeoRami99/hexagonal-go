@@ -19,10 +19,14 @@ type UserProfile struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// UserID holds the value of the "user_id" field.
+	UserID string `json:"user_id,omitempty"`
 	// FirstName holds the value of the "first_name" field.
 	FirstName *string `json:"first_name,omitempty"`
 	// LastName holds the value of the "last_name" field.
 	LastName *string `json:"last_name,omitempty"`
+	// Phone holds the value of the "phone" field.
+	Phone *string `json:"phone,omitempty"`
 	// BirthDate holds the value of the "birth_date" field.
 	BirthDate *time.Time `json:"birth_date,omitempty"`
 	// Gender holds the value of the "gender" field.
@@ -33,6 +37,8 @@ type UserProfile struct {
 	Address *string `json:"address,omitempty"`
 	// PhotoURL holds the value of the "photo_url" field.
 	PhotoURL *string `json:"photo_url,omitempty"`
+	// Bio holds the value of the "bio" field.
+	Bio *string `json:"bio,omitempty"`
 	// SociodemographicData holds the value of the "sociodemographic_data" field.
 	SociodemographicData map[string]interface{} `json:"sociodemographic_data,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -42,7 +48,6 @@ type UserProfile struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserProfileQuery when eager-loading is set.
 	Edges        UserProfileEdges `json:"edges"`
-	user_profile *string
 	selectValues sql.SelectValues
 }
 
@@ -73,12 +78,10 @@ func (*UserProfile) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case userprofile.FieldSociodemographicData:
 			values[i] = new([]byte)
-		case userprofile.FieldID, userprofile.FieldFirstName, userprofile.FieldLastName, userprofile.FieldGender, userprofile.FieldCity, userprofile.FieldAddress, userprofile.FieldPhotoURL:
+		case userprofile.FieldID, userprofile.FieldUserID, userprofile.FieldFirstName, userprofile.FieldLastName, userprofile.FieldPhone, userprofile.FieldGender, userprofile.FieldCity, userprofile.FieldAddress, userprofile.FieldPhotoURL, userprofile.FieldBio:
 			values[i] = new(sql.NullString)
 		case userprofile.FieldBirthDate, userprofile.FieldCreatedAt, userprofile.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case userprofile.ForeignKeys[0]: // user_profile
-			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -100,6 +103,12 @@ func (_m *UserProfile) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.ID = value.String
 			}
+		case userprofile.FieldUserID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field user_id", values[i])
+			} else if value.Valid {
+				_m.UserID = value.String
+			}
 		case userprofile.FieldFirstName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field first_name", values[i])
@@ -113,6 +122,13 @@ func (_m *UserProfile) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.LastName = new(string)
 				*_m.LastName = value.String
+			}
+		case userprofile.FieldPhone:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field phone", values[i])
+			} else if value.Valid {
+				_m.Phone = new(string)
+				*_m.Phone = value.String
 			}
 		case userprofile.FieldBirthDate:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -149,6 +165,13 @@ func (_m *UserProfile) assignValues(columns []string, values []any) error {
 				_m.PhotoURL = new(string)
 				*_m.PhotoURL = value.String
 			}
+		case userprofile.FieldBio:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field bio", values[i])
+			} else if value.Valid {
+				_m.Bio = new(string)
+				*_m.Bio = value.String
+			}
 		case userprofile.FieldSociodemographicData:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field sociodemographic_data", values[i])
@@ -168,13 +191,6 @@ func (_m *UserProfile) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
-			}
-		case userprofile.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field user_profile", values[i])
-			} else if value.Valid {
-				_m.user_profile = new(string)
-				*_m.user_profile = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -217,6 +233,9 @@ func (_m *UserProfile) String() string {
 	var builder strings.Builder
 	builder.WriteString("UserProfile(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("user_id=")
+	builder.WriteString(_m.UserID)
+	builder.WriteString(", ")
 	if v := _m.FirstName; v != nil {
 		builder.WriteString("first_name=")
 		builder.WriteString(*v)
@@ -224,6 +243,11 @@ func (_m *UserProfile) String() string {
 	builder.WriteString(", ")
 	if v := _m.LastName; v != nil {
 		builder.WriteString("last_name=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.Phone; v != nil {
+		builder.WriteString("phone=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
@@ -249,6 +273,11 @@ func (_m *UserProfile) String() string {
 	builder.WriteString(", ")
 	if v := _m.PhotoURL; v != nil {
 		builder.WriteString("photo_url=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.Bio; v != nil {
+		builder.WriteString("bio=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")

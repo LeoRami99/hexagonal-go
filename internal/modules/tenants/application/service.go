@@ -7,42 +7,29 @@ import (
 	"time"
 
 	"hexagonal-go-backend/internal/modules/tenants/domain"
+	"hexagonal-go-backend/internal/platform/identifier"
 )
 
 type CreateTenantInput struct {
-	ID                 string         `json:"id"`
-	Name               string         `json:"name"`
-	Branding           map[string]any `json:"branding"`
-	Domains            []string       `json:"domains"`
-	Limits             map[string]any `json:"limits"`
-	Features           map[string]any `json:"features"`
-	Timezone           string         `json:"timezone"`
-	Language           string         `json:"language"`
-	DateFormat         string         `json:"date_format"`
-	InstitutionalEmail string         `json:"institutional_email"`
-	Policies           map[string]any `json:"policies"`
-	FeatureFlags       map[string]any `json:"feature_flags"`
+	ID           string         `json:"id"`
+	Name         string         `json:"name"`
+	Slug         string         `json:"slug"`
+	ContactEmail string         `json:"contact_email"`
+	Settings     map[string]any `json:"settings"`
 }
 
 type UpdateTenantInput struct {
-	Name               *string        `json:"name"`
-	Branding           map[string]any `json:"branding"`
-	Domains            []string       `json:"domains"`
-	Limits             map[string]any `json:"limits"`
-	Features           map[string]any `json:"features"`
-	Status             *string        `json:"status"`
-	Timezone           *string        `json:"timezone"`
-	Language           *string        `json:"language"`
-	DateFormat         *string        `json:"date_format"`
-	InstitutionalEmail *string        `json:"institutional_email"`
-	Policies           map[string]any `json:"policies"`
-	FeatureFlags       map[string]any `json:"feature_flags"`
+	Name         *string        `json:"name"`
+	Slug         *string        `json:"slug"`
+	ContactEmail *string        `json:"contact_email"`
+	Status       *string        `json:"status"`
+	Settings     map[string]any `json:"settings"`
 }
 
 type TenantService interface {
 	Create(ctx context.Context, input CreateTenantInput) (*domain.Tenant, error)
 	GetByID(ctx context.Context, id string) (*domain.Tenant, error)
-	GetByDomain(ctx context.Context, domainName string) (*domain.Tenant, error)
+	GetBySlug(ctx context.Context, slug string) (*domain.Tenant, error)
 	List(ctx context.Context) ([]*domain.Tenant, error)
 	Update(ctx context.Context, id string, input UpdateTenantInput) (*domain.Tenant, error)
 	Delete(ctx context.Context, id string) error
@@ -62,39 +49,26 @@ func (s *tenantService) Create(ctx context.Context, input CreateTenantInput) (*d
 		return nil, fmt.Errorf("%w: name is required", domain.ErrInvalidTenantData)
 	}
 
-	tz := input.Timezone
-	if tz == "" {
-		tz = "UTC"
+	slug := strings.ToLower(strings.TrimSpace(input.Slug))
+	if slug == "" {
+		slug = strings.ToLower(strings.ReplaceAll(name, " ", "-"))
 	}
-	lang := input.Language
-	if lang == "" {
-		lang = "es"
-	}
-	df := input.DateFormat
-	if df == "" {
-		df = "YYYY-MM-DD"
+
+	id := input.ID
+	if id == "" {
+		id = identifier.New()
 	}
 
 	now := time.Now()
 	tenant := &domain.Tenant{
-		ID:       input.ID,
-		Name:     name,
-		Branding: input.Branding,
-		Domains:  input.Domains,
-		Limits:   input.Limits,
-		Features: input.Features,
-		Status:   domain.StatusActive,
-		Settings: domain.TenantSettings{
-			TenantID:           input.ID,
-			Timezone:           tz,
-			Language:           lang,
-			DateFormat:         df,
-			InstitutionalEmail: input.InstitutionalEmail,
-			Policies:           input.Policies,
-			FeatureFlags:       input.FeatureFlags,
-		},
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:           id,
+		Name:         name,
+		Slug:         slug,
+		ContactEmail: strings.TrimSpace(input.ContactEmail),
+		Status:       domain.StatusActive,
+		Settings:     input.Settings,
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	}
 
 	if err := s.repo.Create(ctx, tenant); err != nil {
@@ -112,12 +86,12 @@ func (s *tenantService) GetByID(ctx context.Context, id string) (*domain.Tenant,
 	return s.repo.FindByID(ctx, id)
 }
 
-func (s *tenantService) GetByDomain(ctx context.Context, domainName string) (*domain.Tenant, error) {
-	domainName = strings.TrimSpace(domainName)
-	if domainName == "" {
-		return nil, fmt.Errorf("%w: domain is required", domain.ErrInvalidTenantData)
+func (s *tenantService) GetBySlug(ctx context.Context, slug string) (*domain.Tenant, error) {
+	slug = strings.TrimSpace(slug)
+	if slug == "" {
+		return nil, fmt.Errorf("%w: slug is required", domain.ErrInvalidTenantData)
 	}
-	return s.repo.FindByDomain(ctx, domainName)
+	return s.repo.FindBySlug(ctx, slug)
 }
 
 func (s *tenantService) List(ctx context.Context) ([]*domain.Tenant, error) {
@@ -137,38 +111,20 @@ func (s *tenantService) Update(ctx context.Context, id string, input UpdateTenan
 		}
 		tenant.Name = name
 	}
-	if input.Branding != nil {
-		tenant.Branding = input.Branding
+	if input.Slug != nil {
+		slug := strings.TrimSpace(*input.Slug)
+		if slug != "" {
+			tenant.Slug = slug
+		}
 	}
-	if input.Domains != nil {
-		tenant.Domains = input.Domains
-	}
-	if input.Limits != nil {
-		tenant.Limits = input.Limits
-	}
-	if input.Features != nil {
-		tenant.Features = input.Features
+	if input.ContactEmail != nil {
+		tenant.ContactEmail = strings.TrimSpace(*input.ContactEmail)
 	}
 	if input.Status != nil {
 		tenant.Status = domain.TenantStatus(*input.Status)
 	}
-	if input.Timezone != nil {
-		tenant.Settings.Timezone = *input.Timezone
-	}
-	if input.Language != nil {
-		tenant.Settings.Language = *input.Language
-	}
-	if input.DateFormat != nil {
-		tenant.Settings.DateFormat = *input.DateFormat
-	}
-	if input.InstitutionalEmail != nil {
-		tenant.Settings.InstitutionalEmail = *input.InstitutionalEmail
-	}
-	if input.Policies != nil {
-		tenant.Settings.Policies = input.Policies
-	}
-	if input.FeatureFlags != nil {
-		tenant.Settings.FeatureFlags = input.FeatureFlags
+	if input.Settings != nil {
+		tenant.Settings = input.Settings
 	}
 
 	tenant.UpdatedAt = time.Now()

@@ -56,6 +56,18 @@ func (f CourseVersionsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Val
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CourseVersionsMutation", m)
 }
 
+// The FeatureFunc type is an adapter to allow the use of ordinary
+// function as Feature mutator.
+type FeatureFunc func(context.Context, *ent.FeatureMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f FeatureFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.FeatureMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.FeatureMutation", m)
+}
+
 // The PermissionFunc type is an adapter to allow the use of ordinary
 // function as Permission mutator.
 type PermissionFunc func(context.Context, *ent.PermissionMutation) (ent.Value, error)
@@ -68,28 +80,52 @@ func (f PermissionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PermissionMutation", m)
 }
 
-// The RoleFunc type is an adapter to allow the use of ordinary
-// function as Role mutator.
-type RoleFunc func(context.Context, *ent.RoleMutation) (ent.Value, error)
+// The ProjectFunc type is an adapter to allow the use of ordinary
+// function as Project mutator.
+type ProjectFunc func(context.Context, *ent.ProjectMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f RoleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.RoleMutation); ok {
+func (f ProjectFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ProjectMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RoleMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProjectMutation", m)
 }
 
-// The SecurityEventFunc type is an adapter to allow the use of ordinary
-// function as SecurityEvent mutator.
-type SecurityEventFunc func(context.Context, *ent.SecurityEventMutation) (ent.Value, error)
+// The ProjectFeatureFunc type is an adapter to allow the use of ordinary
+// function as ProjectFeature mutator.
+type ProjectFeatureFunc func(context.Context, *ent.ProjectFeatureMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f SecurityEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.SecurityEventMutation); ok {
+func (f ProjectFeatureFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ProjectFeatureMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SecurityEventMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProjectFeatureMutation", m)
+}
+
+// The ProjectMembershipFunc type is an adapter to allow the use of ordinary
+// function as ProjectMembership mutator.
+type ProjectMembershipFunc func(context.Context, *ent.ProjectMembershipMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ProjectMembershipFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ProjectMembershipMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProjectMembershipMutation", m)
+}
+
+// The ProjectRoleFunc type is an adapter to allow the use of ordinary
+// function as ProjectRole mutator.
+type ProjectRoleFunc func(context.Context, *ent.ProjectRoleMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ProjectRoleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ProjectRoleMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ProjectRoleMutation", m)
 }
 
 // The SyllabiFunc type is an adapter to allow the use of ordinary
@@ -104,16 +140,16 @@ func (f SyllabiFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SyllabiMutation", m)
 }
 
-// The TenantSettingsFunc type is an adapter to allow the use of ordinary
-// function as TenantSettings mutator.
-type TenantSettingsFunc func(context.Context, *ent.TenantSettingsMutation) (ent.Value, error)
+// The TenantMembershipFunc type is an adapter to allow the use of ordinary
+// function as TenantMembership mutator.
+type TenantMembershipFunc func(context.Context, *ent.TenantMembershipMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f TenantSettingsFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.TenantSettingsMutation); ok {
+func (f TenantMembershipFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TenantMembershipMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TenantSettingsMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TenantMembershipMutation", m)
 }
 
 // The TenantsFunc type is an adapter to allow the use of ordinary

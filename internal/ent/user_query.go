@@ -7,8 +7,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"hexagonal-go-backend/internal/ent/predicate"
-	"hexagonal-go-backend/internal/ent/role"
-	"hexagonal-go-backend/internal/ent/securityevent"
+	"hexagonal-go-backend/internal/ent/tenantmembership"
 	"hexagonal-go-backend/internal/ent/user"
 	"hexagonal-go-backend/internal/ent/userprofile"
 	"math"
@@ -22,13 +21,12 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx                *QueryContext
-	order              []user.OrderOption
-	inters             []Interceptor
-	predicates         []predicate.User
-	withProfile        *UserProfileQuery
-	withSecurityEvents *SecurityEventQuery
-	withPlatformRoles  *RoleQuery
+	ctx                   *QueryContext
+	order                 []user.OrderOption
+	inters                []Interceptor
+	predicates            []predicate.User
+	withProfile           *UserProfileQuery
+	withTenantMemberships *TenantMembershipQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -87,9 +85,9 @@ func (_q *UserQuery) QueryProfile() *UserProfileQuery {
 	return query
 }
 
-// QuerySecurityEvents chains the current query on the "security_events" edge.
-func (_q *UserQuery) QuerySecurityEvents() *SecurityEventQuery {
-	query := (&SecurityEventClient{config: _q.config}).Query()
+// QueryTenantMemberships chains the current query on the "tenant_memberships" edge.
+func (_q *UserQuery) QueryTenantMemberships() *TenantMembershipQuery {
+	query := (&TenantMembershipClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -100,30 +98,8 @@ func (_q *UserQuery) QuerySecurityEvents() *SecurityEventQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
-			sqlgraph.To(securityevent.Table, securityevent.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.SecurityEventsTable, user.SecurityEventsColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryPlatformRoles chains the current query on the "platform_roles" edge.
-func (_q *UserQuery) QueryPlatformRoles() *RoleQuery {
-	query := (&RoleClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(user.Table, user.FieldID, selector),
-			sqlgraph.To(role.Table, role.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, user.PlatformRolesTable, user.PlatformRolesPrimaryKey...),
+			sqlgraph.To(tenantmembership.Table, tenantmembership.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.TenantMembershipsTable, user.TenantMembershipsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -318,14 +294,13 @@ func (_q *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:             _q.config,
-		ctx:                _q.ctx.Clone(),
-		order:              append([]user.OrderOption{}, _q.order...),
-		inters:             append([]Interceptor{}, _q.inters...),
-		predicates:         append([]predicate.User{}, _q.predicates...),
-		withProfile:        _q.withProfile.Clone(),
-		withSecurityEvents: _q.withSecurityEvents.Clone(),
-		withPlatformRoles:  _q.withPlatformRoles.Clone(),
+		config:                _q.config,
+		ctx:                   _q.ctx.Clone(),
+		order:                 append([]user.OrderOption{}, _q.order...),
+		inters:                append([]Interceptor{}, _q.inters...),
+		predicates:            append([]predicate.User{}, _q.predicates...),
+		withProfile:           _q.withProfile.Clone(),
+		withTenantMemberships: _q.withTenantMemberships.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -343,25 +318,14 @@ func (_q *UserQuery) WithProfile(opts ...func(*UserProfileQuery)) *UserQuery {
 	return _q
 }
 
-// WithSecurityEvents tells the query-builder to eager-load the nodes that are connected to
-// the "security_events" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *UserQuery) WithSecurityEvents(opts ...func(*SecurityEventQuery)) *UserQuery {
-	query := (&SecurityEventClient{config: _q.config}).Query()
+// WithTenantMemberships tells the query-builder to eager-load the nodes that are connected to
+// the "tenant_memberships" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithTenantMemberships(opts ...func(*TenantMembershipQuery)) *UserQuery {
+	query := (&TenantMembershipClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withSecurityEvents = query
-	return _q
-}
-
-// WithPlatformRoles tells the query-builder to eager-load the nodes that are connected to
-// the "platform_roles" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *UserQuery) WithPlatformRoles(opts ...func(*RoleQuery)) *UserQuery {
-	query := (&RoleClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withPlatformRoles = query
+	_q.withTenantMemberships = query
 	return _q
 }
 
@@ -371,12 +335,12 @@ func (_q *UserQuery) WithPlatformRoles(opts ...func(*RoleQuery)) *UserQuery {
 // Example:
 //
 //	var v []struct {
-//		TenantID string `json:"tenant_id,omitempty"`
+//		AuthID string `json:"auth_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.User.Query().
-//		GroupBy(user.FieldTenantID).
+//		GroupBy(user.FieldAuthID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (_q *UserQuery) GroupBy(field string, fields ...string) *UserGroupBy {
@@ -394,11 +358,11 @@ func (_q *UserQuery) GroupBy(field string, fields ...string) *UserGroupBy {
 // Example:
 //
 //	var v []struct {
-//		TenantID string `json:"tenant_id,omitempty"`
+//		AuthID string `json:"auth_id,omitempty"`
 //	}
 //
 //	client.User.Query().
-//		Select(user.FieldTenantID).
+//		Select(user.FieldAuthID).
 //		Scan(ctx, &v)
 func (_q *UserQuery) Select(fields ...string) *UserSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
@@ -443,10 +407,9 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [2]bool{
 			_q.withProfile != nil,
-			_q.withSecurityEvents != nil,
-			_q.withPlatformRoles != nil,
+			_q.withTenantMemberships != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -473,17 +436,10 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			return nil, err
 		}
 	}
-	if query := _q.withSecurityEvents; query != nil {
-		if err := _q.loadSecurityEvents(ctx, query, nodes,
-			func(n *User) { n.Edges.SecurityEvents = []*SecurityEvent{} },
-			func(n *User, e *SecurityEvent) { n.Edges.SecurityEvents = append(n.Edges.SecurityEvents, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := _q.withPlatformRoles; query != nil {
-		if err := _q.loadPlatformRoles(ctx, query, nodes,
-			func(n *User) { n.Edges.PlatformRoles = []*Role{} },
-			func(n *User, e *Role) { n.Edges.PlatformRoles = append(n.Edges.PlatformRoles, e) }); err != nil {
+	if query := _q.withTenantMemberships; query != nil {
+		if err := _q.loadTenantMemberships(ctx, query, nodes,
+			func(n *User) { n.Edges.TenantMemberships = []*TenantMembership{} },
+			func(n *User, e *TenantMembership) { n.Edges.TenantMemberships = append(n.Edges.TenantMemberships, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -497,7 +453,9 @@ func (_q *UserQuery) loadProfile(ctx context.Context, query *UserProfileQuery, n
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(userprofile.FieldUserID)
+	}
 	query.Where(predicate.UserProfile(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(user.ProfileColumn), fks...))
 	}))
@@ -506,19 +464,16 @@ func (_q *UserQuery) loadProfile(ctx context.Context, query *UserProfileQuery, n
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_profile
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_profile" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.UserID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_profile" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
 	return nil
 }
-func (_q *UserQuery) loadSecurityEvents(ctx context.Context, query *SecurityEventQuery, nodes []*User, init func(*User), assign func(*User, *SecurityEvent)) error {
+func (_q *UserQuery) loadTenantMemberships(ctx context.Context, query *TenantMembershipQuery, nodes []*User, init func(*User), assign func(*User, *TenantMembership)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[string]*User)
 	for i := range nodes {
@@ -528,85 +483,23 @@ func (_q *UserQuery) loadSecurityEvents(ctx context.Context, query *SecurityEven
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
-	query.Where(predicate.SecurityEvent(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.SecurityEventsColumn), fks...))
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(tenantmembership.FieldUserID)
+	}
+	query.Where(predicate.TenantMembership(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.TenantMembershipsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_security_events
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_security_events" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.UserID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_security_events" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
-	}
-	return nil
-}
-func (_q *UserQuery) loadPlatformRoles(ctx context.Context, query *RoleQuery, nodes []*User, init func(*User), assign func(*User, *Role)) error {
-	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[string]*User)
-	nids := make(map[string]map[*User]struct{})
-	for i, node := range nodes {
-		edgeIDs[i] = node.ID
-		byID[node.ID] = node
-		if init != nil {
-			init(node)
-		}
-	}
-	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(user.PlatformRolesTable)
-		s.Join(joinT).On(s.C(role.FieldID), joinT.C(user.PlatformRolesPrimaryKey[1]))
-		s.Where(sql.InValues(joinT.C(user.PlatformRolesPrimaryKey[0]), edgeIDs...))
-		columns := s.SelectedColumns()
-		s.Select(joinT.C(user.PlatformRolesPrimaryKey[0]))
-		s.AppendSelect(columns...)
-		s.SetDistinct(false)
-	})
-	if err := query.prepareQuery(ctx); err != nil {
-		return err
-	}
-	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
-		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-			assign := spec.Assign
-			values := spec.ScanValues
-			spec.ScanValues = func(columns []string) ([]any, error) {
-				values, err := values(columns[1:])
-				if err != nil {
-					return nil, err
-				}
-				return append([]any{new(sql.NullString)}, values...), nil
-			}
-			spec.Assign = func(columns []string, values []any) error {
-				outValue := values[0].(*sql.NullString).String
-				inValue := values[1].(*sql.NullString).String
-				if nids[inValue] == nil {
-					nids[inValue] = map[*User]struct{}{byID[outValue]: {}}
-					return assign(columns[1:], values[1:])
-				}
-				nids[inValue][byID[outValue]] = struct{}{}
-				return nil
-			}
-		})
-	})
-	neighbors, err := withInterceptors[[]*Role](ctx, query, qr, query.inters)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected "platform_roles" node returned %v`, n.ID)
-		}
-		for kn := range nodes {
-			assign(kn, n)
-		}
 	}
 	return nil
 }

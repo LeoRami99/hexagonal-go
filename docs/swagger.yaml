@@ -1,81 +1,111 @@
 basePath: /api/v1
 definitions:
-  hexagonal-go-backend_internal_modules_tenants_application.CreateTenantInput:
+  hexagonal-go-backend_internal_modules_auth_application.ProjectMembershipContext:
     properties:
-      branding:
-        additionalProperties: {}
-        type: object
-      date_format:
+      project_id:
         type: string
-      domains:
+      project_name:
+        type: string
+      project_slug:
+        type: string
+      roles:
         items:
           type: string
         type: array
-      feature_flags:
-        additionalProperties: {}
-        type: object
-      features:
-        additionalProperties: {}
-        type: object
+      tenant_id:
+        type: string
+    type: object
+  hexagonal-go-backend_internal_modules_auth_application.SessionContext:
+    properties:
+      projects:
+        items:
+          $ref: '#/definitions/hexagonal-go-backend_internal_modules_auth_application.ProjectMembershipContext'
+        type: array
+      tenants:
+        items:
+          $ref: '#/definitions/hexagonal-go-backend_internal_modules_auth_application.TenantContext'
+        type: array
+      user:
+        $ref: '#/definitions/hexagonal-go-backend_internal_modules_auth_application.UserInfo'
+    type: object
+  hexagonal-go-backend_internal_modules_auth_application.TenantContext:
+    properties:
       id:
         type: string
-      institutional_email:
-        type: string
-      language:
-        type: string
-      limits:
-        additionalProperties: {}
-        type: object
       name:
         type: string
-      policies:
+      slug:
+        type: string
+      status:
+        type: string
+    type: object
+  hexagonal-go-backend_internal_modules_auth_application.UserInfo:
+    properties:
+      auth_id:
+        type: string
+      avatar_url:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      is_super_admin:
+        type: boolean
+      name:
+        type: string
+    type: object
+  hexagonal-go-backend_internal_modules_tenants_application.CreateTenantInput:
+    properties:
+      contact_email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      settings:
         additionalProperties: {}
         type: object
-      timezone:
+      slug:
         type: string
     type: object
   hexagonal-go-backend_internal_modules_tenants_application.UpdateTenantInput:
     properties:
-      branding:
-        additionalProperties: {}
-        type: object
-      date_format:
+      contact_email:
         type: string
-      domains:
-        items:
-          type: string
-        type: array
-      feature_flags:
-        additionalProperties: {}
-        type: object
-      features:
-        additionalProperties: {}
-        type: object
-      institutional_email:
-        type: string
-      language:
-        type: string
-      limits:
-        additionalProperties: {}
-        type: object
       name:
         type: string
-      policies:
+      settings:
         additionalProperties: {}
         type: object
+      slug:
+        type: string
       status:
         type: string
-      timezone:
-        type: string
     type: object
-  hexagonal-go-backend_internal_modules_users_domain.Role:
+  hexagonal-go-backend_internal_modules_users_domain.Gender:
     enum:
-    - admin
-    - user
+    - MALE
+    - FEMALE
+    - NON_BINARY
+    - PREFER_NOT_TO_SAY
     type: string
     x-enum-varnames:
-    - RoleAdmin
-    - RoleUser
+    - GenderMale
+    - GenderFemale
+    - GenderNonBinary
+    - GenderPreferNotToSay
+  hexagonal-go-backend_internal_modules_users_domain.UserStatus:
+    enum:
+    - ACTIVE
+    - INACTIVE
+    - SUSPENDED
+    - BLOCKED
+    type: string
+    x-enum-varnames:
+    - StatusActive
+    - StatusInactive
+    - StatusSuspended
+    - StatusBlocked
   hexagonal-go-backend_internal_platform_http_response.Envelope:
     properties:
       data: {}
@@ -133,19 +163,51 @@ definitions:
         type: string
       email:
         type: string
+      is_super_admin:
+        type: boolean
       name:
         maxLength: 100
         minLength: 2
         type: string
-      role:
-        allOf:
-        - $ref: '#/definitions/hexagonal-go-backend_internal_modules_users_domain.Role'
-        enum:
-        - admin
-        - user
     required:
     - email
     - name
+    type: object
+  internal_modules_users_delivery_http_v1.UpdateProfileRequest:
+    properties:
+      address:
+        maxLength: 255
+        type: string
+      bio:
+        type: string
+      birth_date:
+        type: string
+      city:
+        maxLength: 100
+        type: string
+      first_name:
+        maxLength: 100
+        type: string
+      gender:
+        allOf:
+        - $ref: '#/definitions/hexagonal-go-backend_internal_modules_users_domain.Gender'
+        enum:
+        - MALE
+        - FEMALE
+        - NON_BINARY
+        - PREFER_NOT_TO_SAY
+      last_name:
+        maxLength: 100
+        type: string
+      phone:
+        maxLength: 30
+        type: string
+      photo_url:
+        maxLength: 500
+        type: string
+      sociodemographic_data:
+        additionalProperties: {}
+        type: object
     type: object
   internal_modules_users_delivery_http_v1.UpdateUserRequest:
     properties:
@@ -157,12 +219,42 @@ definitions:
         maxLength: 100
         minLength: 2
         type: string
-      role:
+      status:
         allOf:
-        - $ref: '#/definitions/hexagonal-go-backend_internal_modules_users_domain.Role'
+        - $ref: '#/definitions/hexagonal-go-backend_internal_modules_users_domain.UserStatus'
         enum:
-        - admin
-        - user
+        - ACTIVE
+        - INACTIVE
+        - SUSPENDED
+        - BLOCKED
+    type: object
+  internal_modules_users_delivery_http_v1.UserProfileResponse:
+    properties:
+      address:
+        type: string
+      bio:
+        type: string
+      birth_date:
+        type: string
+      city:
+        type: string
+      first_name:
+        type: string
+      gender:
+        $ref: '#/definitions/hexagonal-go-backend_internal_modules_users_domain.Gender'
+      last_name:
+        type: string
+      phone:
+        type: string
+      photo_url:
+        type: string
+      sociodemographic_data:
+        additionalProperties: {}
+        type: object
+      updated_at:
+        type: string
+      user_id:
+        type: string
     type: object
   internal_modules_users_delivery_http_v1.UserResponse:
     properties:
@@ -170,16 +262,22 @@ definitions:
         type: boolean
       auth_id:
         type: string
+      avatar_url:
+        type: string
       created_at:
         type: string
       email:
         type: string
       id:
         type: string
+      is_super_admin:
+        type: boolean
       name:
         type: string
-      role:
-        $ref: '#/definitions/hexagonal-go-backend_internal_modules_users_domain.Role'
+      profile:
+        $ref: '#/definitions/internal_modules_users_delivery_http_v1.UserProfileResponse'
+      status:
+        $ref: '#/definitions/hexagonal-go-backend_internal_modules_users_domain.UserStatus'
       updated_at:
         type: string
     type: object
@@ -266,6 +364,33 @@ paths:
           schema:
             $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
       summary: Cerrar sesión
+      tags:
+      - auth
+  /auth/me:
+    get:
+      consumes:
+      - application/json
+      description: Retorna los datos del usuario, sus organizaciones (tenants) y membresías
+        de proyectos/campus con sus roles asociados.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/hexagonal-go-backend_internal_modules_auth_application.SessionContext'
+              type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener sesión y contexto del usuario autenticado
       tags:
       - auth
   /auth/refresh:
@@ -483,12 +608,14 @@ paths:
         in: query
         name: search
         type: string
-      - description: Filtrar por rol
+      - description: Filtrar por estado
         enum:
-        - admin
-        - user
+        - ACTIVE
+        - INACTIVE
+        - SUSPENDED
+        - BLOCKED
         in: query
-        name: role
+        name: status
         type: string
       - description: Filtrar por estado activo
         in: query
@@ -512,10 +639,6 @@ paths:
               type: object
         "401":
           description: No autenticado
-          schema:
-            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
-        "403":
-          description: Requiere rol de Administrador
           schema:
             $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
       security:
@@ -555,7 +678,7 @@ paths:
           schema:
             $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
         "403":
-          description: Requiere rol de Administrador
+          description: Requiere privilegios de Super Administrador
           schema:
             $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
         "409":
@@ -587,10 +710,6 @@ paths:
           description: No autenticado
           schema:
             $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
-        "403":
-          description: Requiere rol de Administrador
-          schema:
-            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
         "404":
           description: Usuario no encontrado
           schema:
@@ -603,7 +722,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retorna la información de perfil de un usuario por su ID.
+      description: Retorna la información de un usuario por su ID.
       parameters:
       - description: ID del usuario
         in: path
@@ -671,10 +790,6 @@ paths:
           description: No autenticado
           schema:
             $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
-        "403":
-          description: Requiere rol de Administrador
-          schema:
-            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
         "404":
           description: Usuario no encontrado
           schema:
@@ -682,6 +797,68 @@ paths:
       security:
       - BearerAuth: []
       summary: Actualizar usuario
+      tags:
+      - users
+  /users/me/profile:
+    get:
+      consumes:
+      - application/json
+      description: Retorna los datos extendidos del perfil del usuario en sesión.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_users_delivery_http_v1.UserProfileResponse'
+              type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener perfil del usuario autenticado
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Actualiza la información personal/demográfica del usuario en sesión.
+      parameters:
+      - description: Datos de perfil a actualizar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_users_delivery_http_v1.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_users_delivery_http_v1.UserProfileResponse'
+              type: object
+        "400":
+          description: Petición inválida
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Actualizar perfil del usuario autenticado
       tags:
       - users
 securityDefinitions:

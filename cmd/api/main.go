@@ -13,6 +13,7 @@ import (
 	authhttp "hexagonal-go-backend/internal/modules/auth/delivery/http/v1"
 	authinfra "hexagonal-go-backend/internal/modules/auth/infrastructure"
 	memorycache "hexagonal-go-backend/internal/modules/auth/infrastructure/cache/memory"
+	authpersistence "hexagonal-go-backend/internal/modules/auth/infrastructure/persistence/ent"
 	authsecurity "hexagonal-go-backend/internal/modules/auth/infrastructure/security"
 	usersapp "hexagonal-go-backend/internal/modules/users/application"
 	usershttp "hexagonal-go-backend/internal/modules/users/delivery/http/v1"
@@ -21,8 +22,8 @@ import (
 	entusers "hexagonal-go-backend/internal/modules/users/infrastructure/persistence/ent"
 	"hexagonal-go-backend/internal/platform/config"
 	"hexagonal-go-backend/internal/platform/database"
+	"hexagonal-go-backend/internal/platform/database/seeder"
 	httpplatform "hexagonal-go-backend/internal/platform/http"
-	"hexagonal-go-backend/internal/platform/identifier"
 	"hexagonal-go-backend/internal/platform/logger"
 	"hexagonal-go-backend/internal/platform/server"
 )
@@ -64,12 +65,18 @@ func main() {
 	}
 	cache := memorycache.New()
 
+	if err := seeder.SeedPlatform(context.Background(), entClient, log); err != nil {
+		log.Error("failed to seed platform catalog", "error", err)
+		os.Exit(1)
+	}
+
 	userService := usersapp.NewUserService(userRepository, mailer)
 	if err := seedAdmin(context.Background(), userService, userRepository, zitadelClient, log, cfg); err != nil {
 		log.Error("failed to create development administrator", "error", err)
 		os.Exit(1)
 	}
-	authService := authapp.NewAuthService(userRepository, tokenProvider, cache, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL, idp)
+	authContextRepo := authpersistence.NewAuthContextRepository(entClient)
+	authService := authapp.NewAuthService(userRepository, tokenProvider, cache, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL, authContextRepo, idp)
 
 	router := httpplatform.NewRouter(
 		cfg,
@@ -135,18 +142,27 @@ func seedAdmin(ctx context.Context, service usersapp.UserService, repo usersapp.
 	}
 
 	_, err := service.Create(ctx, usersapp.CreateUserInput{
-		TenantID: identifier.New(),
-		AuthID:   authID,
-		Name:     "Administrator",
-		Email:    cfg.Security.AdminEmail,
-		Role:     userdomain.RoleAdmin,
+		AuthID:       authID,
+		Name:         "Administrator",
+		Email:        cfg.Security.AdminEmail,
+		IsSuperAdmin: true,
 	})
 	if errors.Is(err, userdomain.ErrEmailAlreadyExists) {
-		if repo != nil && authID != "admin-seed-id" {
-			if existing, errFind := repo.FindByEmail(ctx, cfg.Security.AdminEmail); errFind == nil && existing.AuthID != authID {
-				existing.AuthID = authID
-				_ = repo.Update(ctx, existing)
-				log.Info("updated administrator auth_id in database", "auth_id", authID)
+		if repo != nil {
+			if existing, errFind := repo.FindByEmail(ctx, cfg.Security.AdminEmail); errFind == nil {
+				updated := false
+				if authID != "admin-seed-id" && existing.AuthID != authID {
+					existing.AuthID = authID
+					updated = true
+				}
+				if !existing.IsSuperAdmin {
+					existing.IsSuperAdmin = true
+					updated = true
+				}
+				if updated {
+					_ = repo.Update(ctx, existing)
+					log.Info("updated administrator credentials and superadmin flag in database", "auth_id", existing.AuthID)
+				}
 			}
 		}
 		return nil

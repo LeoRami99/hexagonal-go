@@ -18,7 +18,6 @@ import (
 
 	authapp "hexagonal-go-backend/internal/modules/auth/application"
 	"hexagonal-go-backend/internal/modules/auth/domain"
-	userdomain "hexagonal-go-backend/internal/modules/users/domain"
 )
 
 type JWK struct {
@@ -125,7 +124,6 @@ func (p *ZitadelTokenProvider) Parse(tokenStr string) (authapp.TokenClaims, erro
 
 	return authapp.TokenClaims{
 		Subject:   payload.Subject,
-		Role:      userdomain.RoleUser, // El rol real se resuelve directamente en PostgreSQL
 		ExpiresAt: time.Unix(payload.ExpiresAt, 0),
 		TokenID:   payload.JTI,
 	}, nil

@@ -10,17 +10,15 @@ import (
 
 	"hexagonal-go-backend/internal/modules/auth/application"
 	"hexagonal-go-backend/internal/modules/auth/domain"
-	userdomain "hexagonal-go-backend/internal/modules/users/domain"
 )
 
 type HMACTokenProvider struct{ secret []byte }
 
 type payload struct {
-	Subject  string          `json:"sub"`
-	TenantID string          `json:"tid,omitempty"`
-	Role     userdomain.Role `json:"role"`
-	Expires  int64           `json:"exp"`
-	ID       string          `json:"jti"`
+	Subject  string `json:"sub"`
+	TenantID string `json:"tid,omitempty"`
+	Expires  int64  `json:"exp"`
+	ID       string `json:"jti"`
 }
 
 func NewHMACTokenProvider(secret string) *HMACTokenProvider {
@@ -28,7 +26,7 @@ func NewHMACTokenProvider(secret string) *HMACTokenProvider {
 }
 
 func (p *HMACTokenProvider) Generate(claims application.TokenClaims) (string, error) {
-	bytes, err := json.Marshal(payload{Subject: claims.Subject, TenantID: claims.TenantID, Role: claims.Role, Expires: claims.ExpiresAt.Unix(), ID: claims.TokenID})
+	bytes, err := json.Marshal(payload{Subject: claims.Subject, TenantID: claims.TenantID, Expires: claims.ExpiresAt.Unix(), ID: claims.TokenID})
 	if err != nil {
 		return "", err
 	}
@@ -49,7 +47,7 @@ func (p *HMACTokenProvider) Parse(token string) (application.TokenClaims, error)
 	if json.Unmarshal(bytes, &value) != nil || value.Subject == "" || time.Now().Unix() >= value.Expires {
 		return application.TokenClaims{}, domain.ErrInvalidToken
 	}
-	return application.TokenClaims{Subject: value.Subject, TenantID: value.TenantID, Role: value.Role, ExpiresAt: time.Unix(value.Expires, 0), TokenID: value.ID}, nil
+	return application.TokenClaims{Subject: value.Subject, TenantID: value.TenantID, ExpiresAt: time.Unix(value.Expires, 0), TokenID: value.ID}, nil
 }
 
 func (p *HMACTokenProvider) sign(value string) string {

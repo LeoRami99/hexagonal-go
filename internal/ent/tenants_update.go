@@ -7,13 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"hexagonal-go-backend/internal/ent/predicate"
+	"hexagonal-go-backend/internal/ent/project"
+	"hexagonal-go-backend/internal/ent/tenantmembership"
 	"hexagonal-go-backend/internal/ent/tenants"
-	"hexagonal-go-backend/internal/ent/tenantsettings"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 )
 
@@ -50,57 +50,37 @@ func (_u *TenantsUpdate) SetNillableName(v *string) *TenantsUpdate {
 	return _u
 }
 
-// SetBranding sets the "branding" field.
-func (_u *TenantsUpdate) SetBranding(v map[string]interface{}) *TenantsUpdate {
-	_u.mutation.SetBranding(v)
+// SetSlug sets the "slug" field.
+func (_u *TenantsUpdate) SetSlug(v string) *TenantsUpdate {
+	_u.mutation.SetSlug(v)
 	return _u
 }
 
-// ClearBranding clears the value of the "branding" field.
-func (_u *TenantsUpdate) ClearBranding() *TenantsUpdate {
-	_u.mutation.ClearBranding()
+// SetNillableSlug sets the "slug" field if the given value is not nil.
+func (_u *TenantsUpdate) SetNillableSlug(v *string) *TenantsUpdate {
+	if v != nil {
+		_u.SetSlug(*v)
+	}
 	return _u
 }
 
-// SetDomains sets the "domains" field.
-func (_u *TenantsUpdate) SetDomains(v []string) *TenantsUpdate {
-	_u.mutation.SetDomains(v)
+// SetContactEmail sets the "contact_email" field.
+func (_u *TenantsUpdate) SetContactEmail(v string) *TenantsUpdate {
+	_u.mutation.SetContactEmail(v)
 	return _u
 }
 
-// AppendDomains appends value to the "domains" field.
-func (_u *TenantsUpdate) AppendDomains(v []string) *TenantsUpdate {
-	_u.mutation.AppendDomains(v)
+// SetNillableContactEmail sets the "contact_email" field if the given value is not nil.
+func (_u *TenantsUpdate) SetNillableContactEmail(v *string) *TenantsUpdate {
+	if v != nil {
+		_u.SetContactEmail(*v)
+	}
 	return _u
 }
 
-// ClearDomains clears the value of the "domains" field.
-func (_u *TenantsUpdate) ClearDomains() *TenantsUpdate {
-	_u.mutation.ClearDomains()
-	return _u
-}
-
-// SetLimits sets the "limits" field.
-func (_u *TenantsUpdate) SetLimits(v map[string]interface{}) *TenantsUpdate {
-	_u.mutation.SetLimits(v)
-	return _u
-}
-
-// ClearLimits clears the value of the "limits" field.
-func (_u *TenantsUpdate) ClearLimits() *TenantsUpdate {
-	_u.mutation.ClearLimits()
-	return _u
-}
-
-// SetFeatures sets the "features" field.
-func (_u *TenantsUpdate) SetFeatures(v map[string]interface{}) *TenantsUpdate {
-	_u.mutation.SetFeatures(v)
-	return _u
-}
-
-// ClearFeatures clears the value of the "features" field.
-func (_u *TenantsUpdate) ClearFeatures() *TenantsUpdate {
-	_u.mutation.ClearFeatures()
+// ClearContactEmail clears the value of the "contact_email" field.
+func (_u *TenantsUpdate) ClearContactEmail() *TenantsUpdate {
+	_u.mutation.ClearContactEmail()
 	return _u
 }
 
@@ -118,23 +98,46 @@ func (_u *TenantsUpdate) SetNillableStatus(v *tenants.Status) *TenantsUpdate {
 	return _u
 }
 
-// SetSettingsID sets the "settings" edge to the TenantSettings entity by ID.
-func (_u *TenantsUpdate) SetSettingsID(id string) *TenantsUpdate {
-	_u.mutation.SetSettingsID(id)
+// SetSettings sets the "settings" field.
+func (_u *TenantsUpdate) SetSettings(v map[string]interface{}) *TenantsUpdate {
+	_u.mutation.SetSettings(v)
 	return _u
 }
 
-// SetNillableSettingsID sets the "settings" edge to the TenantSettings entity by ID if the given value is not nil.
-func (_u *TenantsUpdate) SetNillableSettingsID(id *string) *TenantsUpdate {
-	if id != nil {
-		_u = _u.SetSettingsID(*id)
+// ClearSettings clears the value of the "settings" field.
+func (_u *TenantsUpdate) ClearSettings() *TenantsUpdate {
+	_u.mutation.ClearSettings()
+	return _u
+}
+
+// AddProjectIDs adds the "projects" edge to the Project entity by IDs.
+func (_u *TenantsUpdate) AddProjectIDs(ids ...string) *TenantsUpdate {
+	_u.mutation.AddProjectIDs(ids...)
+	return _u
+}
+
+// AddProjects adds the "projects" edges to the Project entity.
+func (_u *TenantsUpdate) AddProjects(v ...*Project) *TenantsUpdate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
+	return _u.AddProjectIDs(ids...)
+}
+
+// AddMembershipIDs adds the "memberships" edge to the TenantMembership entity by IDs.
+func (_u *TenantsUpdate) AddMembershipIDs(ids ...string) *TenantsUpdate {
+	_u.mutation.AddMembershipIDs(ids...)
 	return _u
 }
 
-// SetSettings sets the "settings" edge to the TenantSettings entity.
-func (_u *TenantsUpdate) SetSettings(v *TenantSettings) *TenantsUpdate {
-	return _u.SetSettingsID(v.ID)
+// AddMemberships adds the "memberships" edges to the TenantMembership entity.
+func (_u *TenantsUpdate) AddMemberships(v ...*TenantMembership) *TenantsUpdate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddMembershipIDs(ids...)
 }
 
 // Mutation returns the TenantsMutation object of the builder.
@@ -142,10 +145,46 @@ func (_u *TenantsUpdate) Mutation() *TenantsMutation {
 	return _u.mutation
 }
 
-// ClearSettings clears the "settings" edge to the TenantSettings entity.
-func (_u *TenantsUpdate) ClearSettings() *TenantsUpdate {
-	_u.mutation.ClearSettings()
+// ClearProjects clears all "projects" edges to the Project entity.
+func (_u *TenantsUpdate) ClearProjects() *TenantsUpdate {
+	_u.mutation.ClearProjects()
 	return _u
+}
+
+// RemoveProjectIDs removes the "projects" edge to Project entities by IDs.
+func (_u *TenantsUpdate) RemoveProjectIDs(ids ...string) *TenantsUpdate {
+	_u.mutation.RemoveProjectIDs(ids...)
+	return _u
+}
+
+// RemoveProjects removes "projects" edges to Project entities.
+func (_u *TenantsUpdate) RemoveProjects(v ...*Project) *TenantsUpdate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveProjectIDs(ids...)
+}
+
+// ClearMemberships clears all "memberships" edges to the TenantMembership entity.
+func (_u *TenantsUpdate) ClearMemberships() *TenantsUpdate {
+	_u.mutation.ClearMemberships()
+	return _u
+}
+
+// RemoveMembershipIDs removes the "memberships" edge to TenantMembership entities by IDs.
+func (_u *TenantsUpdate) RemoveMembershipIDs(ids ...string) *TenantsUpdate {
+	_u.mutation.RemoveMembershipIDs(ids...)
+	return _u
+}
+
+// RemoveMemberships removes "memberships" edges to TenantMembership entities.
+func (_u *TenantsUpdate) RemoveMemberships(v ...*TenantMembership) *TenantsUpdate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveMembershipIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -191,6 +230,16 @@ func (_u *TenantsUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Tenants.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Slug(); ok {
+		if err := tenants.SlugValidator(v); err != nil {
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Tenants.slug": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.ContactEmail(); ok {
+		if err := tenants.ContactEmailValidator(v); err != nil {
+			return &ValidationError{Name: "contact_email", err: fmt.Errorf(`ent: validator failed for field "Tenants.contact_email": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := tenants.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Tenants.status": %w`, err)}
@@ -217,60 +266,107 @@ func (_u *TenantsUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(tenants.FieldName, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.Branding(); ok {
-		_spec.SetField(tenants.FieldBranding, field.TypeJSON, value)
+	if value, ok := _u.mutation.Slug(); ok {
+		_spec.SetField(tenants.FieldSlug, field.TypeString, value)
 	}
-	if _u.mutation.BrandingCleared() {
-		_spec.ClearField(tenants.FieldBranding, field.TypeJSON)
+	if value, ok := _u.mutation.ContactEmail(); ok {
+		_spec.SetField(tenants.FieldContactEmail, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.Domains(); ok {
-		_spec.SetField(tenants.FieldDomains, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedDomains(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, tenants.FieldDomains, value)
-		})
-	}
-	if _u.mutation.DomainsCleared() {
-		_spec.ClearField(tenants.FieldDomains, field.TypeJSON)
-	}
-	if value, ok := _u.mutation.Limits(); ok {
-		_spec.SetField(tenants.FieldLimits, field.TypeJSON, value)
-	}
-	if _u.mutation.LimitsCleared() {
-		_spec.ClearField(tenants.FieldLimits, field.TypeJSON)
-	}
-	if value, ok := _u.mutation.Features(); ok {
-		_spec.SetField(tenants.FieldFeatures, field.TypeJSON, value)
-	}
-	if _u.mutation.FeaturesCleared() {
-		_spec.ClearField(tenants.FieldFeatures, field.TypeJSON)
+	if _u.mutation.ContactEmailCleared() {
+		_spec.ClearField(tenants.FieldContactEmail, field.TypeString)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(tenants.FieldStatus, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.Settings(); ok {
+		_spec.SetField(tenants.FieldSettings, field.TypeJSON, value)
+	}
 	if _u.mutation.SettingsCleared() {
+		_spec.ClearField(tenants.FieldSettings, field.TypeJSON)
+	}
+	if _u.mutation.ProjectsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   tenants.SettingsTable,
-			Columns: []string{tenants.SettingsColumn},
+			Table:   tenants.ProjectsTable,
+			Columns: []string{tenants.ProjectsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tenantsettings.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeString),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.SettingsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RemovedProjectsIDs(); len(nodes) > 0 && !_u.mutation.ProjectsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   tenants.SettingsTable,
-			Columns: []string{tenants.SettingsColumn},
+			Table:   tenants.ProjectsTable,
+			Columns: []string{tenants.ProjectsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tenantsettings.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProjectsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tenants.ProjectsTable,
+			Columns: []string{tenants.ProjectsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.MembershipsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tenants.MembershipsTable,
+			Columns: []string{tenants.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedMembershipsIDs(); len(nodes) > 0 && !_u.mutation.MembershipsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tenants.MembershipsTable,
+			Columns: []string{tenants.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MembershipsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tenants.MembershipsTable,
+			Columns: []string{tenants.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -318,57 +414,37 @@ func (_u *TenantsUpdateOne) SetNillableName(v *string) *TenantsUpdateOne {
 	return _u
 }
 
-// SetBranding sets the "branding" field.
-func (_u *TenantsUpdateOne) SetBranding(v map[string]interface{}) *TenantsUpdateOne {
-	_u.mutation.SetBranding(v)
+// SetSlug sets the "slug" field.
+func (_u *TenantsUpdateOne) SetSlug(v string) *TenantsUpdateOne {
+	_u.mutation.SetSlug(v)
 	return _u
 }
 
-// ClearBranding clears the value of the "branding" field.
-func (_u *TenantsUpdateOne) ClearBranding() *TenantsUpdateOne {
-	_u.mutation.ClearBranding()
+// SetNillableSlug sets the "slug" field if the given value is not nil.
+func (_u *TenantsUpdateOne) SetNillableSlug(v *string) *TenantsUpdateOne {
+	if v != nil {
+		_u.SetSlug(*v)
+	}
 	return _u
 }
 
-// SetDomains sets the "domains" field.
-func (_u *TenantsUpdateOne) SetDomains(v []string) *TenantsUpdateOne {
-	_u.mutation.SetDomains(v)
+// SetContactEmail sets the "contact_email" field.
+func (_u *TenantsUpdateOne) SetContactEmail(v string) *TenantsUpdateOne {
+	_u.mutation.SetContactEmail(v)
 	return _u
 }
 
-// AppendDomains appends value to the "domains" field.
-func (_u *TenantsUpdateOne) AppendDomains(v []string) *TenantsUpdateOne {
-	_u.mutation.AppendDomains(v)
+// SetNillableContactEmail sets the "contact_email" field if the given value is not nil.
+func (_u *TenantsUpdateOne) SetNillableContactEmail(v *string) *TenantsUpdateOne {
+	if v != nil {
+		_u.SetContactEmail(*v)
+	}
 	return _u
 }
 
-// ClearDomains clears the value of the "domains" field.
-func (_u *TenantsUpdateOne) ClearDomains() *TenantsUpdateOne {
-	_u.mutation.ClearDomains()
-	return _u
-}
-
-// SetLimits sets the "limits" field.
-func (_u *TenantsUpdateOne) SetLimits(v map[string]interface{}) *TenantsUpdateOne {
-	_u.mutation.SetLimits(v)
-	return _u
-}
-
-// ClearLimits clears the value of the "limits" field.
-func (_u *TenantsUpdateOne) ClearLimits() *TenantsUpdateOne {
-	_u.mutation.ClearLimits()
-	return _u
-}
-
-// SetFeatures sets the "features" field.
-func (_u *TenantsUpdateOne) SetFeatures(v map[string]interface{}) *TenantsUpdateOne {
-	_u.mutation.SetFeatures(v)
-	return _u
-}
-
-// ClearFeatures clears the value of the "features" field.
-func (_u *TenantsUpdateOne) ClearFeatures() *TenantsUpdateOne {
-	_u.mutation.ClearFeatures()
+// ClearContactEmail clears the value of the "contact_email" field.
+func (_u *TenantsUpdateOne) ClearContactEmail() *TenantsUpdateOne {
+	_u.mutation.ClearContactEmail()
 	return _u
 }
 
@@ -386,23 +462,46 @@ func (_u *TenantsUpdateOne) SetNillableStatus(v *tenants.Status) *TenantsUpdateO
 	return _u
 }
 
-// SetSettingsID sets the "settings" edge to the TenantSettings entity by ID.
-func (_u *TenantsUpdateOne) SetSettingsID(id string) *TenantsUpdateOne {
-	_u.mutation.SetSettingsID(id)
+// SetSettings sets the "settings" field.
+func (_u *TenantsUpdateOne) SetSettings(v map[string]interface{}) *TenantsUpdateOne {
+	_u.mutation.SetSettings(v)
 	return _u
 }
 
-// SetNillableSettingsID sets the "settings" edge to the TenantSettings entity by ID if the given value is not nil.
-func (_u *TenantsUpdateOne) SetNillableSettingsID(id *string) *TenantsUpdateOne {
-	if id != nil {
-		_u = _u.SetSettingsID(*id)
+// ClearSettings clears the value of the "settings" field.
+func (_u *TenantsUpdateOne) ClearSettings() *TenantsUpdateOne {
+	_u.mutation.ClearSettings()
+	return _u
+}
+
+// AddProjectIDs adds the "projects" edge to the Project entity by IDs.
+func (_u *TenantsUpdateOne) AddProjectIDs(ids ...string) *TenantsUpdateOne {
+	_u.mutation.AddProjectIDs(ids...)
+	return _u
+}
+
+// AddProjects adds the "projects" edges to the Project entity.
+func (_u *TenantsUpdateOne) AddProjects(v ...*Project) *TenantsUpdateOne {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
+	return _u.AddProjectIDs(ids...)
+}
+
+// AddMembershipIDs adds the "memberships" edge to the TenantMembership entity by IDs.
+func (_u *TenantsUpdateOne) AddMembershipIDs(ids ...string) *TenantsUpdateOne {
+	_u.mutation.AddMembershipIDs(ids...)
 	return _u
 }
 
-// SetSettings sets the "settings" edge to the TenantSettings entity.
-func (_u *TenantsUpdateOne) SetSettings(v *TenantSettings) *TenantsUpdateOne {
-	return _u.SetSettingsID(v.ID)
+// AddMemberships adds the "memberships" edges to the TenantMembership entity.
+func (_u *TenantsUpdateOne) AddMemberships(v ...*TenantMembership) *TenantsUpdateOne {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddMembershipIDs(ids...)
 }
 
 // Mutation returns the TenantsMutation object of the builder.
@@ -410,10 +509,46 @@ func (_u *TenantsUpdateOne) Mutation() *TenantsMutation {
 	return _u.mutation
 }
 
-// ClearSettings clears the "settings" edge to the TenantSettings entity.
-func (_u *TenantsUpdateOne) ClearSettings() *TenantsUpdateOne {
-	_u.mutation.ClearSettings()
+// ClearProjects clears all "projects" edges to the Project entity.
+func (_u *TenantsUpdateOne) ClearProjects() *TenantsUpdateOne {
+	_u.mutation.ClearProjects()
 	return _u
+}
+
+// RemoveProjectIDs removes the "projects" edge to Project entities by IDs.
+func (_u *TenantsUpdateOne) RemoveProjectIDs(ids ...string) *TenantsUpdateOne {
+	_u.mutation.RemoveProjectIDs(ids...)
+	return _u
+}
+
+// RemoveProjects removes "projects" edges to Project entities.
+func (_u *TenantsUpdateOne) RemoveProjects(v ...*Project) *TenantsUpdateOne {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveProjectIDs(ids...)
+}
+
+// ClearMemberships clears all "memberships" edges to the TenantMembership entity.
+func (_u *TenantsUpdateOne) ClearMemberships() *TenantsUpdateOne {
+	_u.mutation.ClearMemberships()
+	return _u
+}
+
+// RemoveMembershipIDs removes the "memberships" edge to TenantMembership entities by IDs.
+func (_u *TenantsUpdateOne) RemoveMembershipIDs(ids ...string) *TenantsUpdateOne {
+	_u.mutation.RemoveMembershipIDs(ids...)
+	return _u
+}
+
+// RemoveMemberships removes "memberships" edges to TenantMembership entities.
+func (_u *TenantsUpdateOne) RemoveMemberships(v ...*TenantMembership) *TenantsUpdateOne {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveMembershipIDs(ids...)
 }
 
 // Where appends a list predicates to the TenantsUpdate builder.
@@ -472,6 +607,16 @@ func (_u *TenantsUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Tenants.name": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Slug(); ok {
+		if err := tenants.SlugValidator(v); err != nil {
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Tenants.slug": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.ContactEmail(); ok {
+		if err := tenants.ContactEmailValidator(v); err != nil {
+			return &ValidationError{Name: "contact_email", err: fmt.Errorf(`ent: validator failed for field "Tenants.contact_email": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := tenants.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Tenants.status": %w`, err)}
@@ -515,60 +660,107 @@ func (_u *TenantsUpdateOne) sqlSave(ctx context.Context) (_node *Tenants, err er
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(tenants.FieldName, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.Branding(); ok {
-		_spec.SetField(tenants.FieldBranding, field.TypeJSON, value)
+	if value, ok := _u.mutation.Slug(); ok {
+		_spec.SetField(tenants.FieldSlug, field.TypeString, value)
 	}
-	if _u.mutation.BrandingCleared() {
-		_spec.ClearField(tenants.FieldBranding, field.TypeJSON)
+	if value, ok := _u.mutation.ContactEmail(); ok {
+		_spec.SetField(tenants.FieldContactEmail, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.Domains(); ok {
-		_spec.SetField(tenants.FieldDomains, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedDomains(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, tenants.FieldDomains, value)
-		})
-	}
-	if _u.mutation.DomainsCleared() {
-		_spec.ClearField(tenants.FieldDomains, field.TypeJSON)
-	}
-	if value, ok := _u.mutation.Limits(); ok {
-		_spec.SetField(tenants.FieldLimits, field.TypeJSON, value)
-	}
-	if _u.mutation.LimitsCleared() {
-		_spec.ClearField(tenants.FieldLimits, field.TypeJSON)
-	}
-	if value, ok := _u.mutation.Features(); ok {
-		_spec.SetField(tenants.FieldFeatures, field.TypeJSON, value)
-	}
-	if _u.mutation.FeaturesCleared() {
-		_spec.ClearField(tenants.FieldFeatures, field.TypeJSON)
+	if _u.mutation.ContactEmailCleared() {
+		_spec.ClearField(tenants.FieldContactEmail, field.TypeString)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(tenants.FieldStatus, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.Settings(); ok {
+		_spec.SetField(tenants.FieldSettings, field.TypeJSON, value)
+	}
 	if _u.mutation.SettingsCleared() {
+		_spec.ClearField(tenants.FieldSettings, field.TypeJSON)
+	}
+	if _u.mutation.ProjectsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   tenants.SettingsTable,
-			Columns: []string{tenants.SettingsColumn},
+			Table:   tenants.ProjectsTable,
+			Columns: []string{tenants.ProjectsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tenantsettings.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeString),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.SettingsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RemovedProjectsIDs(); len(nodes) > 0 && !_u.mutation.ProjectsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   tenants.SettingsTable,
-			Columns: []string{tenants.SettingsColumn},
+			Table:   tenants.ProjectsTable,
+			Columns: []string{tenants.ProjectsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tenantsettings.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ProjectsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tenants.ProjectsTable,
+			Columns: []string{tenants.ProjectsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.MembershipsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tenants.MembershipsTable,
+			Columns: []string{tenants.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedMembershipsIDs(); len(nodes) > 0 && !_u.mutation.MembershipsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tenants.MembershipsTable,
+			Columns: []string{tenants.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MembershipsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tenants.MembershipsTable,
+			Columns: []string{tenants.MembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

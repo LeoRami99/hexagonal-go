@@ -93,6 +93,30 @@ func (h *Controller) Logout(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+// Me godoc
+// @Summary      Obtener sesión y contexto del usuario autenticado
+// @Description  Retorna los datos del usuario, sus organizaciones (tenants) y membresías de proyectos/campus con sus roles asociados.
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200 {object} response.Envelope{data=application.SessionContext}
+// @Failure      401 {object} response.ErrorResponse "No autenticado"
+// @Router       /auth/me [get]
+func (h *Controller) Me(c *gin.Context) {
+	userID := c.GetString("user_id")
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	sessionCtx, err := h.service.GetSessionContext(c.Request.Context(), userID)
+	if err != nil {
+		response.WriteError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, response.Envelope{Data: sessionCtx})
+}
+
 func writeTokens(c *gin.Context, pair application.TokenPair) {
 	c.JSON(http.StatusOK, response.Envelope{Data: TokenResponse{AccessToken: pair.AccessToken, RefreshToken: pair.RefreshToken, TokenType: "Bearer", ExpiresIn: int64(time.Until(pair.AccessExpiresAt).Seconds())}})
 }

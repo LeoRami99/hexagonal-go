@@ -15,16 +15,16 @@ const (
 	Label = "user"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldTenantID holds the string denoting the tenant_id field in the database.
-	FieldTenantID = "tenant_id"
 	// FieldAuthID holds the string denoting the auth_id field in the database.
 	FieldAuthID = "auth_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
-	// FieldRole holds the string denoting the role field in the database.
-	FieldRole = "role"
+	// FieldAvatarURL holds the string denoting the avatar_url field in the database.
+	FieldAvatarURL = "avatar_url"
+	// FieldIsSuperAdmin holds the string denoting the is_super_admin field in the database.
+	FieldIsSuperAdmin = "is_super_admin"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
 	// FieldActive holds the string denoting the active field in the database.
@@ -35,10 +35,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeProfile holds the string denoting the profile edge name in mutations.
 	EdgeProfile = "profile"
-	// EdgeSecurityEvents holds the string denoting the security_events edge name in mutations.
-	EdgeSecurityEvents = "security_events"
-	// EdgePlatformRoles holds the string denoting the platform_roles edge name in mutations.
-	EdgePlatformRoles = "platform_roles"
+	// EdgeTenantMemberships holds the string denoting the tenant_memberships edge name in mutations.
+	EdgeTenantMemberships = "tenant_memberships"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// ProfileTable is the table that holds the profile relation/edge.
@@ -47,40 +45,29 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "userprofile" package.
 	ProfileInverseTable = "user_profiles"
 	// ProfileColumn is the table column denoting the profile relation/edge.
-	ProfileColumn = "user_profile"
-	// SecurityEventsTable is the table that holds the security_events relation/edge.
-	SecurityEventsTable = "security_events"
-	// SecurityEventsInverseTable is the table name for the SecurityEvent entity.
-	// It exists in this package in order to avoid circular dependency with the "securityevent" package.
-	SecurityEventsInverseTable = "security_events"
-	// SecurityEventsColumn is the table column denoting the security_events relation/edge.
-	SecurityEventsColumn = "user_security_events"
-	// PlatformRolesTable is the table that holds the platform_roles relation/edge. The primary key declared below.
-	PlatformRolesTable = "user_platform_roles"
-	// PlatformRolesInverseTable is the table name for the Role entity.
-	// It exists in this package in order to avoid circular dependency with the "role" package.
-	PlatformRolesInverseTable = "roles"
+	ProfileColumn = "user_id"
+	// TenantMembershipsTable is the table that holds the tenant_memberships relation/edge.
+	TenantMembershipsTable = "tenant_memberships"
+	// TenantMembershipsInverseTable is the table name for the TenantMembership entity.
+	// It exists in this package in order to avoid circular dependency with the "tenantmembership" package.
+	TenantMembershipsInverseTable = "tenant_memberships"
+	// TenantMembershipsColumn is the table column denoting the tenant_memberships relation/edge.
+	TenantMembershipsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
 var Columns = []string{
 	FieldID,
-	FieldTenantID,
 	FieldAuthID,
 	FieldName,
 	FieldEmail,
-	FieldRole,
+	FieldAvatarURL,
+	FieldIsSuperAdmin,
 	FieldStatus,
 	FieldActive,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
-
-var (
-	// PlatformRolesPrimaryKey and PlatformRolesColumn2 are the table columns denoting the
-	// primary key for the platform_roles relation (M2M).
-	PlatformRolesPrimaryKey = []string{"user_id", "role_id"}
-)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -93,14 +80,16 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// TenantIDValidator is a validator for the "tenant_id" field. It is called by the builders before save.
-	TenantIDValidator func(string) error
 	// AuthIDValidator is a validator for the "auth_id" field. It is called by the builders before save.
 	AuthIDValidator func(string) error
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
 	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	EmailValidator func(string) error
+	// AvatarURLValidator is a validator for the "avatar_url" field. It is called by the builders before save.
+	AvatarURLValidator func(string) error
+	// DefaultIsSuperAdmin holds the default value on creation for the "is_super_admin" field.
+	DefaultIsSuperAdmin bool
 	// DefaultActive holds the default value on creation for the "active" field.
 	DefaultActive bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -114,32 +103,6 @@ var (
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
 	IDValidator func(string) error
 )
-
-// Role defines the type for the "role" enum field.
-type Role string
-
-// RoleUser is the default value of the Role enum.
-const DefaultRole = RoleUser
-
-// Role values.
-const (
-	RoleAdmin Role = "admin"
-	RoleUser  Role = "user"
-)
-
-func (r Role) String() string {
-	return string(r)
-}
-
-// RoleValidator is a validator for the "role" field enum values. It is called by the builders before save.
-func RoleValidator(r Role) error {
-	switch r {
-	case RoleAdmin, RoleUser:
-		return nil
-	default:
-		return fmt.Errorf("user: invalid enum value for role field: %q", r)
-	}
-}
 
 // Status defines the type for the "status" enum field.
 type Status string
@@ -177,11 +140,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByTenantID orders the results by the tenant_id field.
-func ByTenantID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTenantID, opts...).ToFunc()
-}
-
 // ByAuthID orders the results by the auth_id field.
 func ByAuthID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAuthID, opts...).ToFunc()
@@ -197,9 +155,14 @@ func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmail, opts...).ToFunc()
 }
 
-// ByRole orders the results by the role field.
-func ByRole(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldRole, opts...).ToFunc()
+// ByAvatarURL orders the results by the avatar_url field.
+func ByAvatarURL(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAvatarURL, opts...).ToFunc()
+}
+
+// ByIsSuperAdmin orders the results by the is_super_admin field.
+func ByIsSuperAdmin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsSuperAdmin, opts...).ToFunc()
 }
 
 // ByStatus orders the results by the status field.
@@ -229,31 +192,17 @@ func ByProfileField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
-// BySecurityEventsCount orders the results by security_events count.
-func BySecurityEventsCount(opts ...sql.OrderTermOption) OrderOption {
+// ByTenantMembershipsCount orders the results by tenant_memberships count.
+func ByTenantMembershipsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newSecurityEventsStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newTenantMembershipsStep(), opts...)
 	}
 }
 
-// BySecurityEvents orders the results by security_events terms.
-func BySecurityEvents(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByTenantMemberships orders the results by tenant_memberships terms.
+func ByTenantMemberships(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newSecurityEventsStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
-
-// ByPlatformRolesCount orders the results by platform_roles count.
-func ByPlatformRolesCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newPlatformRolesStep(), opts...)
-	}
-}
-
-// ByPlatformRoles orders the results by platform_roles terms.
-func ByPlatformRoles(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newPlatformRolesStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newTenantMembershipsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 func newProfileStep() *sqlgraph.Step {
@@ -263,17 +212,10 @@ func newProfileStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2O, false, ProfileTable, ProfileColumn),
 	)
 }
-func newSecurityEventsStep() *sqlgraph.Step {
+func newTenantMembershipsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(SecurityEventsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, SecurityEventsTable, SecurityEventsColumn),
-	)
-}
-func newPlatformRolesStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(PlatformRolesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, false, PlatformRolesTable, PlatformRolesPrimaryKey...),
+		sqlgraph.To(TenantMembershipsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TenantMembershipsTable, TenantMembershipsColumn),
 	)
 }

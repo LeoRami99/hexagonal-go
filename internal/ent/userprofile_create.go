@@ -21,6 +21,12 @@ type UserProfileCreate struct {
 	hooks    []Hook
 }
 
+// SetUserID sets the "user_id" field.
+func (_c *UserProfileCreate) SetUserID(v string) *UserProfileCreate {
+	_c.mutation.SetUserID(v)
+	return _c
+}
+
 // SetFirstName sets the "first_name" field.
 func (_c *UserProfileCreate) SetFirstName(v string) *UserProfileCreate {
 	_c.mutation.SetFirstName(v)
@@ -45,6 +51,20 @@ func (_c *UserProfileCreate) SetLastName(v string) *UserProfileCreate {
 func (_c *UserProfileCreate) SetNillableLastName(v *string) *UserProfileCreate {
 	if v != nil {
 		_c.SetLastName(*v)
+	}
+	return _c
+}
+
+// SetPhone sets the "phone" field.
+func (_c *UserProfileCreate) SetPhone(v string) *UserProfileCreate {
+	_c.mutation.SetPhone(v)
+	return _c
+}
+
+// SetNillablePhone sets the "phone" field if the given value is not nil.
+func (_c *UserProfileCreate) SetNillablePhone(v *string) *UserProfileCreate {
+	if v != nil {
+		_c.SetPhone(*v)
 	}
 	return _c
 }
@@ -119,6 +139,20 @@ func (_c *UserProfileCreate) SetNillablePhotoURL(v *string) *UserProfileCreate {
 	return _c
 }
 
+// SetBio sets the "bio" field.
+func (_c *UserProfileCreate) SetBio(v string) *UserProfileCreate {
+	_c.mutation.SetBio(v)
+	return _c
+}
+
+// SetNillableBio sets the "bio" field if the given value is not nil.
+func (_c *UserProfileCreate) SetNillableBio(v *string) *UserProfileCreate {
+	if v != nil {
+		_c.SetBio(*v)
+	}
+	return _c
+}
+
 // SetSociodemographicData sets the "sociodemographic_data" field.
 func (_c *UserProfileCreate) SetSociodemographicData(v map[string]interface{}) *UserProfileCreate {
 	_c.mutation.SetSociodemographicData(v)
@@ -164,12 +198,6 @@ func (_c *UserProfileCreate) SetNillableID(v *string) *UserProfileCreate {
 	if v != nil {
 		_c.SetID(*v)
 	}
-	return _c
-}
-
-// SetUserID sets the "user" edge to the User entity by ID.
-func (_c *UserProfileCreate) SetUserID(id string) *UserProfileCreate {
-	_c.mutation.SetUserID(id)
 	return _c
 }
 
@@ -229,6 +257,14 @@ func (_c *UserProfileCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *UserProfileCreate) check() error {
+	if _, ok := _c.mutation.UserID(); !ok {
+		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "UserProfile.user_id"`)}
+	}
+	if v, ok := _c.mutation.UserID(); ok {
+		if err := userprofile.UserIDValidator(v); err != nil {
+			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "UserProfile.user_id": %w`, err)}
+		}
+	}
 	if v, ok := _c.mutation.FirstName(); ok {
 		if err := userprofile.FirstNameValidator(v); err != nil {
 			return &ValidationError{Name: "first_name", err: fmt.Errorf(`ent: validator failed for field "UserProfile.first_name": %w`, err)}
@@ -237,6 +273,11 @@ func (_c *UserProfileCreate) check() error {
 	if v, ok := _c.mutation.LastName(); ok {
 		if err := userprofile.LastNameValidator(v); err != nil {
 			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "UserProfile.last_name": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.Phone(); ok {
+		if err := userprofile.PhoneValidator(v); err != nil {
+			return &ValidationError{Name: "phone", err: fmt.Errorf(`ent: validator failed for field "UserProfile.phone": %w`, err)}
 		}
 	}
 	if v, ok := _c.mutation.Gender(); ok {
@@ -316,6 +357,10 @@ func (_c *UserProfileCreate) createSpec() (*UserProfile, *sqlgraph.CreateSpec) {
 		_spec.SetField(userprofile.FieldLastName, field.TypeString, value)
 		_node.LastName = &value
 	}
+	if value, ok := _c.mutation.Phone(); ok {
+		_spec.SetField(userprofile.FieldPhone, field.TypeString, value)
+		_node.Phone = &value
+	}
 	if value, ok := _c.mutation.BirthDate(); ok {
 		_spec.SetField(userprofile.FieldBirthDate, field.TypeTime, value)
 		_node.BirthDate = &value
@@ -335,6 +380,10 @@ func (_c *UserProfileCreate) createSpec() (*UserProfile, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.PhotoURL(); ok {
 		_spec.SetField(userprofile.FieldPhotoURL, field.TypeString, value)
 		_node.PhotoURL = &value
+	}
+	if value, ok := _c.mutation.Bio(); ok {
+		_spec.SetField(userprofile.FieldBio, field.TypeString, value)
+		_node.Bio = &value
 	}
 	if value, ok := _c.mutation.SociodemographicData(); ok {
 		_spec.SetField(userprofile.FieldSociodemographicData, field.TypeJSON, value)
@@ -362,7 +411,7 @@ func (_c *UserProfileCreate) createSpec() (*UserProfile, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_profile = &nodes[0]
+		_node.UserID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

@@ -9,7 +9,6 @@ import (
 	tenanthttp "hexagonal-go-backend/internal/modules/tenants/delivery/http/v1"
 	usersapp "hexagonal-go-backend/internal/modules/users/application"
 	usershttp "hexagonal-go-backend/internal/modules/users/delivery/http/v1"
-	userdomain "hexagonal-go-backend/internal/modules/users/domain"
 	"hexagonal-go-backend/internal/platform/config"
 	"hexagonal-go-backend/internal/platform/http/middleware"
 
@@ -53,10 +52,13 @@ func NewRouter(cfg config.Config, logger *slog.Logger, users *usershttp.Controll
 
 	protected := v1.Group("")
 	protected.Use(middleware.Authenticate(tokens, userRepo))
+	protected.GET("/auth/me", auth.Me)
+	protected.GET("/users/me/profile", users.GetMyProfile)
+	protected.PUT("/users/me/profile", users.UpdateMyProfile)
 	protected.GET("/users/:id", users.Get)
 
 	admin := protected.Group("")
-	admin.Use(middleware.RequireRole(userdomain.RoleAdmin))
+	admin.Use(middleware.RequireSuperAdminDirect())
 	admin.POST("/users", users.Create)
 	admin.GET("/users", users.List)
 	admin.PUT("/users/:id", users.Update)

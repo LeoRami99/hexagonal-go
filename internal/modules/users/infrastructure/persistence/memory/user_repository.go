@@ -11,12 +11,16 @@ import (
 )
 
 type UserRepository struct {
-	mu    sync.RWMutex
-	users map[string]domain.User
+	mu       sync.RWMutex
+	users    map[string]domain.User
+	profiles map[string]domain.UserProfile
 }
 
 func NewUserRepository() *UserRepository {
-	return &UserRepository{users: make(map[string]domain.User)}
+	return &UserRepository{
+		users:    make(map[string]domain.User),
+		profiles: make(map[string]domain.UserProfile),
+	}
 }
 
 func (r *UserRepository) Create(_ context.Context, user *domain.User) error {
@@ -38,7 +42,12 @@ func (r *UserRepository) FindByID(_ context.Context, id string) (*domain.User, e
 	if !ok {
 		return nil, domain.ErrUserNotFound
 	}
-	return clone(user), nil
+	u := clone(user)
+	if p, found := r.profiles[id]; found {
+		pCopy := p
+		u.Profile = &pCopy
+	}
+	return u, nil
 }
 
 func (r *UserRepository) FindByAuthID(_ context.Context, authID string) (*domain.User, error) {
@@ -47,7 +56,12 @@ func (r *UserRepository) FindByAuthID(_ context.Context, authID string) (*domain
 	authID = strings.TrimSpace(authID)
 	for _, user := range r.users {
 		if user.AuthID == authID {
-			return clone(user), nil
+			u := clone(user)
+			if p, found := r.profiles[user.ID]; found {
+				pCopy := p
+				u.Profile = &pCopy
+			}
+			return u, nil
 		}
 	}
 	return nil, domain.ErrUserNotFound
@@ -59,7 +73,12 @@ func (r *UserRepository) FindByEmail(_ context.Context, email string) (*domain.U
 	email = strings.ToLower(strings.TrimSpace(email))
 	for _, user := range r.users {
 		if user.Email == email {
-			return clone(user), nil
+			u := clone(user)
+			if p, found := r.profiles[user.ID]; found {
+				pCopy := p
+				u.Profile = &pCopy
+			}
+			return u, nil
 		}
 	}
 	return nil, domain.ErrUserNotFound
@@ -71,16 +90,24 @@ func (r *UserRepository) List(_ context.Context, filter application.UserFilter) 
 	all := make([]domain.User, 0, len(r.users))
 	query := strings.ToLower(filter.Search)
 	for _, user := range r.users {
+		if user.IsSuperAdmin {
+			continue
+		}
 		if query != "" && !strings.Contains(strings.ToLower(user.Name+" "+user.Email), query) {
 			continue
 		}
-		if filter.Role != "" && user.Role != filter.Role {
+		if filter.Status != "" && user.Status != filter.Status {
 			continue
 		}
 		if filter.Active != nil && user.Active != *filter.Active {
 			continue
 		}
-		all = append(all, user)
+		u := user
+		if p, found := r.profiles[user.ID]; found {
+			pCopy := p
+			u.Profile = &pCopy
+		}
+		all = append(all, u)
 	}
 	sort.Slice(all, func(i, j int) bool {
 		less := all[i].CreatedAt.Before(all[j].CreatedAt)
@@ -126,6 +153,24 @@ func (r *UserRepository) Delete(_ context.Context, id string) error {
 		return domain.ErrUserNotFound
 	}
 	delete(r.users, id)
+	delete(r.profiles, id)
+	return nil
+}
+
+func (r *UserRepository) GetProfile(_ context.Context, userID string) (*domain.UserProfile, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if p, found := r.profiles[userID]; found {
+		pCopy := p
+		return &pCopy, nil
+	}
+	return nil, nil
+}
+
+func (r *UserRepository) UpsertProfile(_ context.Context, profile *domain.UserProfile) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.profiles[profile.UserID] = *profile
 	return nil
 }
 

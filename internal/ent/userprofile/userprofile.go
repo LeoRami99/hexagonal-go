@@ -15,10 +15,14 @@ const (
 	Label = "user_profile"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldUserID holds the string denoting the user_id field in the database.
+	FieldUserID = "user_id"
 	// FieldFirstName holds the string denoting the first_name field in the database.
 	FieldFirstName = "first_name"
 	// FieldLastName holds the string denoting the last_name field in the database.
 	FieldLastName = "last_name"
+	// FieldPhone holds the string denoting the phone field in the database.
+	FieldPhone = "phone"
 	// FieldBirthDate holds the string denoting the birth_date field in the database.
 	FieldBirthDate = "birth_date"
 	// FieldGender holds the string denoting the gender field in the database.
@@ -29,6 +33,8 @@ const (
 	FieldAddress = "address"
 	// FieldPhotoURL holds the string denoting the photo_url field in the database.
 	FieldPhotoURL = "photo_url"
+	// FieldBio holds the string denoting the bio field in the database.
+	FieldBio = "bio"
 	// FieldSociodemographicData holds the string denoting the sociodemographic_data field in the database.
 	FieldSociodemographicData = "sociodemographic_data"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -45,28 +51,25 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
-	UserColumn = "user_profile"
+	UserColumn = "user_id"
 )
 
 // Columns holds all SQL columns for userprofile fields.
 var Columns = []string{
 	FieldID,
+	FieldUserID,
 	FieldFirstName,
 	FieldLastName,
+	FieldPhone,
 	FieldBirthDate,
 	FieldGender,
 	FieldCity,
 	FieldAddress,
 	FieldPhotoURL,
+	FieldBio,
 	FieldSociodemographicData,
 	FieldCreatedAt,
 	FieldUpdatedAt,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the "user_profiles"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"user_profile",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -76,19 +79,18 @@ func ValidColumn(column string) bool {
 			return true
 		}
 	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
-			return true
-		}
-	}
 	return false
 }
 
 var (
+	// UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	UserIDValidator func(string) error
 	// FirstNameValidator is a validator for the "first_name" field. It is called by the builders before save.
 	FirstNameValidator func(string) error
 	// LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
 	LastNameValidator func(string) error
+	// PhoneValidator is a validator for the "phone" field. It is called by the builders before save.
+	PhoneValidator func(string) error
 	// CityValidator is a validator for the "city" field. It is called by the builders before save.
 	CityValidator func(string) error
 	// AddressValidator is a validator for the "address" field. It is called by the builders before save.
@@ -140,6 +142,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
+// ByUserID orders the results by the user_id field.
+func ByUserID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUserID, opts...).ToFunc()
+}
+
 // ByFirstName orders the results by the first_name field.
 func ByFirstName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFirstName, opts...).ToFunc()
@@ -148,6 +155,11 @@ func ByFirstName(opts ...sql.OrderTermOption) OrderOption {
 // ByLastName orders the results by the last_name field.
 func ByLastName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastName, opts...).ToFunc()
+}
+
+// ByPhone orders the results by the phone field.
+func ByPhone(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPhone, opts...).ToFunc()
 }
 
 // ByBirthDate orders the results by the birth_date field.
@@ -173,6 +185,11 @@ func ByAddress(opts ...sql.OrderTermOption) OrderOption {
 // ByPhotoURL orders the results by the photo_url field.
 func ByPhotoURL(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPhotoURL, opts...).ToFunc()
+}
+
+// ByBio orders the results by the bio field.
+func ByBio(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBio, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

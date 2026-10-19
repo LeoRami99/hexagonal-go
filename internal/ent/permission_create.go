@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"hexagonal-go-backend/internal/ent/permission"
-	"hexagonal-go-backend/internal/ent/role"
+	"hexagonal-go-backend/internal/ent/projectrole"
 	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -21,9 +21,23 @@ type PermissionCreate struct {
 	hooks    []Hook
 }
 
-// SetAction sets the "action" field.
-func (_c *PermissionCreate) SetAction(v string) *PermissionCreate {
-	_c.mutation.SetAction(v)
+// SetCode sets the "code" field.
+func (_c *PermissionCreate) SetCode(v string) *PermissionCreate {
+	_c.mutation.SetCode(v)
+	return _c
+}
+
+// SetModule sets the "module" field.
+func (_c *PermissionCreate) SetModule(v string) *PermissionCreate {
+	_c.mutation.SetModule(v)
+	return _c
+}
+
+// SetNillableModule sets the "module" field if the given value is not nil.
+func (_c *PermissionCreate) SetNillableModule(v *string) *PermissionCreate {
+	if v != nil {
+		_c.SetModule(*v)
+	}
 	return _c
 }
 
@@ -69,14 +83,14 @@ func (_c *PermissionCreate) SetNillableID(v *string) *PermissionCreate {
 	return _c
 }
 
-// AddRoleIDs adds the "roles" edge to the Role entity by IDs.
+// AddRoleIDs adds the "roles" edge to the ProjectRole entity by IDs.
 func (_c *PermissionCreate) AddRoleIDs(ids ...string) *PermissionCreate {
 	_c.mutation.AddRoleIDs(ids...)
 	return _c
 }
 
-// AddRoles adds the "roles" edges to the Role entity.
-func (_c *PermissionCreate) AddRoles(v ...*Role) *PermissionCreate {
+// AddRoles adds the "roles" edges to the ProjectRole entity.
+func (_c *PermissionCreate) AddRoles(v ...*ProjectRole) *PermissionCreate {
 	ids := make([]string, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
@@ -119,6 +133,10 @@ func (_c *PermissionCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *PermissionCreate) defaults() {
+	if _, ok := _c.mutation.Module(); !ok {
+		v := permission.DefaultModule
+		_c.mutation.SetModule(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := permission.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -131,12 +149,20 @@ func (_c *PermissionCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *PermissionCreate) check() error {
-	if _, ok := _c.mutation.Action(); !ok {
-		return &ValidationError{Name: "action", err: errors.New(`ent: missing required field "Permission.action"`)}
+	if _, ok := _c.mutation.Code(); !ok {
+		return &ValidationError{Name: "code", err: errors.New(`ent: missing required field "Permission.code"`)}
 	}
-	if v, ok := _c.mutation.Action(); ok {
-		if err := permission.ActionValidator(v); err != nil {
-			return &ValidationError{Name: "action", err: fmt.Errorf(`ent: validator failed for field "Permission.action": %w`, err)}
+	if v, ok := _c.mutation.Code(); ok {
+		if err := permission.CodeValidator(v); err != nil {
+			return &ValidationError{Name: "code", err: fmt.Errorf(`ent: validator failed for field "Permission.code": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Module(); !ok {
+		return &ValidationError{Name: "module", err: errors.New(`ent: missing required field "Permission.module"`)}
+	}
+	if v, ok := _c.mutation.Module(); ok {
+		if err := permission.ModuleValidator(v); err != nil {
+			return &ValidationError{Name: "module", err: fmt.Errorf(`ent: validator failed for field "Permission.module": %w`, err)}
 		}
 	}
 	if v, ok := _c.mutation.Description(); ok {
@@ -187,9 +213,13 @@ func (_c *PermissionCreate) createSpec() (*Permission, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
-	if value, ok := _c.mutation.Action(); ok {
-		_spec.SetField(permission.FieldAction, field.TypeString, value)
-		_node.Action = value
+	if value, ok := _c.mutation.Code(); ok {
+		_spec.SetField(permission.FieldCode, field.TypeString, value)
+		_node.Code = value
+	}
+	if value, ok := _c.mutation.Module(); ok {
+		_spec.SetField(permission.FieldModule, field.TypeString, value)
+		_node.Module = value
 	}
 	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(permission.FieldDescription, field.TypeString, value)
@@ -207,7 +237,7 @@ func (_c *PermissionCreate) createSpec() (*Permission, *sqlgraph.CreateSpec) {
 			Columns: permission.RolesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(role.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(projectrole.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

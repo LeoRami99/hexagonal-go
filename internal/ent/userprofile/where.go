@@ -65,6 +65,11 @@ func IDContainsFold(id string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldContainsFold(FieldID, id))
 }
 
+// UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
+func UserID(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEQ(FieldUserID, v))
+}
+
 // FirstName applies equality check predicate on the "first_name" field. It's identical to FirstNameEQ.
 func FirstName(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldFirstName, v))
@@ -73,6 +78,11 @@ func FirstName(v string) predicate.UserProfile {
 // LastName applies equality check predicate on the "last_name" field. It's identical to LastNameEQ.
 func LastName(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldLastName, v))
+}
+
+// Phone applies equality check predicate on the "phone" field. It's identical to PhoneEQ.
+func Phone(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEQ(FieldPhone, v))
 }
 
 // BirthDate applies equality check predicate on the "birth_date" field. It's identical to BirthDateEQ.
@@ -95,6 +105,11 @@ func PhotoURL(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldPhotoURL, v))
 }
 
+// Bio applies equality check predicate on the "bio" field. It's identical to BioEQ.
+func Bio(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEQ(FieldBio, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldCreatedAt, v))
@@ -103,6 +118,71 @@ func CreatedAt(v time.Time) predicate.UserProfile {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// UserIDEQ applies the EQ predicate on the "user_id" field.
+func UserIDEQ(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEQ(FieldUserID, v))
+}
+
+// UserIDNEQ applies the NEQ predicate on the "user_id" field.
+func UserIDNEQ(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNEQ(FieldUserID, v))
+}
+
+// UserIDIn applies the In predicate on the "user_id" field.
+func UserIDIn(vs ...string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldIn(FieldUserID, vs...))
+}
+
+// UserIDNotIn applies the NotIn predicate on the "user_id" field.
+func UserIDNotIn(vs ...string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNotIn(FieldUserID, vs...))
+}
+
+// UserIDGT applies the GT predicate on the "user_id" field.
+func UserIDGT(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldGT(FieldUserID, v))
+}
+
+// UserIDGTE applies the GTE predicate on the "user_id" field.
+func UserIDGTE(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldGTE(FieldUserID, v))
+}
+
+// UserIDLT applies the LT predicate on the "user_id" field.
+func UserIDLT(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldLT(FieldUserID, v))
+}
+
+// UserIDLTE applies the LTE predicate on the "user_id" field.
+func UserIDLTE(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldLTE(FieldUserID, v))
+}
+
+// UserIDContains applies the Contains predicate on the "user_id" field.
+func UserIDContains(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldContains(FieldUserID, v))
+}
+
+// UserIDHasPrefix applies the HasPrefix predicate on the "user_id" field.
+func UserIDHasPrefix(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldHasPrefix(FieldUserID, v))
+}
+
+// UserIDHasSuffix applies the HasSuffix predicate on the "user_id" field.
+func UserIDHasSuffix(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldHasSuffix(FieldUserID, v))
+}
+
+// UserIDEqualFold applies the EqualFold predicate on the "user_id" field.
+func UserIDEqualFold(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEqualFold(FieldUserID, v))
+}
+
+// UserIDContainsFold applies the ContainsFold predicate on the "user_id" field.
+func UserIDContainsFold(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldContainsFold(FieldUserID, v))
 }
 
 // FirstNameEQ applies the EQ predicate on the "first_name" field.
@@ -253,6 +333,81 @@ func LastNameEqualFold(v string) predicate.UserProfile {
 // LastNameContainsFold applies the ContainsFold predicate on the "last_name" field.
 func LastNameContainsFold(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldContainsFold(FieldLastName, v))
+}
+
+// PhoneEQ applies the EQ predicate on the "phone" field.
+func PhoneEQ(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEQ(FieldPhone, v))
+}
+
+// PhoneNEQ applies the NEQ predicate on the "phone" field.
+func PhoneNEQ(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNEQ(FieldPhone, v))
+}
+
+// PhoneIn applies the In predicate on the "phone" field.
+func PhoneIn(vs ...string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldIn(FieldPhone, vs...))
+}
+
+// PhoneNotIn applies the NotIn predicate on the "phone" field.
+func PhoneNotIn(vs ...string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNotIn(FieldPhone, vs...))
+}
+
+// PhoneGT applies the GT predicate on the "phone" field.
+func PhoneGT(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldGT(FieldPhone, v))
+}
+
+// PhoneGTE applies the GTE predicate on the "phone" field.
+func PhoneGTE(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldGTE(FieldPhone, v))
+}
+
+// PhoneLT applies the LT predicate on the "phone" field.
+func PhoneLT(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldLT(FieldPhone, v))
+}
+
+// PhoneLTE applies the LTE predicate on the "phone" field.
+func PhoneLTE(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldLTE(FieldPhone, v))
+}
+
+// PhoneContains applies the Contains predicate on the "phone" field.
+func PhoneContains(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldContains(FieldPhone, v))
+}
+
+// PhoneHasPrefix applies the HasPrefix predicate on the "phone" field.
+func PhoneHasPrefix(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldHasPrefix(FieldPhone, v))
+}
+
+// PhoneHasSuffix applies the HasSuffix predicate on the "phone" field.
+func PhoneHasSuffix(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldHasSuffix(FieldPhone, v))
+}
+
+// PhoneIsNil applies the IsNil predicate on the "phone" field.
+func PhoneIsNil() predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldIsNull(FieldPhone))
+}
+
+// PhoneNotNil applies the NotNil predicate on the "phone" field.
+func PhoneNotNil() predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNotNull(FieldPhone))
+}
+
+// PhoneEqualFold applies the EqualFold predicate on the "phone" field.
+func PhoneEqualFold(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEqualFold(FieldPhone, v))
+}
+
+// PhoneContainsFold applies the ContainsFold predicate on the "phone" field.
+func PhoneContainsFold(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldContainsFold(FieldPhone, v))
 }
 
 // BirthDateEQ applies the EQ predicate on the "birth_date" field.
@@ -558,6 +713,81 @@ func PhotoURLEqualFold(v string) predicate.UserProfile {
 // PhotoURLContainsFold applies the ContainsFold predicate on the "photo_url" field.
 func PhotoURLContainsFold(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldContainsFold(FieldPhotoURL, v))
+}
+
+// BioEQ applies the EQ predicate on the "bio" field.
+func BioEQ(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEQ(FieldBio, v))
+}
+
+// BioNEQ applies the NEQ predicate on the "bio" field.
+func BioNEQ(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNEQ(FieldBio, v))
+}
+
+// BioIn applies the In predicate on the "bio" field.
+func BioIn(vs ...string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldIn(FieldBio, vs...))
+}
+
+// BioNotIn applies the NotIn predicate on the "bio" field.
+func BioNotIn(vs ...string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNotIn(FieldBio, vs...))
+}
+
+// BioGT applies the GT predicate on the "bio" field.
+func BioGT(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldGT(FieldBio, v))
+}
+
+// BioGTE applies the GTE predicate on the "bio" field.
+func BioGTE(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldGTE(FieldBio, v))
+}
+
+// BioLT applies the LT predicate on the "bio" field.
+func BioLT(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldLT(FieldBio, v))
+}
+
+// BioLTE applies the LTE predicate on the "bio" field.
+func BioLTE(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldLTE(FieldBio, v))
+}
+
+// BioContains applies the Contains predicate on the "bio" field.
+func BioContains(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldContains(FieldBio, v))
+}
+
+// BioHasPrefix applies the HasPrefix predicate on the "bio" field.
+func BioHasPrefix(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldHasPrefix(FieldBio, v))
+}
+
+// BioHasSuffix applies the HasSuffix predicate on the "bio" field.
+func BioHasSuffix(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldHasSuffix(FieldBio, v))
+}
+
+// BioIsNil applies the IsNil predicate on the "bio" field.
+func BioIsNil() predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldIsNull(FieldBio))
+}
+
+// BioNotNil applies the NotNil predicate on the "bio" field.
+func BioNotNil() predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNotNull(FieldBio))
+}
+
+// BioEqualFold applies the EqualFold predicate on the "bio" field.
+func BioEqualFold(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEqualFold(FieldBio, v))
+}
+
+// BioContainsFold applies the ContainsFold predicate on the "bio" field.
+func BioContainsFold(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldContainsFold(FieldBio, v))
 }
 
 // SociodemographicDataIsNil applies the IsNil predicate on the "sociodemographic_data" field.

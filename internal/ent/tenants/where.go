@@ -80,6 +80,16 @@ func Name(v string) predicate.Tenants {
 	return predicate.Tenants(sql.FieldEQ(FieldName, v))
 }
 
+// Slug applies equality check predicate on the "slug" field. It's identical to SlugEQ.
+func Slug(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldEQ(FieldSlug, v))
+}
+
+// ContactEmail applies equality check predicate on the "contact_email" field. It's identical to ContactEmailEQ.
+func ContactEmail(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldEQ(FieldContactEmail, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Tenants {
 	return predicate.Tenants(sql.FieldEQ(FieldCreatedAt, v))
@@ -225,44 +235,144 @@ func NameContainsFold(v string) predicate.Tenants {
 	return predicate.Tenants(sql.FieldContainsFold(FieldName, v))
 }
 
-// BrandingIsNil applies the IsNil predicate on the "branding" field.
-func BrandingIsNil() predicate.Tenants {
-	return predicate.Tenants(sql.FieldIsNull(FieldBranding))
+// SlugEQ applies the EQ predicate on the "slug" field.
+func SlugEQ(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldEQ(FieldSlug, v))
 }
 
-// BrandingNotNil applies the NotNil predicate on the "branding" field.
-func BrandingNotNil() predicate.Tenants {
-	return predicate.Tenants(sql.FieldNotNull(FieldBranding))
+// SlugNEQ applies the NEQ predicate on the "slug" field.
+func SlugNEQ(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldNEQ(FieldSlug, v))
 }
 
-// DomainsIsNil applies the IsNil predicate on the "domains" field.
-func DomainsIsNil() predicate.Tenants {
-	return predicate.Tenants(sql.FieldIsNull(FieldDomains))
+// SlugIn applies the In predicate on the "slug" field.
+func SlugIn(vs ...string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldIn(FieldSlug, vs...))
 }
 
-// DomainsNotNil applies the NotNil predicate on the "domains" field.
-func DomainsNotNil() predicate.Tenants {
-	return predicate.Tenants(sql.FieldNotNull(FieldDomains))
+// SlugNotIn applies the NotIn predicate on the "slug" field.
+func SlugNotIn(vs ...string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldNotIn(FieldSlug, vs...))
 }
 
-// LimitsIsNil applies the IsNil predicate on the "limits" field.
-func LimitsIsNil() predicate.Tenants {
-	return predicate.Tenants(sql.FieldIsNull(FieldLimits))
+// SlugGT applies the GT predicate on the "slug" field.
+func SlugGT(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldGT(FieldSlug, v))
 }
 
-// LimitsNotNil applies the NotNil predicate on the "limits" field.
-func LimitsNotNil() predicate.Tenants {
-	return predicate.Tenants(sql.FieldNotNull(FieldLimits))
+// SlugGTE applies the GTE predicate on the "slug" field.
+func SlugGTE(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldGTE(FieldSlug, v))
 }
 
-// FeaturesIsNil applies the IsNil predicate on the "features" field.
-func FeaturesIsNil() predicate.Tenants {
-	return predicate.Tenants(sql.FieldIsNull(FieldFeatures))
+// SlugLT applies the LT predicate on the "slug" field.
+func SlugLT(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldLT(FieldSlug, v))
 }
 
-// FeaturesNotNil applies the NotNil predicate on the "features" field.
-func FeaturesNotNil() predicate.Tenants {
-	return predicate.Tenants(sql.FieldNotNull(FieldFeatures))
+// SlugLTE applies the LTE predicate on the "slug" field.
+func SlugLTE(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldLTE(FieldSlug, v))
+}
+
+// SlugContains applies the Contains predicate on the "slug" field.
+func SlugContains(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldContains(FieldSlug, v))
+}
+
+// SlugHasPrefix applies the HasPrefix predicate on the "slug" field.
+func SlugHasPrefix(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldHasPrefix(FieldSlug, v))
+}
+
+// SlugHasSuffix applies the HasSuffix predicate on the "slug" field.
+func SlugHasSuffix(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldHasSuffix(FieldSlug, v))
+}
+
+// SlugEqualFold applies the EqualFold predicate on the "slug" field.
+func SlugEqualFold(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldEqualFold(FieldSlug, v))
+}
+
+// SlugContainsFold applies the ContainsFold predicate on the "slug" field.
+func SlugContainsFold(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldContainsFold(FieldSlug, v))
+}
+
+// ContactEmailEQ applies the EQ predicate on the "contact_email" field.
+func ContactEmailEQ(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldEQ(FieldContactEmail, v))
+}
+
+// ContactEmailNEQ applies the NEQ predicate on the "contact_email" field.
+func ContactEmailNEQ(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldNEQ(FieldContactEmail, v))
+}
+
+// ContactEmailIn applies the In predicate on the "contact_email" field.
+func ContactEmailIn(vs ...string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldIn(FieldContactEmail, vs...))
+}
+
+// ContactEmailNotIn applies the NotIn predicate on the "contact_email" field.
+func ContactEmailNotIn(vs ...string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldNotIn(FieldContactEmail, vs...))
+}
+
+// ContactEmailGT applies the GT predicate on the "contact_email" field.
+func ContactEmailGT(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldGT(FieldContactEmail, v))
+}
+
+// ContactEmailGTE applies the GTE predicate on the "contact_email" field.
+func ContactEmailGTE(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldGTE(FieldContactEmail, v))
+}
+
+// ContactEmailLT applies the LT predicate on the "contact_email" field.
+func ContactEmailLT(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldLT(FieldContactEmail, v))
+}
+
+// ContactEmailLTE applies the LTE predicate on the "contact_email" field.
+func ContactEmailLTE(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldLTE(FieldContactEmail, v))
+}
+
+// ContactEmailContains applies the Contains predicate on the "contact_email" field.
+func ContactEmailContains(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldContains(FieldContactEmail, v))
+}
+
+// ContactEmailHasPrefix applies the HasPrefix predicate on the "contact_email" field.
+func ContactEmailHasPrefix(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldHasPrefix(FieldContactEmail, v))
+}
+
+// ContactEmailHasSuffix applies the HasSuffix predicate on the "contact_email" field.
+func ContactEmailHasSuffix(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldHasSuffix(FieldContactEmail, v))
+}
+
+// ContactEmailIsNil applies the IsNil predicate on the "contact_email" field.
+func ContactEmailIsNil() predicate.Tenants {
+	return predicate.Tenants(sql.FieldIsNull(FieldContactEmail))
+}
+
+// ContactEmailNotNil applies the NotNil predicate on the "contact_email" field.
+func ContactEmailNotNil() predicate.Tenants {
+	return predicate.Tenants(sql.FieldNotNull(FieldContactEmail))
+}
+
+// ContactEmailEqualFold applies the EqualFold predicate on the "contact_email" field.
+func ContactEmailEqualFold(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldEqualFold(FieldContactEmail, v))
+}
+
+// ContactEmailContainsFold applies the ContainsFold predicate on the "contact_email" field.
+func ContactEmailContainsFold(v string) predicate.Tenants {
+	return predicate.Tenants(sql.FieldContainsFold(FieldContactEmail, v))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
@@ -285,21 +395,54 @@ func StatusNotIn(vs ...Status) predicate.Tenants {
 	return predicate.Tenants(sql.FieldNotIn(FieldStatus, vs...))
 }
 
-// HasSettings applies the HasEdge predicate on the "settings" edge.
-func HasSettings() predicate.Tenants {
+// SettingsIsNil applies the IsNil predicate on the "settings" field.
+func SettingsIsNil() predicate.Tenants {
+	return predicate.Tenants(sql.FieldIsNull(FieldSettings))
+}
+
+// SettingsNotNil applies the NotNil predicate on the "settings" field.
+func SettingsNotNil() predicate.Tenants {
+	return predicate.Tenants(sql.FieldNotNull(FieldSettings))
+}
+
+// HasProjects applies the HasEdge predicate on the "projects" edge.
+func HasProjects() predicate.Tenants {
 	return predicate.Tenants(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, SettingsTable, SettingsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, ProjectsTable, ProjectsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasSettingsWith applies the HasEdge predicate on the "settings" edge with a given conditions (other predicates).
-func HasSettingsWith(preds ...predicate.TenantSettings) predicate.Tenants {
+// HasProjectsWith applies the HasEdge predicate on the "projects" edge with a given conditions (other predicates).
+func HasProjectsWith(preds ...predicate.Project) predicate.Tenants {
 	return predicate.Tenants(func(s *sql.Selector) {
-		step := newSettingsStep()
+		step := newProjectsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasMemberships applies the HasEdge predicate on the "memberships" edge.
+func HasMemberships() predicate.Tenants {
+	return predicate.Tenants(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, MembershipsTable, MembershipsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMembershipsWith applies the HasEdge predicate on the "memberships" edge with a given conditions (other predicates).
+func HasMembershipsWith(preds ...predicate.TenantMembership) predicate.Tenants {
+	return predicate.Tenants(func(s *sql.Selector) {
+		step := newMembershipsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -29,6 +29,20 @@ func (_u *UserProfileUpdate) Where(ps ...predicate.UserProfile) *UserProfileUpda
 	return _u
 }
 
+// SetUserID sets the "user_id" field.
+func (_u *UserProfileUpdate) SetUserID(v string) *UserProfileUpdate {
+	_u.mutation.SetUserID(v)
+	return _u
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (_u *UserProfileUpdate) SetNillableUserID(v *string) *UserProfileUpdate {
+	if v != nil {
+		_u.SetUserID(*v)
+	}
+	return _u
+}
+
 // SetFirstName sets the "first_name" field.
 func (_u *UserProfileUpdate) SetFirstName(v string) *UserProfileUpdate {
 	_u.mutation.SetFirstName(v)
@@ -66,6 +80,26 @@ func (_u *UserProfileUpdate) SetNillableLastName(v *string) *UserProfileUpdate {
 // ClearLastName clears the value of the "last_name" field.
 func (_u *UserProfileUpdate) ClearLastName() *UserProfileUpdate {
 	_u.mutation.ClearLastName()
+	return _u
+}
+
+// SetPhone sets the "phone" field.
+func (_u *UserProfileUpdate) SetPhone(v string) *UserProfileUpdate {
+	_u.mutation.SetPhone(v)
+	return _u
+}
+
+// SetNillablePhone sets the "phone" field if the given value is not nil.
+func (_u *UserProfileUpdate) SetNillablePhone(v *string) *UserProfileUpdate {
+	if v != nil {
+		_u.SetPhone(*v)
+	}
+	return _u
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (_u *UserProfileUpdate) ClearPhone() *UserProfileUpdate {
+	_u.mutation.ClearPhone()
 	return _u
 }
 
@@ -169,6 +203,26 @@ func (_u *UserProfileUpdate) ClearPhotoURL() *UserProfileUpdate {
 	return _u
 }
 
+// SetBio sets the "bio" field.
+func (_u *UserProfileUpdate) SetBio(v string) *UserProfileUpdate {
+	_u.mutation.SetBio(v)
+	return _u
+}
+
+// SetNillableBio sets the "bio" field if the given value is not nil.
+func (_u *UserProfileUpdate) SetNillableBio(v *string) *UserProfileUpdate {
+	if v != nil {
+		_u.SetBio(*v)
+	}
+	return _u
+}
+
+// ClearBio clears the value of the "bio" field.
+func (_u *UserProfileUpdate) ClearBio() *UserProfileUpdate {
+	_u.mutation.ClearBio()
+	return _u
+}
+
 // SetSociodemographicData sets the "sociodemographic_data" field.
 func (_u *UserProfileUpdate) SetSociodemographicData(v map[string]interface{}) *UserProfileUpdate {
 	_u.mutation.SetSociodemographicData(v)
@@ -184,12 +238,6 @@ func (_u *UserProfileUpdate) ClearSociodemographicData() *UserProfileUpdate {
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *UserProfileUpdate) SetUpdatedAt(v time.Time) *UserProfileUpdate {
 	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
-// SetUserID sets the "user" edge to the User entity by ID.
-func (_u *UserProfileUpdate) SetUserID(id string) *UserProfileUpdate {
-	_u.mutation.SetUserID(id)
 	return _u
 }
 
@@ -247,6 +295,11 @@ func (_u *UserProfileUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *UserProfileUpdate) check() error {
+	if v, ok := _u.mutation.UserID(); ok {
+		if err := userprofile.UserIDValidator(v); err != nil {
+			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "UserProfile.user_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.FirstName(); ok {
 		if err := userprofile.FirstNameValidator(v); err != nil {
 			return &ValidationError{Name: "first_name", err: fmt.Errorf(`ent: validator failed for field "UserProfile.first_name": %w`, err)}
@@ -255,6 +308,11 @@ func (_u *UserProfileUpdate) check() error {
 	if v, ok := _u.mutation.LastName(); ok {
 		if err := userprofile.LastNameValidator(v); err != nil {
 			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "UserProfile.last_name": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Phone(); ok {
+		if err := userprofile.PhoneValidator(v); err != nil {
+			return &ValidationError{Name: "phone", err: fmt.Errorf(`ent: validator failed for field "UserProfile.phone": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.Gender(); ok {
@@ -307,6 +365,12 @@ func (_u *UserProfileUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if _u.mutation.LastNameCleared() {
 		_spec.ClearField(userprofile.FieldLastName, field.TypeString)
 	}
+	if value, ok := _u.mutation.Phone(); ok {
+		_spec.SetField(userprofile.FieldPhone, field.TypeString, value)
+	}
+	if _u.mutation.PhoneCleared() {
+		_spec.ClearField(userprofile.FieldPhone, field.TypeString)
+	}
 	if value, ok := _u.mutation.BirthDate(); ok {
 		_spec.SetField(userprofile.FieldBirthDate, field.TypeTime, value)
 	}
@@ -336,6 +400,12 @@ func (_u *UserProfileUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.PhotoURLCleared() {
 		_spec.ClearField(userprofile.FieldPhotoURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.Bio(); ok {
+		_spec.SetField(userprofile.FieldBio, field.TypeString, value)
+	}
+	if _u.mutation.BioCleared() {
+		_spec.ClearField(userprofile.FieldBio, field.TypeString)
 	}
 	if value, ok := _u.mutation.SociodemographicData(); ok {
 		_spec.SetField(userprofile.FieldSociodemographicData, field.TypeJSON, value)
@@ -395,6 +465,20 @@ type UserProfileUpdateOne struct {
 	mutation *UserProfileMutation
 }
 
+// SetUserID sets the "user_id" field.
+func (_u *UserProfileUpdateOne) SetUserID(v string) *UserProfileUpdateOne {
+	_u.mutation.SetUserID(v)
+	return _u
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (_u *UserProfileUpdateOne) SetNillableUserID(v *string) *UserProfileUpdateOne {
+	if v != nil {
+		_u.SetUserID(*v)
+	}
+	return _u
+}
+
 // SetFirstName sets the "first_name" field.
 func (_u *UserProfileUpdateOne) SetFirstName(v string) *UserProfileUpdateOne {
 	_u.mutation.SetFirstName(v)
@@ -432,6 +516,26 @@ func (_u *UserProfileUpdateOne) SetNillableLastName(v *string) *UserProfileUpdat
 // ClearLastName clears the value of the "last_name" field.
 func (_u *UserProfileUpdateOne) ClearLastName() *UserProfileUpdateOne {
 	_u.mutation.ClearLastName()
+	return _u
+}
+
+// SetPhone sets the "phone" field.
+func (_u *UserProfileUpdateOne) SetPhone(v string) *UserProfileUpdateOne {
+	_u.mutation.SetPhone(v)
+	return _u
+}
+
+// SetNillablePhone sets the "phone" field if the given value is not nil.
+func (_u *UserProfileUpdateOne) SetNillablePhone(v *string) *UserProfileUpdateOne {
+	if v != nil {
+		_u.SetPhone(*v)
+	}
+	return _u
+}
+
+// ClearPhone clears the value of the "phone" field.
+func (_u *UserProfileUpdateOne) ClearPhone() *UserProfileUpdateOne {
+	_u.mutation.ClearPhone()
 	return _u
 }
 
@@ -535,6 +639,26 @@ func (_u *UserProfileUpdateOne) ClearPhotoURL() *UserProfileUpdateOne {
 	return _u
 }
 
+// SetBio sets the "bio" field.
+func (_u *UserProfileUpdateOne) SetBio(v string) *UserProfileUpdateOne {
+	_u.mutation.SetBio(v)
+	return _u
+}
+
+// SetNillableBio sets the "bio" field if the given value is not nil.
+func (_u *UserProfileUpdateOne) SetNillableBio(v *string) *UserProfileUpdateOne {
+	if v != nil {
+		_u.SetBio(*v)
+	}
+	return _u
+}
+
+// ClearBio clears the value of the "bio" field.
+func (_u *UserProfileUpdateOne) ClearBio() *UserProfileUpdateOne {
+	_u.mutation.ClearBio()
+	return _u
+}
+
 // SetSociodemographicData sets the "sociodemographic_data" field.
 func (_u *UserProfileUpdateOne) SetSociodemographicData(v map[string]interface{}) *UserProfileUpdateOne {
 	_u.mutation.SetSociodemographicData(v)
@@ -550,12 +674,6 @@ func (_u *UserProfileUpdateOne) ClearSociodemographicData() *UserProfileUpdateOn
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *UserProfileUpdateOne) SetUpdatedAt(v time.Time) *UserProfileUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
-// SetUserID sets the "user" edge to the User entity by ID.
-func (_u *UserProfileUpdateOne) SetUserID(id string) *UserProfileUpdateOne {
-	_u.mutation.SetUserID(id)
 	return _u
 }
 
@@ -626,6 +744,11 @@ func (_u *UserProfileUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *UserProfileUpdateOne) check() error {
+	if v, ok := _u.mutation.UserID(); ok {
+		if err := userprofile.UserIDValidator(v); err != nil {
+			return &ValidationError{Name: "user_id", err: fmt.Errorf(`ent: validator failed for field "UserProfile.user_id": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.FirstName(); ok {
 		if err := userprofile.FirstNameValidator(v); err != nil {
 			return &ValidationError{Name: "first_name", err: fmt.Errorf(`ent: validator failed for field "UserProfile.first_name": %w`, err)}
@@ -634,6 +757,11 @@ func (_u *UserProfileUpdateOne) check() error {
 	if v, ok := _u.mutation.LastName(); ok {
 		if err := userprofile.LastNameValidator(v); err != nil {
 			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "UserProfile.last_name": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Phone(); ok {
+		if err := userprofile.PhoneValidator(v); err != nil {
+			return &ValidationError{Name: "phone", err: fmt.Errorf(`ent: validator failed for field "UserProfile.phone": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.Gender(); ok {
@@ -703,6 +831,12 @@ func (_u *UserProfileUpdateOne) sqlSave(ctx context.Context) (_node *UserProfile
 	if _u.mutation.LastNameCleared() {
 		_spec.ClearField(userprofile.FieldLastName, field.TypeString)
 	}
+	if value, ok := _u.mutation.Phone(); ok {
+		_spec.SetField(userprofile.FieldPhone, field.TypeString, value)
+	}
+	if _u.mutation.PhoneCleared() {
+		_spec.ClearField(userprofile.FieldPhone, field.TypeString)
+	}
 	if value, ok := _u.mutation.BirthDate(); ok {
 		_spec.SetField(userprofile.FieldBirthDate, field.TypeTime, value)
 	}
@@ -732,6 +866,12 @@ func (_u *UserProfileUpdateOne) sqlSave(ctx context.Context) (_node *UserProfile
 	}
 	if _u.mutation.PhotoURLCleared() {
 		_spec.ClearField(userprofile.FieldPhotoURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.Bio(); ok {
+		_spec.SetField(userprofile.FieldBio, field.TypeString, value)
+	}
+	if _u.mutation.BioCleared() {
+		_spec.ClearField(userprofile.FieldBio, field.TypeString)
 	}
 	if value, ok := _u.mutation.SociodemographicData(); ok {
 		_spec.SetField(userprofile.FieldSociodemographicData, field.TypeJSON, value)

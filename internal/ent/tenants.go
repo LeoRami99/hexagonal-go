@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"hexagonal-go-backend/internal/ent/tenants"
-	"hexagonal-go-backend/internal/ent/tenantsettings"
 	"strings"
 	"time"
 
@@ -25,16 +24,14 @@ type Tenants struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
-	// Branding holds the value of the "branding" field.
-	Branding map[string]interface{} `json:"branding,omitempty"`
-	// Domains holds the value of the "domains" field.
-	Domains []string `json:"domains,omitempty"`
-	// Limits holds the value of the "limits" field.
-	Limits map[string]interface{} `json:"limits,omitempty"`
-	// Features holds the value of the "features" field.
-	Features map[string]interface{} `json:"features,omitempty"`
+	// Slug holds the value of the "slug" field.
+	Slug string `json:"slug,omitempty"`
+	// ContactEmail holds the value of the "contact_email" field.
+	ContactEmail *string `json:"contact_email,omitempty"`
 	// Status holds the value of the "status" field.
 	Status tenants.Status `json:"status,omitempty"`
+	// Settings holds the value of the "settings" field.
+	Settings map[string]interface{} `json:"settings,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TenantsQuery when eager-loading is set.
 	Edges        TenantsEdges `json:"edges"`
@@ -43,22 +40,31 @@ type Tenants struct {
 
 // TenantsEdges holds the relations/edges for other nodes in the graph.
 type TenantsEdges struct {
-	// Settings holds the value of the settings edge.
-	Settings *TenantSettings `json:"settings,omitempty"`
+	// Projects holds the value of the projects edge.
+	Projects []*Project `json:"projects,omitempty"`
+	// Memberships holds the value of the memberships edge.
+	Memberships []*TenantMembership `json:"memberships,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
-// SettingsOrErr returns the Settings value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e TenantsEdges) SettingsOrErr() (*TenantSettings, error) {
-	if e.Settings != nil {
-		return e.Settings, nil
-	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: tenantsettings.Label}
+// ProjectsOrErr returns the Projects value or an error if the edge
+// was not loaded in eager-loading.
+func (e TenantsEdges) ProjectsOrErr() ([]*Project, error) {
+	if e.loadedTypes[0] {
+		return e.Projects, nil
 	}
-	return nil, &NotLoadedError{edge: "settings"}
+	return nil, &NotLoadedError{edge: "projects"}
+}
+
+// MembershipsOrErr returns the Memberships value or an error if the edge
+// was not loaded in eager-loading.
+func (e TenantsEdges) MembershipsOrErr() ([]*TenantMembership, error) {
+	if e.loadedTypes[1] {
+		return e.Memberships, nil
+	}
+	return nil, &NotLoadedError{edge: "memberships"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -66,9 +72,9 @@ func (*Tenants) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case tenants.FieldBranding, tenants.FieldDomains, tenants.FieldLimits, tenants.FieldFeatures:
+		case tenants.FieldSettings:
 			values[i] = new([]byte)
-		case tenants.FieldID, tenants.FieldName, tenants.FieldStatus:
+		case tenants.FieldID, tenants.FieldName, tenants.FieldSlug, tenants.FieldContactEmail, tenants.FieldStatus:
 			values[i] = new(sql.NullString)
 		case tenants.FieldCreatedAt, tenants.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -111,43 +117,32 @@ func (_m *Tenants) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Name = value.String
 			}
-		case tenants.FieldBranding:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field branding", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Branding); err != nil {
-					return fmt.Errorf("unmarshal field branding: %w", err)
-				}
+		case tenants.FieldSlug:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field slug", values[i])
+			} else if value.Valid {
+				_m.Slug = value.String
 			}
-		case tenants.FieldDomains:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field domains", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Domains); err != nil {
-					return fmt.Errorf("unmarshal field domains: %w", err)
-				}
-			}
-		case tenants.FieldLimits:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field limits", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Limits); err != nil {
-					return fmt.Errorf("unmarshal field limits: %w", err)
-				}
-			}
-		case tenants.FieldFeatures:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field features", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Features); err != nil {
-					return fmt.Errorf("unmarshal field features: %w", err)
-				}
+		case tenants.FieldContactEmail:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_email", values[i])
+			} else if value.Valid {
+				_m.ContactEmail = new(string)
+				*_m.ContactEmail = value.String
 			}
 		case tenants.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				_m.Status = tenants.Status(value.String)
+			}
+		case tenants.FieldSettings:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field settings", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.Settings); err != nil {
+					return fmt.Errorf("unmarshal field settings: %w", err)
+				}
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -162,9 +157,14 @@ func (_m *Tenants) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QuerySettings queries the "settings" edge of the Tenants entity.
-func (_m *Tenants) QuerySettings() *TenantSettingsQuery {
-	return NewTenantsClient(_m.config).QuerySettings(_m)
+// QueryProjects queries the "projects" edge of the Tenants entity.
+func (_m *Tenants) QueryProjects() *ProjectQuery {
+	return NewTenantsClient(_m.config).QueryProjects(_m)
+}
+
+// QueryMemberships queries the "memberships" edge of the Tenants entity.
+func (_m *Tenants) QueryMemberships() *TenantMembershipQuery {
+	return NewTenantsClient(_m.config).QueryMemberships(_m)
 }
 
 // Update returns a builder for updating this Tenants.
@@ -199,20 +199,19 @@ func (_m *Tenants) String() string {
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
-	builder.WriteString("branding=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Branding))
+	builder.WriteString("slug=")
+	builder.WriteString(_m.Slug)
 	builder.WriteString(", ")
-	builder.WriteString("domains=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Domains))
-	builder.WriteString(", ")
-	builder.WriteString("limits=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Limits))
-	builder.WriteString(", ")
-	builder.WriteString("features=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Features))
+	if v := _m.ContactEmail; v != nil {
+		builder.WriteString("contact_email=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
+	builder.WriteString(", ")
+	builder.WriteString("settings=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Settings))
 	builder.WriteByte(')')
 	return builder.String()
 }

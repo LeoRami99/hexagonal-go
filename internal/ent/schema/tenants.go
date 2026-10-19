@@ -15,26 +15,26 @@ type Tenants struct {
 // Fields of the Tenants.
 func (Tenants) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("id").StorageKey("id").Immutable(),
 		field.String("name").NotEmpty().MaxLen(255),
-		field.JSON("branding", map[string]any{}).Optional(),
-		field.JSON("domains", []string{}).Optional(),
-		field.JSON("limits", map[string]any{}).Optional(),
-		field.JSON("features", map[string]any{}).Optional(),
-		field.Enum("status").Values("ACTIVE", "INACTIVE", "PENDING").Default("ACTIVE"),
+		field.String("slug").MaxLen(100).NotEmpty(),
+		field.String("contact_email").MaxLen(255).Optional().Nillable(),
+		field.Enum("status").Values("ACTIVE", "INACTIVE", "SUSPENDED", "PENDING").Default("ACTIVE"),
+		field.JSON("settings", map[string]any{}).Optional(),
 	}
 }
 
 // Edges of the Tenants.
 func (Tenants) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("settings", TenantSettings.Type).Unique(),
+		edge.To("projects", Project.Type),
+		edge.To("memberships", TenantMembership.Type),
 	}
 }
 
 // Mixin of the Tenants.
 func (Tenants) Mixin() []ent.Mixin {
 	return []ent.Mixin{
+		IDMixin{},
 		TimeMixin{},
 	}
 }
@@ -42,6 +42,7 @@ func (Tenants) Mixin() []ent.Mixin {
 // Indexes of the Tenants.
 func (Tenants) Indexes() []ent.Index {
 	return []ent.Index{
+		index.Fields("slug").Unique(),
 		index.Fields("status"),
 	}
 }
