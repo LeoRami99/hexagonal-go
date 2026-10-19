@@ -20,10 +20,28 @@ type Tx struct {
 	CourseTemplates *CourseTemplatesClient
 	// CourseVersions is the client for interacting with the CourseVersions builders.
 	CourseVersions *CourseVersionsClient
+	// Feature is the client for interacting with the Feature builders.
+	Feature *FeatureClient
+	// Permission is the client for interacting with the Permission builders.
+	Permission *PermissionClient
+	// Project is the client for interacting with the Project builders.
+	Project *ProjectClient
+	// ProjectFeature is the client for interacting with the ProjectFeature builders.
+	ProjectFeature *ProjectFeatureClient
+	// ProjectMembership is the client for interacting with the ProjectMembership builders.
+	ProjectMembership *ProjectMembershipClient
+	// ProjectRole is the client for interacting with the ProjectRole builders.
+	ProjectRole *ProjectRoleClient
 	// Syllabi is the client for interacting with the Syllabi builders.
 	Syllabi *SyllabiClient
+	// TenantMembership is the client for interacting with the TenantMembership builders.
+	TenantMembership *TenantMembershipClient
+	// Tenants is the client for interacting with the Tenants builders.
+	Tenants *TenantsClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// UserProfile is the client for interacting with the UserProfile builders.
+	UserProfile *UserProfileClient
 
 	// lazily loaded.
 	client     *Client
@@ -159,8 +177,17 @@ func (tx *Tx) init() {
 	tx.CourseModules = NewCourseModulesClient(tx.config)
 	tx.CourseTemplates = NewCourseTemplatesClient(tx.config)
 	tx.CourseVersions = NewCourseVersionsClient(tx.config)
+	tx.Feature = NewFeatureClient(tx.config)
+	tx.Permission = NewPermissionClient(tx.config)
+	tx.Project = NewProjectClient(tx.config)
+	tx.ProjectFeature = NewProjectFeatureClient(tx.config)
+	tx.ProjectMembership = NewProjectMembershipClient(tx.config)
+	tx.ProjectRole = NewProjectRoleClient(tx.config)
 	tx.Syllabi = NewSyllabiClient(tx.config)
+	tx.TenantMembership = NewTenantMembershipClient(tx.config)
+	tx.Tenants = NewTenantsClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.UserProfile = NewUserProfileClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

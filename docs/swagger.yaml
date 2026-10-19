@@ -1,5 +1,286 @@
 basePath: /api/v1
-host: localhost:8080
+definitions:
+  hexagonal-go-backend_internal_modules_auth_application.ProjectMembershipContext:
+    properties:
+      project_id:
+        type: string
+      project_name:
+        type: string
+      project_slug:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+      tenant_id:
+        type: string
+    type: object
+  hexagonal-go-backend_internal_modules_auth_application.SessionContext:
+    properties:
+      projects:
+        items:
+          $ref: '#/definitions/hexagonal-go-backend_internal_modules_auth_application.ProjectMembershipContext'
+        type: array
+      tenants:
+        items:
+          $ref: '#/definitions/hexagonal-go-backend_internal_modules_auth_application.TenantContext'
+        type: array
+      user:
+        $ref: '#/definitions/hexagonal-go-backend_internal_modules_auth_application.UserInfo'
+    type: object
+  hexagonal-go-backend_internal_modules_auth_application.TenantContext:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+      status:
+        type: string
+    type: object
+  hexagonal-go-backend_internal_modules_auth_application.UserInfo:
+    properties:
+      auth_id:
+        type: string
+      avatar_url:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      is_super_admin:
+        type: boolean
+      name:
+        type: string
+    type: object
+  hexagonal-go-backend_internal_modules_tenants_application.CreateTenantInput:
+    properties:
+      contact_email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      settings:
+        additionalProperties: {}
+        type: object
+      slug:
+        type: string
+    type: object
+  hexagonal-go-backend_internal_modules_tenants_application.UpdateTenantInput:
+    properties:
+      contact_email:
+        type: string
+      name:
+        type: string
+      settings:
+        additionalProperties: {}
+        type: object
+      slug:
+        type: string
+      status:
+        type: string
+    type: object
+  hexagonal-go-backend_internal_modules_users_domain.Gender:
+    enum:
+    - MALE
+    - FEMALE
+    - NON_BINARY
+    - PREFER_NOT_TO_SAY
+    type: string
+    x-enum-varnames:
+    - GenderMale
+    - GenderFemale
+    - GenderNonBinary
+    - GenderPreferNotToSay
+  hexagonal-go-backend_internal_modules_users_domain.UserStatus:
+    enum:
+    - ACTIVE
+    - INACTIVE
+    - SUSPENDED
+    - BLOCKED
+    type: string
+    x-enum-varnames:
+    - StatusActive
+    - StatusInactive
+    - StatusSuspended
+    - StatusBlocked
+  hexagonal-go-backend_internal_platform_http_response.Envelope:
+    properties:
+      data: {}
+      meta: {}
+    type: object
+  hexagonal-go-backend_internal_platform_http_response.ErrorBody:
+    properties:
+      code:
+        type: string
+      fields:
+        additionalProperties:
+          type: string
+        type: object
+      message:
+        type: string
+    type: object
+  hexagonal-go-backend_internal_platform_http_response.ErrorResponse:
+    properties:
+      error:
+        $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorBody'
+      request_id:
+        type: string
+    type: object
+  internal_modules_auth_delivery_http_v1.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  internal_modules_auth_delivery_http_v1.TokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  internal_modules_auth_delivery_http_v1.TokenResponse:
+    properties:
+      access_token:
+        type: string
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      token_type:
+        type: string
+    type: object
+  internal_modules_users_delivery_http_v1.CreateUserRequest:
+    properties:
+      auth_id:
+        type: string
+      email:
+        type: string
+      is_super_admin:
+        type: boolean
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - email
+    - name
+    type: object
+  internal_modules_users_delivery_http_v1.UpdateProfileRequest:
+    properties:
+      address:
+        maxLength: 255
+        type: string
+      bio:
+        type: string
+      birth_date:
+        type: string
+      city:
+        maxLength: 100
+        type: string
+      first_name:
+        maxLength: 100
+        type: string
+      gender:
+        allOf:
+        - $ref: '#/definitions/hexagonal-go-backend_internal_modules_users_domain.Gender'
+        enum:
+        - MALE
+        - FEMALE
+        - NON_BINARY
+        - PREFER_NOT_TO_SAY
+      last_name:
+        maxLength: 100
+        type: string
+      phone:
+        maxLength: 30
+        type: string
+      photo_url:
+        maxLength: 500
+        type: string
+      sociodemographic_data:
+        additionalProperties: {}
+        type: object
+    type: object
+  internal_modules_users_delivery_http_v1.UpdateUserRequest:
+    properties:
+      active:
+        type: boolean
+      email:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/hexagonal-go-backend_internal_modules_users_domain.UserStatus'
+        enum:
+        - ACTIVE
+        - INACTIVE
+        - SUSPENDED
+        - BLOCKED
+    type: object
+  internal_modules_users_delivery_http_v1.UserProfileResponse:
+    properties:
+      address:
+        type: string
+      bio:
+        type: string
+      birth_date:
+        type: string
+      city:
+        type: string
+      first_name:
+        type: string
+      gender:
+        $ref: '#/definitions/hexagonal-go-backend_internal_modules_users_domain.Gender'
+      last_name:
+        type: string
+      phone:
+        type: string
+      photo_url:
+        type: string
+      sociodemographic_data:
+        additionalProperties: {}
+        type: object
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  internal_modules_users_delivery_http_v1.UserResponse:
+    properties:
+      active:
+        type: boolean
+      auth_id:
+        type: string
+      avatar_url:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      is_super_admin:
+        type: boolean
+      name:
+        type: string
+      profile:
+        $ref: '#/definitions/internal_modules_users_delivery_http_v1.UserProfileResponse'
+      status:
+        $ref: '#/definitions/hexagonal-go-backend_internal_modules_users_domain.UserStatus'
+      updated_at:
+        type: string
+    type: object
 info:
   contact:
     email: soporte@empresa.com
@@ -7,7 +288,579 @@ info:
   description: API REST construida con Go, Gin y Arquitectura Hexagonal.
   title: Go Hexagonal API
   version: "1.0"
-paths: {}
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica credenciales de usuario y genera un par de tokens JWT
+        (Access y Refresh).
+      parameters:
+      - description: Credenciales de acceso
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_auth_delivery_http_v1.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_auth_delivery_http_v1.TokenResponse'
+              type: object
+        "400":
+          description: Formato de request inválido
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "401":
+          description: 'INVALID_CREDENTIALS: email o contraseña incorrectos'
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "403":
+          description: 'ACCOUNT_DISABLED: cuenta deshabilitada'
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "423":
+          description: 'ACCOUNT_LOCKED: cuenta bloqueada temporalmente'
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "503":
+          description: 'IDENTITY_PROVIDER_UNAVAILABLE: servicio de autenticación no
+            disponible'
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      summary: Iniciar sesión
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Invalida el refresh token del usuario.
+      parameters:
+      - description: Refresh token a revocar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_auth_delivery_http_v1.TokenRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Sin contenido
+        "400":
+          description: Formato de request inválido
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "401":
+          description: Token inválido
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      summary: Cerrar sesión
+      tags:
+      - auth
+  /auth/me:
+    get:
+      consumes:
+      - application/json
+      description: Retorna los datos del usuario, sus organizaciones (tenants) y membresías
+        de proyectos/campus con sus roles asociados.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/hexagonal-go-backend_internal_modules_auth_application.SessionContext'
+              type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener sesión y contexto del usuario autenticado
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Genera un nuevo par de tokens JWT utilizando un refresh token válido.
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_auth_delivery_http_v1.TokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_auth_delivery_http_v1.TokenResponse'
+              type: object
+        "400":
+          description: Formato de request inválido
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "401":
+          description: Token inválido o expirado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      summary: Renovar token de acceso
+      tags:
+      - auth
+  /tenants:
+    get:
+      consumes:
+      - application/json
+      description: Retorna la lista de todos los tenants registrados.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Listar tenants
+      tags:
+      - tenants
+    post:
+      consumes:
+      - application/json
+      description: Crea una nueva organización/tenant en la plataforma.
+      parameters:
+      - description: Datos de creación del tenant
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/hexagonal-go-backend_internal_modules_tenants_application.CreateTenantInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Datos inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: El tenant ya existe
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Crear tenant
+      tags:
+      - tenants
+  /tenants/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina un tenant por su ID.
+      parameters:
+      - description: ID del tenant
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Sin contenido
+        "404":
+          description: Tenant no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Eliminar tenant
+      tags:
+      - tenants
+    get:
+      consumes:
+      - application/json
+      description: Retorna los detalles de un tenant por su ID.
+      parameters:
+      - description: ID del tenant
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Tenant no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Obtener tenant por ID
+      tags:
+      - tenants
+    put:
+      consumes:
+      - application/json
+      description: Actualiza la información de un tenant existente.
+      parameters:
+      - description: ID del tenant
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Campos a actualizar del tenant
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/hexagonal-go-backend_internal_modules_tenants_application.UpdateTenantInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Datos inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Tenant no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Actualizar tenant
+      tags:
+      - tenants
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Retorna una lista paginada de usuarios con filtros opcionales.
+      parameters:
+      - default: 1
+        description: Número de página
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Límite por página
+        in: query
+        name: limit
+        type: integer
+      - description: Término de búsqueda
+        in: query
+        name: search
+        type: string
+      - description: Filtrar por estado
+        enum:
+        - ACTIVE
+        - INACTIVE
+        - SUSPENDED
+        - BLOCKED
+        in: query
+        name: status
+        type: string
+      - description: Filtrar por estado activo
+        in: query
+        name: active
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_modules_users_delivery_http_v1.UserResponse'
+                  type: array
+                meta:
+                  type: object
+              type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar usuarios
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Registra un nuevo usuario en la plataforma.
+      parameters:
+      - description: Payload de creación de usuario
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_users_delivery_http_v1.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_users_delivery_http_v1.UserResponse'
+              type: object
+        "400":
+          description: Petición inválida o datos malformados
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "403":
+          description: Requiere privilegios de Super Administrador
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "409":
+          description: El email ya está registrado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Crear usuario
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina un usuario por su ID.
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Sin contenido
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Eliminar usuario
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Retorna la información de un usuario por su ID.
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_users_delivery_http_v1.UserResponse'
+              type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener usuario
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Actualiza la información de un usuario existente.
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Datos a actualizar del usuario
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_users_delivery_http_v1.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_users_delivery_http_v1.UserResponse'
+              type: object
+        "400":
+          description: Petición inválida
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Actualizar usuario
+      tags:
+      - users
+  /users/me/profile:
+    get:
+      consumes:
+      - application/json
+      description: Retorna los datos extendidos del perfil del usuario en sesión.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_users_delivery_http_v1.UserProfileResponse'
+              type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener perfil del usuario autenticado
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Actualiza la información personal/demográfica del usuario en sesión.
+      parameters:
+      - description: Datos de perfil a actualizar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_users_delivery_http_v1.UpdateProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_users_delivery_http_v1.UserProfileResponse'
+              type: object
+        "400":
+          description: Petición inválida
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Actualizar perfil del usuario autenticado
+      tags:
+      - users
 securityDefinitions:
   BearerAuth:
     description: Escribe "Bearer " seguido de tu token JWT
