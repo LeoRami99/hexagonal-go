@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 // field.String("project_id").MaxLen(100).NotEmpty(),
 // 		field.String("title").MaxLen(350).NotEmpty(),
 // 		field.String("slug").MaxLen(150).NotEmpty(),
@@ -19,6 +21,7 @@ type Course struct {
 	Level 	string
 	ThumbnailURL string
 	Status 	string
-	CreatedAt 	string
-	UpdatedAt 	string
+	CreatedAt 	time.Time
+	UpdatedAt 	time.Time
 }
+
