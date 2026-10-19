@@ -2,11 +2,10 @@
 APP := bin/api
 CMD := ./cmd/api
 MODULES_DIR := internal/modules
-MIGRATIONS_DIR := file://migrations
-ATLAS ?= atlas
+MIGRATE := go run ./cmd/migrate
 export GOTOOLCHAIN ?= go1.26.0
 
-.PHONY: run dev build test cover fmt fmt-check vet lint check swagger ent-generate ent-schema atlas-check migration-diff migrate-baseline migrate-apply migrate-status docker-up docker-down module clean
+.PHONY: run dev build test cover fmt fmt-check vet lint check swagger ent-generate ent-schema migration-diff migrate-baseline migrate-apply migrate-status migrate-hash docker-up docker-down module clean
 
 run:
 	@if [ -f .env ]; then \
@@ -70,66 +69,28 @@ ent-schema:
 	go run entgo.io/ent/cmd/ent new --target internal/ent/schema $(NAME)
 	$(MAKE) ent-generate
 
-atlas-check:
-	@command -v $(ATLAS) >/dev/null 2>&1 || { \
-		echo "Error: Atlas CLI no está instalado. macOS: brew install ariga/tap/atlas"; \
-		exit 1; \
-	}
+# Migraciones: herramienta en Go (cmd/migrate), sin Atlas CLI ni shell.
+# Funciona igual en Linux, macOS y Windows; lee DATABASE_URL de .env.
+# Sin make: go run ./cmd/migrate <diff|apply|baseline|status|hash>
 
 # Uso: make migration-diff NAME=add_products
-migration-diff: atlas-check
-	@if [ -z "$(NAME)" ]; then \
-		echo "Error: indica el nombre de la migración. Uso: make migration-diff NAME=add_products"; \
-		exit 1; \
-	fi
-	@if ! printf '%s' "$(NAME)" | grep -Eq '^[a-z][a-z0-9_]*$$'; then \
-		echo "Error: NAME debe usar snake_case."; \
-		exit 1; \
-	fi
-	$(ATLAS) migrate diff $(NAME) \
-		--dir "$(MIGRATIONS_DIR)" \
-		--to "ent://internal/ent/schema" \
-		--dev-url "docker://postgres/17/dev?search_path=public"
+migration-diff:
+	$(MIGRATE) diff $(NAME)
 
-# Uso único al adoptar Atlas sobre una base ya creada por Ent:
+# Uso único al adoptar migraciones sobre una base ya creada por Ent:
 # make migrate-baseline VERSION=20260925003527
-migrate-baseline: atlas-check
-	@if [ -z "$(VERSION)" ]; then \
-		echo "Error: indica la versión inicial. Uso: make migrate-baseline VERSION=20260925003527"; \
-		exit 1; \
-	fi
-	@if ! printf '%s' "$(VERSION)" | grep -Eq '^[0-9]+$$'; then \
-		echo "Error: VERSION debe contener únicamente el prefijo numérico de la migración."; \
-		exit 1; \
-	fi
-	@if [ ! -f .env ]; then \
-		echo "Error: no existe .env con DATABASE_URL."; \
-		exit 1; \
-	fi; \
-	set -a; \
-	. ./.env; \
-	set +a; \
-	$(ATLAS) migrate apply --dir "$(MIGRATIONS_DIR)" --url "$$DATABASE_URL" --baseline "$(VERSION)"
+migrate-baseline:
+	$(MIGRATE) baseline $(VERSION)
 
-migrate-apply: atlas-check
-	@if [ ! -f .env ]; then \
-		echo "Error: no existe .env con DATABASE_URL."; \
-		exit 1; \
-	fi; \
-	set -a; \
-	. ./.env; \
-	set +a; \
-	$(ATLAS) migrate apply --dir "$(MIGRATIONS_DIR)" --url "$$DATABASE_URL"
+migrate-apply:
+	$(MIGRATE) apply
 
-migrate-status: atlas-check
-	@if [ ! -f .env ]; then \
-		echo "Error: no existe .env con DATABASE_URL."; \
-		exit 1; \
-	fi; \
-	set -a; \
-	. ./.env; \
-	set +a; \
-	GOTOOLCHAIN=go1.26.0 $(ATLAS) migrate status --dir "$(MIGRATIONS_DIR)" --url "$$DATABASE_URL"
+migrate-status:
+	$(MIGRATE) status
+
+# Recalcula migrations/atlas.sum tras editar a mano un archivo SQL.
+migrate-hash:
+	$(MIGRATE) hash
 
 docker-up:
 	docker compose up -d --build
