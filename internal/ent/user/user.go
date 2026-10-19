@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -14,31 +15,55 @@ const (
 	Label = "user"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldAuthID holds the string denoting the auth_id field in the database.
+	FieldAuthID = "auth_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
-	// FieldPasswordHash holds the string denoting the password_hash field in the database.
-	FieldPasswordHash = "password_hash"
-	// FieldRole holds the string denoting the role field in the database.
-	FieldRole = "role"
+	// FieldAvatarURL holds the string denoting the avatar_url field in the database.
+	FieldAvatarURL = "avatar_url"
+	// FieldIsSuperAdmin holds the string denoting the is_super_admin field in the database.
+	FieldIsSuperAdmin = "is_super_admin"
+	// FieldStatus holds the string denoting the status field in the database.
+	FieldStatus = "status"
 	// FieldActive holds the string denoting the active field in the database.
 	FieldActive = "active"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// EdgeProfile holds the string denoting the profile edge name in mutations.
+	EdgeProfile = "profile"
+	// EdgeTenantMemberships holds the string denoting the tenant_memberships edge name in mutations.
+	EdgeTenantMemberships = "tenant_memberships"
 	// Table holds the table name of the user in the database.
 	Table = "users"
+	// ProfileTable is the table that holds the profile relation/edge.
+	ProfileTable = "user_profiles"
+	// ProfileInverseTable is the table name for the UserProfile entity.
+	// It exists in this package in order to avoid circular dependency with the "userprofile" package.
+	ProfileInverseTable = "user_profiles"
+	// ProfileColumn is the table column denoting the profile relation/edge.
+	ProfileColumn = "user_id"
+	// TenantMembershipsTable is the table that holds the tenant_memberships relation/edge.
+	TenantMembershipsTable = "tenant_memberships"
+	// TenantMembershipsInverseTable is the table name for the TenantMembership entity.
+	// It exists in this package in order to avoid circular dependency with the "tenantmembership" package.
+	TenantMembershipsInverseTable = "tenant_memberships"
+	// TenantMembershipsColumn is the table column denoting the tenant_memberships relation/edge.
+	TenantMembershipsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
 var Columns = []string{
 	FieldID,
+	FieldAuthID,
 	FieldName,
 	FieldEmail,
-	FieldPasswordHash,
-	FieldRole,
+	FieldAvatarURL,
+	FieldIsSuperAdmin,
+	FieldStatus,
 	FieldActive,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -55,12 +80,16 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// AuthIDValidator is a validator for the "auth_id" field. It is called by the builders before save.
+	AuthIDValidator func(string) error
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
 	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	EmailValidator func(string) error
-	// PasswordHashValidator is a validator for the "password_hash" field. It is called by the builders before save.
-	PasswordHashValidator func(string) error
+	// AvatarURLValidator is a validator for the "avatar_url" field. It is called by the builders before save.
+	AvatarURLValidator func(string) error
+	// DefaultIsSuperAdmin holds the default value on creation for the "is_super_admin" field.
+	DefaultIsSuperAdmin bool
 	// DefaultActive holds the default value on creation for the "active" field.
 	DefaultActive bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -75,29 +104,31 @@ var (
 	IDValidator func(string) error
 )
 
-// Role defines the type for the "role" enum field.
-type Role string
+// Status defines the type for the "status" enum field.
+type Status string
 
-// RoleUser is the default value of the Role enum.
-const DefaultRole = RoleUser
+// StatusACTIVE is the default value of the Status enum.
+const DefaultStatus = StatusACTIVE
 
-// Role values.
+// Status values.
 const (
-	RoleAdmin Role = "admin"
-	RoleUser  Role = "user"
+	StatusACTIVE    Status = "ACTIVE"
+	StatusINACTIVE  Status = "INACTIVE"
+	StatusSUSPENDED Status = "SUSPENDED"
+	StatusBLOCKED   Status = "BLOCKED"
 )
 
-func (r Role) String() string {
-	return string(r)
+func (s Status) String() string {
+	return string(s)
 }
 
-// RoleValidator is a validator for the "role" field enum values. It is called by the builders before save.
-func RoleValidator(r Role) error {
-	switch r {
-	case RoleAdmin, RoleUser:
+// StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
+func StatusValidator(s Status) error {
+	switch s {
+	case StatusACTIVE, StatusINACTIVE, StatusSUSPENDED, StatusBLOCKED:
 		return nil
 	default:
-		return fmt.Errorf("user: invalid enum value for role field: %q", r)
+		return fmt.Errorf("user: invalid enum value for status field: %q", s)
 	}
 }
 
@@ -107,6 +138,11 @@ type OrderOption func(*sql.Selector)
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByAuthID orders the results by the auth_id field.
+func ByAuthID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAuthID, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.
@@ -119,14 +155,19 @@ func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmail, opts...).ToFunc()
 }
 
-// ByPasswordHash orders the results by the password_hash field.
-func ByPasswordHash(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldPasswordHash, opts...).ToFunc()
+// ByAvatarURL orders the results by the avatar_url field.
+func ByAvatarURL(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAvatarURL, opts...).ToFunc()
 }
 
-// ByRole orders the results by the role field.
-func ByRole(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldRole, opts...).ToFunc()
+// ByIsSuperAdmin orders the results by the is_super_admin field.
+func ByIsSuperAdmin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsSuperAdmin, opts...).ToFunc()
+}
+
+// ByStatus orders the results by the status field.
+func ByStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
 // ByActive orders the results by the active field.
@@ -142,4 +183,39 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByProfileField orders the results by profile field.
+func ByProfileField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newProfileStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByTenantMembershipsCount orders the results by tenant_memberships count.
+func ByTenantMembershipsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTenantMembershipsStep(), opts...)
+	}
+}
+
+// ByTenantMemberships orders the results by tenant_memberships terms.
+func ByTenantMemberships(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTenantMembershipsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newProfileStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ProfileInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, ProfileTable, ProfileColumn),
+	)
+}
+func newTenantMembershipsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TenantMembershipsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TenantMembershipsTable, TenantMembershipsColumn),
+	)
 }

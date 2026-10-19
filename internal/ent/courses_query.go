@@ -82,8 +82,8 @@ func (_q *CoursesQuery) FirstX(ctx context.Context) *Courses {
 
 // FirstID returns the first Courses ID from the query.
 // Returns a *NotFoundError when no Courses ID was found.
-func (_q *CoursesQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (_q *CoursesQuery) FirstID(ctx context.Context) (id string, err error) {
+	var ids []string
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
@@ -95,7 +95,7 @@ func (_q *CoursesQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *CoursesQuery) FirstIDX(ctx context.Context) int {
+func (_q *CoursesQuery) FirstIDX(ctx context.Context) string {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -133,8 +133,8 @@ func (_q *CoursesQuery) OnlyX(ctx context.Context) *Courses {
 // OnlyID is like Only, but returns the only Courses ID in the query.
 // Returns a *NotSingularError when more than one Courses ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *CoursesQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (_q *CoursesQuery) OnlyID(ctx context.Context) (id string, err error) {
+	var ids []string
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
@@ -150,7 +150,7 @@ func (_q *CoursesQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *CoursesQuery) OnlyIDX(ctx context.Context) int {
+func (_q *CoursesQuery) OnlyIDX(ctx context.Context) string {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -178,7 +178,7 @@ func (_q *CoursesQuery) AllX(ctx context.Context) []*Courses {
 }
 
 // IDs executes the query and returns a list of Courses IDs.
-func (_q *CoursesQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (_q *CoursesQuery) IDs(ctx context.Context) (ids []string, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
@@ -190,7 +190,7 @@ func (_q *CoursesQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *CoursesQuery) IDsX(ctx context.Context) []int {
+func (_q *CoursesQuery) IDsX(ctx context.Context) []string {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -258,6 +258,18 @@ func (_q *CoursesQuery) Clone() *CoursesQuery {
 
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
+//
+// Example:
+//
+//	var v []struct {
+//		TenantID string `json:"tenant_id,omitempty"`
+//		Count int `json:"count,omitempty"`
+//	}
+//
+//	client.Courses.Query().
+//		GroupBy(courses.FieldTenantID).
+//		Aggregate(ent.Count()).
+//		Scan(ctx, &v)
 func (_q *CoursesQuery) GroupBy(field string, fields ...string) *CoursesGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
 	grbuild := &CoursesGroupBy{build: _q}
@@ -269,6 +281,16 @@ func (_q *CoursesQuery) GroupBy(field string, fields ...string) *CoursesGroupBy 
 
 // Select allows the selection one or more fields/columns for the given query,
 // instead of selecting all fields in the entity.
+//
+// Example:
+//
+//	var v []struct {
+//		TenantID string `json:"tenant_id,omitempty"`
+//	}
+//
+//	client.Courses.Query().
+//		Select(courses.FieldTenantID).
+//		Scan(ctx, &v)
 func (_q *CoursesQuery) Select(fields ...string) *CoursesSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
 	sbuild := &CoursesSelect{CoursesQuery: _q}
@@ -343,7 +365,7 @@ func (_q *CoursesQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (_q *CoursesQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(courses.Table, courses.Columns, sqlgraph.NewFieldSpec(courses.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(courses.Table, courses.Columns, sqlgraph.NewFieldSpec(courses.FieldID, field.TypeString))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

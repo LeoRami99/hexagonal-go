@@ -5,6 +5,7 @@ package ent
 import (
 	"fmt"
 	"hexagonal-go-backend/internal/ent/user"
+	"hexagonal-go-backend/internal/ent/userprofile"
 	"strings"
 	"time"
 
@@ -17,21 +18,59 @@ type User struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID string `json:"id,omitempty"`
+	// AuthID holds the value of the "auth_id" field.
+	AuthID string `json:"auth_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
-	// PasswordHash holds the value of the "password_hash" field.
-	PasswordHash string `json:"-"`
-	// Role holds the value of the "role" field.
-	Role user.Role `json:"role,omitempty"`
+	// AvatarURL holds the value of the "avatar_url" field.
+	AvatarURL *string `json:"avatar_url,omitempty"`
+	// IsSuperAdmin holds the value of the "is_super_admin" field.
+	IsSuperAdmin bool `json:"is_super_admin,omitempty"`
+	// Status holds the value of the "status" field.
+	Status user.Status `json:"status,omitempty"`
 	// Active holds the value of the "active" field.
 	Active bool `json:"active,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the UserQuery when eager-loading is set.
+	Edges        UserEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// UserEdges holds the relations/edges for other nodes in the graph.
+type UserEdges struct {
+	// Profile holds the value of the profile edge.
+	Profile *UserProfile `json:"profile,omitempty"`
+	// TenantMemberships holds the value of the tenant_memberships edge.
+	TenantMemberships []*TenantMembership `json:"tenant_memberships,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [2]bool
+}
+
+// ProfileOrErr returns the Profile value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserEdges) ProfileOrErr() (*UserProfile, error) {
+	if e.Profile != nil {
+		return e.Profile, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: userprofile.Label}
+	}
+	return nil, &NotLoadedError{edge: "profile"}
+}
+
+// TenantMembershipsOrErr returns the TenantMemberships value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) TenantMembershipsOrErr() ([]*TenantMembership, error) {
+	if e.loadedTypes[1] {
+		return e.TenantMemberships, nil
+	}
+	return nil, &NotLoadedError{edge: "tenant_memberships"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -39,9 +78,9 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldActive:
+		case user.FieldIsSuperAdmin, user.FieldActive:
 			values[i] = new(sql.NullBool)
-		case user.FieldID, user.FieldName, user.FieldEmail, user.FieldPasswordHash, user.FieldRole:
+		case user.FieldID, user.FieldAuthID, user.FieldName, user.FieldEmail, user.FieldAvatarURL, user.FieldStatus:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt, user.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -66,6 +105,12 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.ID = value.String
 			}
+		case user.FieldAuthID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field auth_id", values[i])
+			} else if value.Valid {
+				_m.AuthID = value.String
+			}
 		case user.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
@@ -78,17 +123,24 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Email = value.String
 			}
-		case user.FieldPasswordHash:
+		case user.FieldAvatarURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field password_hash", values[i])
+				return fmt.Errorf("unexpected type %T for field avatar_url", values[i])
 			} else if value.Valid {
-				_m.PasswordHash = value.String
+				_m.AvatarURL = new(string)
+				*_m.AvatarURL = value.String
 			}
-		case user.FieldRole:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field role", values[i])
+		case user.FieldIsSuperAdmin:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_super_admin", values[i])
 			} else if value.Valid {
-				_m.Role = user.Role(value.String)
+				_m.IsSuperAdmin = value.Bool
+			}
+		case user.FieldStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field status", values[i])
+			} else if value.Valid {
+				_m.Status = user.Status(value.String)
 			}
 		case user.FieldActive:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -121,6 +173,16 @@ func (_m *User) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
+// QueryProfile queries the "profile" edge of the User entity.
+func (_m *User) QueryProfile() *UserProfileQuery {
+	return NewUserClient(_m.config).QueryProfile(_m)
+}
+
+// QueryTenantMemberships queries the "tenant_memberships" edge of the User entity.
+func (_m *User) QueryTenantMemberships() *TenantMembershipQuery {
+	return NewUserClient(_m.config).QueryTenantMemberships(_m)
+}
+
 // Update returns a builder for updating this User.
 // Note that you need to call User.Unwrap() before calling this method if this User
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -144,16 +206,25 @@ func (_m *User) String() string {
 	var builder strings.Builder
 	builder.WriteString("User(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	builder.WriteString("auth_id=")
+	builder.WriteString(_m.AuthID)
+	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
 	builder.WriteString("email=")
 	builder.WriteString(_m.Email)
 	builder.WriteString(", ")
-	builder.WriteString("password_hash=<sensitive>")
+	if v := _m.AvatarURL; v != nil {
+		builder.WriteString("avatar_url=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("role=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Role))
+	builder.WriteString("is_super_admin=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsSuperAdmin))
+	builder.WriteString(", ")
+	builder.WriteString("status=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Status))
 	builder.WriteString(", ")
 	builder.WriteString("active=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Active))

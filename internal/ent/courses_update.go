@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"hexagonal-go-backend/internal/ent/courses"
 	"hexagonal-go-backend/internal/ent/predicate"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -27,6 +28,124 @@ func (_u *CoursesUpdate) Where(ps ...predicate.Courses) *CoursesUpdate {
 	return _u
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *CoursesUpdate) SetUpdatedAt(v time.Time) *CoursesUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetProjectID sets the "project_id" field.
+func (_u *CoursesUpdate) SetProjectID(v string) *CoursesUpdate {
+	_u.mutation.SetProjectID(v)
+	return _u
+}
+
+// SetNillableProjectID sets the "project_id" field if the given value is not nil.
+func (_u *CoursesUpdate) SetNillableProjectID(v *string) *CoursesUpdate {
+	if v != nil {
+		_u.SetProjectID(*v)
+	}
+	return _u
+}
+
+// SetTitle sets the "title" field.
+func (_u *CoursesUpdate) SetTitle(v string) *CoursesUpdate {
+	_u.mutation.SetTitle(v)
+	return _u
+}
+
+// SetNillableTitle sets the "title" field if the given value is not nil.
+func (_u *CoursesUpdate) SetNillableTitle(v *string) *CoursesUpdate {
+	if v != nil {
+		_u.SetTitle(*v)
+	}
+	return _u
+}
+
+// SetSlug sets the "slug" field.
+func (_u *CoursesUpdate) SetSlug(v string) *CoursesUpdate {
+	_u.mutation.SetSlug(v)
+	return _u
+}
+
+// SetNillableSlug sets the "slug" field if the given value is not nil.
+func (_u *CoursesUpdate) SetNillableSlug(v *string) *CoursesUpdate {
+	if v != nil {
+		_u.SetSlug(*v)
+	}
+	return _u
+}
+
+// SetSummary sets the "summary" field.
+func (_u *CoursesUpdate) SetSummary(v string) *CoursesUpdate {
+	_u.mutation.SetSummary(v)
+	return _u
+}
+
+// SetNillableSummary sets the "summary" field if the given value is not nil.
+func (_u *CoursesUpdate) SetNillableSummary(v *string) *CoursesUpdate {
+	if v != nil {
+		_u.SetSummary(*v)
+	}
+	return _u
+}
+
+// SetDescription sets the "description" field.
+func (_u *CoursesUpdate) SetDescription(v string) *CoursesUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (_u *CoursesUpdate) SetNillableDescription(v *string) *CoursesUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
+	}
+	return _u
+}
+
+// SetLevel sets the "level" field.
+func (_u *CoursesUpdate) SetLevel(v string) *CoursesUpdate {
+	_u.mutation.SetLevel(v)
+	return _u
+}
+
+// SetNillableLevel sets the "level" field if the given value is not nil.
+func (_u *CoursesUpdate) SetNillableLevel(v *string) *CoursesUpdate {
+	if v != nil {
+		_u.SetLevel(*v)
+	}
+	return _u
+}
+
+// SetThumbnailURL sets the "thumbnail_url" field.
+func (_u *CoursesUpdate) SetThumbnailURL(v string) *CoursesUpdate {
+	_u.mutation.SetThumbnailURL(v)
+	return _u
+}
+
+// SetNillableThumbnailURL sets the "thumbnail_url" field if the given value is not nil.
+func (_u *CoursesUpdate) SetNillableThumbnailURL(v *string) *CoursesUpdate {
+	if v != nil {
+		_u.SetThumbnailURL(*v)
+	}
+	return _u
+}
+
+// SetStatus sets the "status" field.
+func (_u *CoursesUpdate) SetStatus(v string) *CoursesUpdate {
+	_u.mutation.SetStatus(v)
+	return _u
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (_u *CoursesUpdate) SetNillableStatus(v *string) *CoursesUpdate {
+	if v != nil {
+		_u.SetStatus(*v)
+	}
+	return _u
+}
+
 // Mutation returns the CoursesMutation object of the builder.
 func (_u *CoursesUpdate) Mutation() *CoursesMutation {
 	return _u.mutation
@@ -34,6 +153,7 @@ func (_u *CoursesUpdate) Mutation() *CoursesMutation {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *CoursesUpdate) Save(ctx context.Context) (int, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -59,14 +179,97 @@ func (_u *CoursesUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_u *CoursesUpdate) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		v := courses.UpdateDefaultUpdatedAt()
+		_u.mutation.SetUpdatedAt(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (_u *CoursesUpdate) check() error {
+	if v, ok := _u.mutation.ProjectID(); ok {
+		if err := courses.ProjectIDValidator(v); err != nil {
+			return &ValidationError{Name: "project_id", err: fmt.Errorf(`ent: validator failed for field "Courses.project_id": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Title(); ok {
+		if err := courses.TitleValidator(v); err != nil {
+			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Courses.title": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Slug(); ok {
+		if err := courses.SlugValidator(v); err != nil {
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Courses.slug": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Summary(); ok {
+		if err := courses.SummaryValidator(v); err != nil {
+			return &ValidationError{Name: "summary", err: fmt.Errorf(`ent: validator failed for field "Courses.summary": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Description(); ok {
+		if err := courses.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Courses.description": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Level(); ok {
+		if err := courses.LevelValidator(v); err != nil {
+			return &ValidationError{Name: "level", err: fmt.Errorf(`ent: validator failed for field "Courses.level": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.ThumbnailURL(); ok {
+		if err := courses.ThumbnailURLValidator(v); err != nil {
+			return &ValidationError{Name: "thumbnail_url", err: fmt.Errorf(`ent: validator failed for field "Courses.thumbnail_url": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Status(); ok {
+		if err := courses.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Courses.status": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (_u *CoursesUpdate) sqlSave(ctx context.Context) (_node int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(courses.Table, courses.Columns, sqlgraph.NewFieldSpec(courses.FieldID, field.TypeInt))
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
+	_spec := sqlgraph.NewUpdateSpec(courses.Table, courses.Columns, sqlgraph.NewFieldSpec(courses.FieldID, field.TypeString))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(courses.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.ProjectID(); ok {
+		_spec.SetField(courses.FieldProjectID, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Title(); ok {
+		_spec.SetField(courses.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Slug(); ok {
+		_spec.SetField(courses.FieldSlug, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Summary(); ok {
+		_spec.SetField(courses.FieldSummary, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Description(); ok {
+		_spec.SetField(courses.FieldDescription, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Level(); ok {
+		_spec.SetField(courses.FieldLevel, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.ThumbnailURL(); ok {
+		_spec.SetField(courses.FieldThumbnailURL, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Status(); ok {
+		_spec.SetField(courses.FieldStatus, field.TypeString, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -86,6 +289,124 @@ type CoursesUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *CoursesMutation
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *CoursesUpdateOne) SetUpdatedAt(v time.Time) *CoursesUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetProjectID sets the "project_id" field.
+func (_u *CoursesUpdateOne) SetProjectID(v string) *CoursesUpdateOne {
+	_u.mutation.SetProjectID(v)
+	return _u
+}
+
+// SetNillableProjectID sets the "project_id" field if the given value is not nil.
+func (_u *CoursesUpdateOne) SetNillableProjectID(v *string) *CoursesUpdateOne {
+	if v != nil {
+		_u.SetProjectID(*v)
+	}
+	return _u
+}
+
+// SetTitle sets the "title" field.
+func (_u *CoursesUpdateOne) SetTitle(v string) *CoursesUpdateOne {
+	_u.mutation.SetTitle(v)
+	return _u
+}
+
+// SetNillableTitle sets the "title" field if the given value is not nil.
+func (_u *CoursesUpdateOne) SetNillableTitle(v *string) *CoursesUpdateOne {
+	if v != nil {
+		_u.SetTitle(*v)
+	}
+	return _u
+}
+
+// SetSlug sets the "slug" field.
+func (_u *CoursesUpdateOne) SetSlug(v string) *CoursesUpdateOne {
+	_u.mutation.SetSlug(v)
+	return _u
+}
+
+// SetNillableSlug sets the "slug" field if the given value is not nil.
+func (_u *CoursesUpdateOne) SetNillableSlug(v *string) *CoursesUpdateOne {
+	if v != nil {
+		_u.SetSlug(*v)
+	}
+	return _u
+}
+
+// SetSummary sets the "summary" field.
+func (_u *CoursesUpdateOne) SetSummary(v string) *CoursesUpdateOne {
+	_u.mutation.SetSummary(v)
+	return _u
+}
+
+// SetNillableSummary sets the "summary" field if the given value is not nil.
+func (_u *CoursesUpdateOne) SetNillableSummary(v *string) *CoursesUpdateOne {
+	if v != nil {
+		_u.SetSummary(*v)
+	}
+	return _u
+}
+
+// SetDescription sets the "description" field.
+func (_u *CoursesUpdateOne) SetDescription(v string) *CoursesUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (_u *CoursesUpdateOne) SetNillableDescription(v *string) *CoursesUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
+	}
+	return _u
+}
+
+// SetLevel sets the "level" field.
+func (_u *CoursesUpdateOne) SetLevel(v string) *CoursesUpdateOne {
+	_u.mutation.SetLevel(v)
+	return _u
+}
+
+// SetNillableLevel sets the "level" field if the given value is not nil.
+func (_u *CoursesUpdateOne) SetNillableLevel(v *string) *CoursesUpdateOne {
+	if v != nil {
+		_u.SetLevel(*v)
+	}
+	return _u
+}
+
+// SetThumbnailURL sets the "thumbnail_url" field.
+func (_u *CoursesUpdateOne) SetThumbnailURL(v string) *CoursesUpdateOne {
+	_u.mutation.SetThumbnailURL(v)
+	return _u
+}
+
+// SetNillableThumbnailURL sets the "thumbnail_url" field if the given value is not nil.
+func (_u *CoursesUpdateOne) SetNillableThumbnailURL(v *string) *CoursesUpdateOne {
+	if v != nil {
+		_u.SetThumbnailURL(*v)
+	}
+	return _u
+}
+
+// SetStatus sets the "status" field.
+func (_u *CoursesUpdateOne) SetStatus(v string) *CoursesUpdateOne {
+	_u.mutation.SetStatus(v)
+	return _u
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (_u *CoursesUpdateOne) SetNillableStatus(v *string) *CoursesUpdateOne {
+	if v != nil {
+		_u.SetStatus(*v)
+	}
+	return _u
 }
 
 // Mutation returns the CoursesMutation object of the builder.
@@ -108,6 +429,7 @@ func (_u *CoursesUpdateOne) Select(field string, fields ...string) *CoursesUpdat
 
 // Save executes the query and returns the updated Courses entity.
 func (_u *CoursesUpdateOne) Save(ctx context.Context) (*Courses, error) {
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -133,8 +455,64 @@ func (_u *CoursesUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_u *CoursesUpdateOne) defaults() {
+	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		v := courses.UpdateDefaultUpdatedAt()
+		_u.mutation.SetUpdatedAt(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (_u *CoursesUpdateOne) check() error {
+	if v, ok := _u.mutation.ProjectID(); ok {
+		if err := courses.ProjectIDValidator(v); err != nil {
+			return &ValidationError{Name: "project_id", err: fmt.Errorf(`ent: validator failed for field "Courses.project_id": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Title(); ok {
+		if err := courses.TitleValidator(v); err != nil {
+			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Courses.title": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Slug(); ok {
+		if err := courses.SlugValidator(v); err != nil {
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Courses.slug": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Summary(); ok {
+		if err := courses.SummaryValidator(v); err != nil {
+			return &ValidationError{Name: "summary", err: fmt.Errorf(`ent: validator failed for field "Courses.summary": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Description(); ok {
+		if err := courses.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Courses.description": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Level(); ok {
+		if err := courses.LevelValidator(v); err != nil {
+			return &ValidationError{Name: "level", err: fmt.Errorf(`ent: validator failed for field "Courses.level": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.ThumbnailURL(); ok {
+		if err := courses.ThumbnailURLValidator(v); err != nil {
+			return &ValidationError{Name: "thumbnail_url", err: fmt.Errorf(`ent: validator failed for field "Courses.thumbnail_url": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Status(); ok {
+		if err := courses.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Courses.status": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (_u *CoursesUpdateOne) sqlSave(ctx context.Context) (_node *Courses, err error) {
-	_spec := sqlgraph.NewUpdateSpec(courses.Table, courses.Columns, sqlgraph.NewFieldSpec(courses.FieldID, field.TypeInt))
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
+	_spec := sqlgraph.NewUpdateSpec(courses.Table, courses.Columns, sqlgraph.NewFieldSpec(courses.FieldID, field.TypeString))
 	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Courses.id" for update`)}
@@ -158,6 +536,33 @@ func (_u *CoursesUpdateOne) sqlSave(ctx context.Context) (_node *Courses, err er
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(courses.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.ProjectID(); ok {
+		_spec.SetField(courses.FieldProjectID, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Title(); ok {
+		_spec.SetField(courses.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Slug(); ok {
+		_spec.SetField(courses.FieldSlug, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Summary(); ok {
+		_spec.SetField(courses.FieldSummary, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Description(); ok {
+		_spec.SetField(courses.FieldDescription, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Level(); ok {
+		_spec.SetField(courses.FieldLevel, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.ThumbnailURL(); ok {
+		_spec.SetField(courses.FieldThumbnailURL, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Status(); ok {
+		_spec.SetField(courses.FieldStatus, field.TypeString, value)
 	}
 	_node = &Courses{config: _u.config}
 	_spec.Assign = _node.assignValues

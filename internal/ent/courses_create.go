@@ -4,8 +4,10 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"hexagonal-go-backend/internal/ent/courses"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -18,6 +20,102 @@ type CoursesCreate struct {
 	hooks    []Hook
 }
 
+// SetTenantID sets the "tenant_id" field.
+func (_c *CoursesCreate) SetTenantID(v string) *CoursesCreate {
+	_c.mutation.SetTenantID(v)
+	return _c
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (_c *CoursesCreate) SetCreatedAt(v time.Time) *CoursesCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (_c *CoursesCreate) SetNillableCreatedAt(v *time.Time) *CoursesCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
+	}
+	return _c
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_c *CoursesCreate) SetUpdatedAt(v time.Time) *CoursesCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_c *CoursesCreate) SetNillableUpdatedAt(v *time.Time) *CoursesCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
+	}
+	return _c
+}
+
+// SetProjectID sets the "project_id" field.
+func (_c *CoursesCreate) SetProjectID(v string) *CoursesCreate {
+	_c.mutation.SetProjectID(v)
+	return _c
+}
+
+// SetTitle sets the "title" field.
+func (_c *CoursesCreate) SetTitle(v string) *CoursesCreate {
+	_c.mutation.SetTitle(v)
+	return _c
+}
+
+// SetSlug sets the "slug" field.
+func (_c *CoursesCreate) SetSlug(v string) *CoursesCreate {
+	_c.mutation.SetSlug(v)
+	return _c
+}
+
+// SetSummary sets the "summary" field.
+func (_c *CoursesCreate) SetSummary(v string) *CoursesCreate {
+	_c.mutation.SetSummary(v)
+	return _c
+}
+
+// SetDescription sets the "description" field.
+func (_c *CoursesCreate) SetDescription(v string) *CoursesCreate {
+	_c.mutation.SetDescription(v)
+	return _c
+}
+
+// SetLevel sets the "level" field.
+func (_c *CoursesCreate) SetLevel(v string) *CoursesCreate {
+	_c.mutation.SetLevel(v)
+	return _c
+}
+
+// SetThumbnailURL sets the "thumbnail_url" field.
+func (_c *CoursesCreate) SetThumbnailURL(v string) *CoursesCreate {
+	_c.mutation.SetThumbnailURL(v)
+	return _c
+}
+
+// SetStatus sets the "status" field.
+func (_c *CoursesCreate) SetStatus(v string) *CoursesCreate {
+	_c.mutation.SetStatus(v)
+	return _c
+}
+
+// SetID sets the "id" field.
+func (_c *CoursesCreate) SetID(v string) *CoursesCreate {
+	_c.mutation.SetID(v)
+	return _c
+}
+
+// SetNillableID sets the "id" field if the given value is not nil.
+func (_c *CoursesCreate) SetNillableID(v *string) *CoursesCreate {
+	if v != nil {
+		_c.SetID(*v)
+	}
+	return _c
+}
+
 // Mutation returns the CoursesMutation object of the builder.
 func (_c *CoursesCreate) Mutation() *CoursesMutation {
 	return _c.mutation
@@ -25,6 +123,7 @@ func (_c *CoursesCreate) Mutation() *CoursesMutation {
 
 // Save creates the Courses in the database.
 func (_c *CoursesCreate) Save(ctx context.Context) (*Courses, error) {
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -50,8 +149,107 @@ func (_c *CoursesCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (_c *CoursesCreate) defaults() {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		v := courses.DefaultCreatedAt()
+		_c.mutation.SetCreatedAt(v)
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		v := courses.DefaultUpdatedAt
+		_c.mutation.SetUpdatedAt(v)
+	}
+	if _, ok := _c.mutation.ID(); !ok {
+		v := courses.DefaultID()
+		_c.mutation.SetID(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (_c *CoursesCreate) check() error {
+	if _, ok := _c.mutation.TenantID(); !ok {
+		return &ValidationError{Name: "tenant_id", err: errors.New(`ent: missing required field "Courses.tenant_id"`)}
+	}
+	if v, ok := _c.mutation.TenantID(); ok {
+		if err := courses.TenantIDValidator(v); err != nil {
+			return &ValidationError{Name: "tenant_id", err: fmt.Errorf(`ent: validator failed for field "Courses.tenant_id": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Courses.created_at"`)}
+	}
+	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Courses.updated_at"`)}
+	}
+	if _, ok := _c.mutation.ProjectID(); !ok {
+		return &ValidationError{Name: "project_id", err: errors.New(`ent: missing required field "Courses.project_id"`)}
+	}
+	if v, ok := _c.mutation.ProjectID(); ok {
+		if err := courses.ProjectIDValidator(v); err != nil {
+			return &ValidationError{Name: "project_id", err: fmt.Errorf(`ent: validator failed for field "Courses.project_id": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Title(); !ok {
+		return &ValidationError{Name: "title", err: errors.New(`ent: missing required field "Courses.title"`)}
+	}
+	if v, ok := _c.mutation.Title(); ok {
+		if err := courses.TitleValidator(v); err != nil {
+			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Courses.title": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Slug(); !ok {
+		return &ValidationError{Name: "slug", err: errors.New(`ent: missing required field "Courses.slug"`)}
+	}
+	if v, ok := _c.mutation.Slug(); ok {
+		if err := courses.SlugValidator(v); err != nil {
+			return &ValidationError{Name: "slug", err: fmt.Errorf(`ent: validator failed for field "Courses.slug": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Summary(); !ok {
+		return &ValidationError{Name: "summary", err: errors.New(`ent: missing required field "Courses.summary"`)}
+	}
+	if v, ok := _c.mutation.Summary(); ok {
+		if err := courses.SummaryValidator(v); err != nil {
+			return &ValidationError{Name: "summary", err: fmt.Errorf(`ent: validator failed for field "Courses.summary": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Description(); !ok {
+		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "Courses.description"`)}
+	}
+	if v, ok := _c.mutation.Description(); ok {
+		if err := courses.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "Courses.description": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Level(); !ok {
+		return &ValidationError{Name: "level", err: errors.New(`ent: missing required field "Courses.level"`)}
+	}
+	if v, ok := _c.mutation.Level(); ok {
+		if err := courses.LevelValidator(v); err != nil {
+			return &ValidationError{Name: "level", err: fmt.Errorf(`ent: validator failed for field "Courses.level": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.ThumbnailURL(); !ok {
+		return &ValidationError{Name: "thumbnail_url", err: errors.New(`ent: missing required field "Courses.thumbnail_url"`)}
+	}
+	if v, ok := _c.mutation.ThumbnailURL(); ok {
+		if err := courses.ThumbnailURLValidator(v); err != nil {
+			return &ValidationError{Name: "thumbnail_url", err: fmt.Errorf(`ent: validator failed for field "Courses.thumbnail_url": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Courses.status"`)}
+	}
+	if v, ok := _c.mutation.Status(); ok {
+		if err := courses.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Courses.status": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.ID(); ok {
+		if err := courses.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Courses.id": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -66,8 +264,13 @@ func (_c *CoursesCreate) sqlSave(ctx context.Context) (*Courses, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != nil {
+		if id, ok := _spec.ID.Value.(string); ok {
+			_node.ID = id
+		} else {
+			return nil, fmt.Errorf("unexpected Courses.ID type: %T", _spec.ID.Value)
+		}
+	}
 	_c.mutation.id = &_node.ID
 	_c.mutation.done = true
 	return _node, nil
@@ -76,8 +279,56 @@ func (_c *CoursesCreate) sqlSave(ctx context.Context) (*Courses, error) {
 func (_c *CoursesCreate) createSpec() (*Courses, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Courses{config: _c.config}
-		_spec = sqlgraph.NewCreateSpec(courses.Table, sqlgraph.NewFieldSpec(courses.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(courses.Table, sqlgraph.NewFieldSpec(courses.FieldID, field.TypeString))
 	)
+	if id, ok := _c.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
+	if value, ok := _c.mutation.TenantID(); ok {
+		_spec.SetField(courses.FieldTenantID, field.TypeString, value)
+		_node.TenantID = value
+	}
+	if value, ok := _c.mutation.CreatedAt(); ok {
+		_spec.SetField(courses.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := _c.mutation.UpdatedAt(); ok {
+		_spec.SetField(courses.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
+	if value, ok := _c.mutation.ProjectID(); ok {
+		_spec.SetField(courses.FieldProjectID, field.TypeString, value)
+		_node.ProjectID = value
+	}
+	if value, ok := _c.mutation.Title(); ok {
+		_spec.SetField(courses.FieldTitle, field.TypeString, value)
+		_node.Title = value
+	}
+	if value, ok := _c.mutation.Slug(); ok {
+		_spec.SetField(courses.FieldSlug, field.TypeString, value)
+		_node.Slug = value
+	}
+	if value, ok := _c.mutation.Summary(); ok {
+		_spec.SetField(courses.FieldSummary, field.TypeString, value)
+		_node.Summary = value
+	}
+	if value, ok := _c.mutation.Description(); ok {
+		_spec.SetField(courses.FieldDescription, field.TypeString, value)
+		_node.Description = value
+	}
+	if value, ok := _c.mutation.Level(); ok {
+		_spec.SetField(courses.FieldLevel, field.TypeString, value)
+		_node.Level = value
+	}
+	if value, ok := _c.mutation.ThumbnailURL(); ok {
+		_spec.SetField(courses.FieldThumbnailURL, field.TypeString, value)
+		_node.ThumbnailURL = value
+	}
+	if value, ok := _c.mutation.Status(); ok {
+		_spec.SetField(courses.FieldStatus, field.TypeString, value)
+		_node.Status = value
+	}
 	return _node, _spec
 }
 
@@ -99,6 +350,7 @@ func (_c *CoursesCreateBulk) Save(ctx context.Context) ([]*Courses, error) {
 	for i := range _c.builders {
 		func(i int, root context.Context) {
 			builder := _c.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*CoursesMutation)
 				if !ok {
@@ -125,10 +377,6 @@ func (_c *CoursesCreateBulk) Save(ctx context.Context) ([]*Courses, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
-					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
-				}
 				mutation.done = true
 				return nodes[i], nil
 			})

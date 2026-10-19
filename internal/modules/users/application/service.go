@@ -12,33 +12,42 @@ import (
 
 type userService struct {
 	repo   UserRepository
-	hasher PasswordHasher
 	mailer Mailer
 }
 
-func NewUserService(repo UserRepository, hasher PasswordHasher, mailer Mailer) UserService {
-	return &userService{repo: repo, hasher: hasher, mailer: mailer}
+func NewUserService(repo UserRepository, mailer Mailer) UserService {
+	return &userService{repo: repo, mailer: mailer}
 }
 
 func (s *userService) Create(ctx context.Context, in CreateUserInput) (*domain.User, error) {
-	in.Name, in.Email = strings.TrimSpace(in.Name), strings.ToLower(strings.TrimSpace(in.Email))
-	if len(in.Name) < 2 || in.Email == "" || len(in.Password) < 8 {
+	in.Name, in.Email, in.AuthID = strings.TrimSpace(in.Name), strings.ToLower(strings.TrimSpace(in.Email)), strings.TrimSpace(in.AuthID)
+	if len(in.Name) < 2 || in.Email == "" {
 		return nil, domain.ErrInvalidInput
+	}
+	if in.AuthID != "" {
+		if existing, err := s.repo.FindByAuthID(ctx, in.AuthID); err == nil && existing != nil {
+			return existing, nil
+		}
 	}
 	if _, err := s.repo.FindByEmail(ctx, in.Email); err == nil {
 		return nil, domain.ErrEmailAlreadyExists
 	} else if !errors.Is(err, domain.ErrUserNotFound) {
 		return nil, err
 	}
-	hash, err := s.hasher.Hash(in.Password)
-	if err != nil {
-		return nil, err
-	}
-	if in.Role == "" {
-		in.Role = domain.RoleUser
-	}
+
 	now := time.Now().UTC()
-	u := &domain.User{ID: identifier.New(), Name: in.Name, Email: in.Email, PasswordHash: hash, Role: in.Role, Active: true, CreatedAt: now, UpdatedAt: now}
+	u := &domain.User{
+		ID:           identifier.New(),
+		AuthID:       in.AuthID,
+		Name:         in.Name,
+		Email:        in.Email,
+		AvatarURL:    in.AvatarURL,
+		IsSuperAdmin: in.IsSuperAdmin,
+		Status:       domain.StatusActive,
+		Active:       true,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
 	if err := s.repo.Create(ctx, u); err != nil {
 		return nil, err
 	}
@@ -81,11 +90,14 @@ func (s *userService) Update(ctx context.Context, id string, in UpdateUserInput)
 		}
 		u.Email = email
 	}
+	if in.AvatarURL != nil {
+		u.AvatarURL = *in.AvatarURL
+	}
 	if in.Active != nil {
 		u.Active = *in.Active
 	}
-	if in.Role != "" {
-		u.Role = in.Role
+	if in.Status != nil {
+		u.Status = *in.Status
 	}
 	u.UpdatedAt = time.Now().UTC()
 	if err := s.repo.Update(ctx, u); err != nil {
@@ -96,4 +108,74 @@ func (s *userService) Update(ctx context.Context, id string, in UpdateUserInput)
 
 func (s *userService) Delete(ctx context.Context, id string) error {
 	return s.repo.Delete(ctx, id)
+}
+
+func (s *userService) GetProfile(ctx context.Context, userID string) (*domain.UserProfile, error) {
+	if _, err := s.repo.FindByID(ctx, userID); err != nil {
+		return nil, err
+	}
+	profile, err := s.repo.GetProfile(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	if profile == nil {
+		profile = &domain.UserProfile{
+			UserID: userID,
+		}
+	}
+	return profile, nil
+}
+
+func (s *userService) UpdateProfile(ctx context.Context, userID string, in UpdateProfileInput) (*domain.UserProfile, error) {
+	if _, err := s.repo.FindByID(ctx, userID); err != nil {
+		return nil, err
+	}
+	profile, err := s.repo.GetProfile(ctx, userID)
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		return nil, err
+	}
+	now := time.Now().UTC()
+	if profile == nil {
+		profile = &domain.UserProfile{
+			ID:        identifier.New(),
+			UserID:    userID,
+			CreatedAt: now,
+		}
+	}
+	if in.FirstName != nil {
+		profile.FirstName = strings.TrimSpace(*in.FirstName)
+	}
+	if in.LastName != nil {
+		profile.LastName = strings.TrimSpace(*in.LastName)
+	}
+	if in.Phone != nil {
+		profile.Phone = strings.TrimSpace(*in.Phone)
+	}
+	if in.BirthDate != nil {
+		profile.BirthDate = in.BirthDate
+	}
+	if in.Gender != nil {
+		profile.Gender = *in.Gender
+	}
+	if in.City != nil {
+		profile.City = strings.TrimSpace(*in.City)
+	}
+	if in.Address != nil {
+		profile.Address = strings.TrimSpace(*in.Address)
+	}
+	if in.PhotoURL != nil {
+		profile.PhotoURL = strings.TrimSpace(*in.PhotoURL)
+	}
+	if in.Bio != nil {
+		profile.Bio = strings.TrimSpace(*in.Bio)
+	}
+	if in.SociodemographicData != nil {
+		profile.SociodemographicData = in.SociodemographicData
+	}
+	profile.UpdatedAt = now
+
+	if err := s.repo.UpsertProfile(ctx, profile); err != nil {
+		return nil, err
+	}
+	return profile, nil
 }
