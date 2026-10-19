@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"hexagonal-go-backend/internal/ent/courses"
+	"hexagonal-go-backend/internal/ent/project"
 	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -85,7 +86,7 @@ func (_c *CoursesCreate) SetDescription(v string) *CoursesCreate {
 }
 
 // SetLevel sets the "level" field.
-func (_c *CoursesCreate) SetLevel(v string) *CoursesCreate {
+func (_c *CoursesCreate) SetLevel(v courses.Level) *CoursesCreate {
 	_c.mutation.SetLevel(v)
 	return _c
 }
@@ -97,8 +98,16 @@ func (_c *CoursesCreate) SetThumbnailURL(v string) *CoursesCreate {
 }
 
 // SetStatus sets the "status" field.
-func (_c *CoursesCreate) SetStatus(v string) *CoursesCreate {
+func (_c *CoursesCreate) SetStatus(v courses.Status) *CoursesCreate {
 	_c.mutation.SetStatus(v)
+	return _c
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (_c *CoursesCreate) SetNillableStatus(v *courses.Status) *CoursesCreate {
+	if v != nil {
+		_c.SetStatus(*v)
+	}
 	return _c
 }
 
@@ -114,6 +123,11 @@ func (_c *CoursesCreate) SetNillableID(v *string) *CoursesCreate {
 		_c.SetID(*v)
 	}
 	return _c
+}
+
+// SetProject sets the "project" edge to the Project entity.
+func (_c *CoursesCreate) SetProject(v *Project) *CoursesCreate {
+	return _c.SetProjectID(v.ID)
 }
 
 // Mutation returns the CoursesMutation object of the builder.
@@ -158,6 +172,10 @@ func (_c *CoursesCreate) defaults() {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		v := courses.DefaultUpdatedAt
 		_c.mutation.SetUpdatedAt(v)
+	}
+	if _, ok := _c.mutation.Status(); !ok {
+		v := courses.DefaultStatus
+		_c.mutation.SetStatus(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := courses.DefaultID()
@@ -250,6 +268,9 @@ func (_c *CoursesCreate) check() error {
 			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "Courses.id": %w`, err)}
 		}
 	}
+	if len(_c.mutation.ProjectIDs()) == 0 {
+		return &ValidationError{Name: "project", err: errors.New(`ent: missing required edge "Courses.project"`)}
+	}
 	return nil
 }
 
@@ -297,10 +318,6 @@ func (_c *CoursesCreate) createSpec() (*Courses, *sqlgraph.CreateSpec) {
 		_spec.SetField(courses.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if value, ok := _c.mutation.ProjectID(); ok {
-		_spec.SetField(courses.FieldProjectID, field.TypeString, value)
-		_node.ProjectID = value
-	}
 	if value, ok := _c.mutation.Title(); ok {
 		_spec.SetField(courses.FieldTitle, field.TypeString, value)
 		_node.Title = value
@@ -318,7 +335,7 @@ func (_c *CoursesCreate) createSpec() (*Courses, *sqlgraph.CreateSpec) {
 		_node.Description = value
 	}
 	if value, ok := _c.mutation.Level(); ok {
-		_spec.SetField(courses.FieldLevel, field.TypeString, value)
+		_spec.SetField(courses.FieldLevel, field.TypeEnum, value)
 		_node.Level = value
 	}
 	if value, ok := _c.mutation.ThumbnailURL(); ok {
@@ -326,8 +343,25 @@ func (_c *CoursesCreate) createSpec() (*Courses, *sqlgraph.CreateSpec) {
 		_node.ThumbnailURL = value
 	}
 	if value, ok := _c.mutation.Status(); ok {
-		_spec.SetField(courses.FieldStatus, field.TypeString, value)
+		_spec.SetField(courses.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
+	}
+	if nodes := _c.mutation.ProjectIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   courses.ProjectTable,
+			Columns: []string{courses.ProjectColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(project.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ProjectID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

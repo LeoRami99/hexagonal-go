@@ -51,6 +51,8 @@ const (
 	EdgeRoles = "roles"
 	// EdgeFeatures holds the string denoting the features edge name in mutations.
 	EdgeFeatures = "features"
+	// EdgeCourses holds the string denoting the courses edge name in mutations.
+	EdgeCourses = "courses"
 	// Table holds the table name of the project in the database.
 	Table = "projects"
 	// TenantTable is the table that holds the tenant relation/edge.
@@ -81,6 +83,13 @@ const (
 	FeaturesInverseTable = "project_features"
 	// FeaturesColumn is the table column denoting the features relation/edge.
 	FeaturesColumn = "project_id"
+	// CoursesTable is the table that holds the courses relation/edge.
+	CoursesTable = "courses"
+	// CoursesInverseTable is the table name for the Courses entity.
+	// It exists in this package in order to avoid circular dependency with the "courses" package.
+	CoursesInverseTable = "courses"
+	// CoursesColumn is the table column denoting the courses relation/edge.
+	CoursesColumn = "project_id"
 )
 
 // Columns holds all SQL columns for project fields.
@@ -277,6 +286,20 @@ func ByFeatures(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newFeaturesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByCoursesCount orders the results by courses count.
+func ByCoursesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCoursesStep(), opts...)
+	}
+}
+
+// ByCourses orders the results by courses terms.
+func ByCourses(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCoursesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newTenantStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -303,5 +326,12 @@ func newFeaturesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(FeaturesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, FeaturesTable, FeaturesColumn),
+	)
+}
+func newCoursesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CoursesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, CoursesTable, CoursesColumn),
 	)
 }

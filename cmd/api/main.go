@@ -15,11 +15,15 @@ import (
 	memorycache "hexagonal-go-backend/internal/modules/auth/infrastructure/cache/memory"
 	authpersistence "hexagonal-go-backend/internal/modules/auth/infrastructure/persistence/ent"
 	authsecurity "hexagonal-go-backend/internal/modules/auth/infrastructure/security"
+	courseapp "hexagonal-go-backend/internal/modules/courses/application"
+	courseshttp "hexagonal-go-backend/internal/modules/courses/delivery/http/v1"
+	coursepersistence "hexagonal-go-backend/internal/modules/courses/infrastructure/persistence/ent"
 	usersapp "hexagonal-go-backend/internal/modules/users/application"
 	usershttp "hexagonal-go-backend/internal/modules/users/delivery/http/v1"
 	userdomain "hexagonal-go-backend/internal/modules/users/domain"
 	usermail "hexagonal-go-backend/internal/modules/users/infrastructure/mail"
 	entusers "hexagonal-go-backend/internal/modules/users/infrastructure/persistence/ent"
+
 	"hexagonal-go-backend/internal/platform/config"
 	"hexagonal-go-backend/internal/platform/database"
 	"hexagonal-go-backend/internal/platform/database/seeder"
@@ -49,6 +53,7 @@ func main() {
 	}()
 
 	userRepository := entusers.NewUserRepository(entClient)
+	coursesRepository := coursepersistence.NewCourseRepository(entClient)
 	mailer := usermail.NewLogMailer(log)
 
 	var tokenProvider authapp.TokenProvider
@@ -71,6 +76,9 @@ func main() {
 	}
 
 	userService := usersapp.NewUserService(userRepository, mailer)
+
+	courseService := courseapp.NewCoursesService(coursesRepository)
+
 	if err := seedAdmin(context.Background(), userService, userRepository, zitadelClient, log, cfg); err != nil {
 		log.Error("failed to create development administrator", "error", err)
 		os.Exit(1)
@@ -78,11 +86,12 @@ func main() {
 	authContextRepo := authpersistence.NewAuthContextRepository(entClient)
 	authService := authapp.NewAuthService(userRepository, tokenProvider, cache, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL, authContextRepo, idp)
 
-	router := httpplatform.NewRouter(
+	router := httpplatform.NewRouterWithCourses(
 		cfg,
 		log,
 		usershttp.NewController(userService),
 		authhttp.NewController(authService),
+		courseshttp.NewController(courseService),
 		tokenProvider,
 		userRepository,
 	)

@@ -398,6 +398,22 @@ func (c *CoursesClient) GetX(ctx context.Context, id string) *Courses {
 	return obj
 }
 
+// QueryProject queries the project edge of a Courses.
+func (c *CoursesClient) QueryProject(_m *Courses) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(courses.Table, courses.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, courses.ProjectTable, courses.ProjectColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *CoursesClient) Hooks() []Hook {
 	return c.hooks.Courses
@@ -886,6 +902,22 @@ func (c *ProjectClient) QueryFeatures(_m *Project) *ProjectFeatureQuery {
 			sqlgraph.From(project.Table, project.FieldID, id),
 			sqlgraph.To(projectfeature.Table, projectfeature.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, project.FeaturesTable, project.FeaturesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCourses queries the courses edge of a Project.
+func (c *ProjectClient) QueryCourses(_m *Project) *CoursesQuery {
+	query := (&CoursesClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(courses.Table, courses.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.CoursesTable, project.CoursesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

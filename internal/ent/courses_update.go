@@ -34,20 +34,6 @@ func (_u *CoursesUpdate) SetUpdatedAt(v time.Time) *CoursesUpdate {
 	return _u
 }
 
-// SetProjectID sets the "project_id" field.
-func (_u *CoursesUpdate) SetProjectID(v string) *CoursesUpdate {
-	_u.mutation.SetProjectID(v)
-	return _u
-}
-
-// SetNillableProjectID sets the "project_id" field if the given value is not nil.
-func (_u *CoursesUpdate) SetNillableProjectID(v *string) *CoursesUpdate {
-	if v != nil {
-		_u.SetProjectID(*v)
-	}
-	return _u
-}
-
 // SetTitle sets the "title" field.
 func (_u *CoursesUpdate) SetTitle(v string) *CoursesUpdate {
 	_u.mutation.SetTitle(v)
@@ -105,13 +91,13 @@ func (_u *CoursesUpdate) SetNillableDescription(v *string) *CoursesUpdate {
 }
 
 // SetLevel sets the "level" field.
-func (_u *CoursesUpdate) SetLevel(v string) *CoursesUpdate {
+func (_u *CoursesUpdate) SetLevel(v courses.Level) *CoursesUpdate {
 	_u.mutation.SetLevel(v)
 	return _u
 }
 
 // SetNillableLevel sets the "level" field if the given value is not nil.
-func (_u *CoursesUpdate) SetNillableLevel(v *string) *CoursesUpdate {
+func (_u *CoursesUpdate) SetNillableLevel(v *courses.Level) *CoursesUpdate {
 	if v != nil {
 		_u.SetLevel(*v)
 	}
@@ -133,13 +119,13 @@ func (_u *CoursesUpdate) SetNillableThumbnailURL(v *string) *CoursesUpdate {
 }
 
 // SetStatus sets the "status" field.
-func (_u *CoursesUpdate) SetStatus(v string) *CoursesUpdate {
+func (_u *CoursesUpdate) SetStatus(v courses.Status) *CoursesUpdate {
 	_u.mutation.SetStatus(v)
 	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (_u *CoursesUpdate) SetNillableStatus(v *string) *CoursesUpdate {
+func (_u *CoursesUpdate) SetNillableStatus(v *courses.Status) *CoursesUpdate {
 	if v != nil {
 		_u.SetStatus(*v)
 	}
@@ -189,11 +175,6 @@ func (_u *CoursesUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *CoursesUpdate) check() error {
-	if v, ok := _u.mutation.ProjectID(); ok {
-		if err := courses.ProjectIDValidator(v); err != nil {
-			return &ValidationError{Name: "project_id", err: fmt.Errorf(`ent: validator failed for field "Courses.project_id": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Title(); ok {
 		if err := courses.TitleValidator(v); err != nil {
 			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Courses.title": %w`, err)}
@@ -229,6 +210,9 @@ func (_u *CoursesUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Courses.status": %w`, err)}
 		}
 	}
+	if _u.mutation.ProjectCleared() && len(_u.mutation.ProjectIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Courses.project"`)
+	}
 	return nil
 }
 
@@ -247,9 +231,6 @@ func (_u *CoursesUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(courses.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.ProjectID(); ok {
-		_spec.SetField(courses.FieldProjectID, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.Title(); ok {
 		_spec.SetField(courses.FieldTitle, field.TypeString, value)
 	}
@@ -263,13 +244,13 @@ func (_u *CoursesUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.SetField(courses.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Level(); ok {
-		_spec.SetField(courses.FieldLevel, field.TypeString, value)
+		_spec.SetField(courses.FieldLevel, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.ThumbnailURL(); ok {
 		_spec.SetField(courses.FieldThumbnailURL, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Status(); ok {
-		_spec.SetField(courses.FieldStatus, field.TypeString, value)
+		_spec.SetField(courses.FieldStatus, field.TypeEnum, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -294,20 +275,6 @@ type CoursesUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *CoursesUpdateOne) SetUpdatedAt(v time.Time) *CoursesUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
-// SetProjectID sets the "project_id" field.
-func (_u *CoursesUpdateOne) SetProjectID(v string) *CoursesUpdateOne {
-	_u.mutation.SetProjectID(v)
-	return _u
-}
-
-// SetNillableProjectID sets the "project_id" field if the given value is not nil.
-func (_u *CoursesUpdateOne) SetNillableProjectID(v *string) *CoursesUpdateOne {
-	if v != nil {
-		_u.SetProjectID(*v)
-	}
 	return _u
 }
 
@@ -368,13 +335,13 @@ func (_u *CoursesUpdateOne) SetNillableDescription(v *string) *CoursesUpdateOne 
 }
 
 // SetLevel sets the "level" field.
-func (_u *CoursesUpdateOne) SetLevel(v string) *CoursesUpdateOne {
+func (_u *CoursesUpdateOne) SetLevel(v courses.Level) *CoursesUpdateOne {
 	_u.mutation.SetLevel(v)
 	return _u
 }
 
 // SetNillableLevel sets the "level" field if the given value is not nil.
-func (_u *CoursesUpdateOne) SetNillableLevel(v *string) *CoursesUpdateOne {
+func (_u *CoursesUpdateOne) SetNillableLevel(v *courses.Level) *CoursesUpdateOne {
 	if v != nil {
 		_u.SetLevel(*v)
 	}
@@ -396,13 +363,13 @@ func (_u *CoursesUpdateOne) SetNillableThumbnailURL(v *string) *CoursesUpdateOne
 }
 
 // SetStatus sets the "status" field.
-func (_u *CoursesUpdateOne) SetStatus(v string) *CoursesUpdateOne {
+func (_u *CoursesUpdateOne) SetStatus(v courses.Status) *CoursesUpdateOne {
 	_u.mutation.SetStatus(v)
 	return _u
 }
 
 // SetNillableStatus sets the "status" field if the given value is not nil.
-func (_u *CoursesUpdateOne) SetNillableStatus(v *string) *CoursesUpdateOne {
+func (_u *CoursesUpdateOne) SetNillableStatus(v *courses.Status) *CoursesUpdateOne {
 	if v != nil {
 		_u.SetStatus(*v)
 	}
@@ -465,11 +432,6 @@ func (_u *CoursesUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *CoursesUpdateOne) check() error {
-	if v, ok := _u.mutation.ProjectID(); ok {
-		if err := courses.ProjectIDValidator(v); err != nil {
-			return &ValidationError{Name: "project_id", err: fmt.Errorf(`ent: validator failed for field "Courses.project_id": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Title(); ok {
 		if err := courses.TitleValidator(v); err != nil {
 			return &ValidationError{Name: "title", err: fmt.Errorf(`ent: validator failed for field "Courses.title": %w`, err)}
@@ -504,6 +466,9 @@ func (_u *CoursesUpdateOne) check() error {
 		if err := courses.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Courses.status": %w`, err)}
 		}
+	}
+	if _u.mutation.ProjectCleared() && len(_u.mutation.ProjectIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Courses.project"`)
 	}
 	return nil
 }
@@ -540,9 +505,6 @@ func (_u *CoursesUpdateOne) sqlSave(ctx context.Context) (_node *Courses, err er
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(courses.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.ProjectID(); ok {
-		_spec.SetField(courses.FieldProjectID, field.TypeString, value)
-	}
 	if value, ok := _u.mutation.Title(); ok {
 		_spec.SetField(courses.FieldTitle, field.TypeString, value)
 	}
@@ -556,13 +518,13 @@ func (_u *CoursesUpdateOne) sqlSave(ctx context.Context) (_node *Courses, err er
 		_spec.SetField(courses.FieldDescription, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Level(); ok {
-		_spec.SetField(courses.FieldLevel, field.TypeString, value)
+		_spec.SetField(courses.FieldLevel, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.ThumbnailURL(); ok {
 		_spec.SetField(courses.FieldThumbnailURL, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Status(); ok {
-		_spec.SetField(courses.FieldStatus, field.TypeString, value)
+		_spec.SetField(courses.FieldStatus, field.TypeEnum, value)
 	}
 	_node = &Courses{config: _u.config}
 	_spec.Assign = _node.assignValues

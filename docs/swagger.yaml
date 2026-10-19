@@ -157,6 +157,110 @@ definitions:
       token_type:
         type: string
     type: object
+  internal_modules_courses_delivery_http_v1.CreateCourseRequest:
+    properties:
+      description:
+        minLength: 2
+        type: string
+      level:
+        enum:
+        - beginner
+        - intermediate
+        - advanced
+        type: string
+      project_id:
+        type: string
+      slug:
+        maxLength: 150
+        minLength: 2
+        type: string
+      status:
+        enum:
+        - draft
+        - published
+        - archived
+        type: string
+      summary:
+        maxLength: 350
+        minLength: 2
+        type: string
+      tenant_id:
+        type: string
+      thumbnail_url:
+        type: string
+      title:
+        maxLength: 350
+        minLength: 2
+        type: string
+    required:
+    - description
+    - level
+    - project_id
+    - slug
+    - status
+    - summary
+    - tenant_id
+    - thumbnail_url
+    - title
+    type: object
+  internal_modules_courses_delivery_http_v1.CreateCourseResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      level:
+        type: string
+      project_id:
+        type: string
+      slug:
+        type: string
+      status:
+        type: string
+      summary:
+        type: string
+      tenant_id:
+        type: string
+      thumbnail_url:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_modules_courses_delivery_http_v1.UpdateCourseRequest:
+    properties:
+      description:
+        minLength: 2
+        type: string
+      level:
+        enum:
+        - beginner
+        - intermediate
+        - advanced
+        type: string
+      slug:
+        maxLength: 150
+        minLength: 2
+        type: string
+      status:
+        enum:
+        - draft
+        - published
+        - archived
+        type: string
+      summary:
+        minLength: 2
+        type: string
+      thumbnail_url:
+        type: string
+      title:
+        maxLength: 350
+        minLength: 2
+        type: string
+    type: object
   internal_modules_users_delivery_http_v1.CreateUserRequest:
     properties:
       auth_id:
@@ -428,6 +532,277 @@ paths:
       summary: Renovar token de acceso
       tags:
       - auth
+  /courses:
+    get:
+      description: Retorna cursos paginados y permite buscar por título, slug o resumen,
+        filtrar por nivel y estado, y ordenar el resultado.
+      parameters:
+      - default: 1
+        description: Número de página
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 20
+        description: Elementos por página
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - description: Texto para buscar en título, slug o resumen
+        in: query
+        name: search
+        type: string
+      - description: Nivel del curso
+        enum:
+        - beginner
+        - intermediate
+        - advanced
+        in: query
+        name: level
+        type: string
+      - description: Estado del curso
+        enum:
+        - draft
+        - published
+        - archived
+        in: query
+        name: status
+        type: string
+      - default: created_at
+        description: Campo de ordenamiento
+        enum:
+        - created_at
+        - updated_at
+        - title
+        in: query
+        name: sort
+        type: string
+      - default: desc
+        description: Dirección del ordenamiento
+        enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_modules_courses_delivery_http_v1.CreateCourseResponse'
+                  type: array
+                meta:
+                  type: object
+              type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "500":
+          description: Error interno
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar cursos
+      tags:
+      - courses
+    post:
+      consumes:
+      - application/json
+      description: Crea un curso asociado a un proyecto y tenant. El slug debe ser
+        único dentro del proyecto.
+      parameters:
+      - description: Datos del curso
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_courses_delivery_http_v1.CreateCourseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_courses_delivery_http_v1.CreateCourseResponse'
+              type: object
+        "400":
+          description: Petición malformada
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "409":
+          description: Ya existe un curso con el mismo slug en el proyecto
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "422":
+          description: Datos del curso inválidos
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "500":
+          description: Error interno
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Crear curso
+      tags:
+      - courses
+  /courses/{id}:
+    delete:
+      description: Elimina permanentemente un curso por su identificador.
+      parameters:
+      - description: ULID del curso
+        in: path
+        maxLength: 26
+        minLength: 26
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: Curso eliminado
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "404":
+          description: Curso no encontrado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "422":
+          description: Identificador inválido
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "500":
+          description: Error interno
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Eliminar curso
+      tags:
+      - courses
+    get:
+      description: Retorna un curso por su identificador ULID.
+      parameters:
+      - description: ULID del curso
+        in: path
+        maxLength: 26
+        minLength: 26
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_courses_delivery_http_v1.CreateCourseResponse'
+              type: object
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "404":
+          description: Curso no encontrado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "422":
+          description: Identificador inválido
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "500":
+          description: Error interno
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener curso
+      tags:
+      - courses
+    put:
+      consumes:
+      - application/json
+      description: Actualiza parcialmente un curso. Solo se modifican los campos enviados
+        en el cuerpo.
+      parameters:
+      - description: ULID del curso
+        in: path
+        maxLength: 26
+        minLength: 26
+        name: id
+        required: true
+        type: string
+      - description: Campos del curso que se desean actualizar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_modules_courses_delivery_http_v1.UpdateCourseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_modules_courses_delivery_http_v1.CreateCourseResponse'
+              type: object
+        "400":
+          description: Petición malformada
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "401":
+          description: No autenticado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "404":
+          description: Curso no encontrado
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "409":
+          description: El slug ya está utilizado en el proyecto
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "422":
+          description: Datos del curso inválidos
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+        "500":
+          description: Error interno
+          schema:
+            $ref: '#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Actualizar curso
+      tags:
+      - courses
   /tenants:
     get:
       consumes:

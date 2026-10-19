@@ -68,10 +68,11 @@ func init() {
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),
+			validators[2].(func(string) error),
 		}
-		return func(project_id string) error {
+		return func(project string) error {
 			for _, fn := range fns {
-				if err := fn(project_id); err != nil {
+				if err := fn(project); err != nil {
 					return err
 				}
 			}
@@ -122,24 +123,6 @@ func init() {
 	coursesDescDescription := coursesFields[4].Descriptor()
 	// courses.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
 	courses.DescriptionValidator = coursesDescDescription.Validators[0].(func(string) error)
-	// coursesDescLevel is the schema descriptor for level field.
-	coursesDescLevel := coursesFields[5].Descriptor()
-	// courses.LevelValidator is a validator for the "level" field. It is called by the builders before save.
-	courses.LevelValidator = func() func(string) error {
-		validators := coursesDescLevel.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(level string) error {
-			for _, fn := range fns {
-				if err := fn(level); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
 	// coursesDescThumbnailURL is the schema descriptor for thumbnail_url field.
 	coursesDescThumbnailURL := coursesFields[6].Descriptor()
 	// courses.ThumbnailURLValidator is a validator for the "thumbnail_url" field. It is called by the builders before save.
@@ -152,24 +135,6 @@ func init() {
 		return func(thumbnail_url string) error {
 			for _, fn := range fns {
 				if err := fn(thumbnail_url); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// coursesDescStatus is the schema descriptor for status field.
-	coursesDescStatus := coursesFields[7].Descriptor()
-	// courses.StatusValidator is a validator for the "status" field. It is called by the builders before save.
-	courses.StatusValidator = func() func(string) error {
-		validators := coursesDescStatus.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(status string) error {
-			for _, fn := range fns {
-				if err := fn(status); err != nil {
 					return err
 				}
 			}

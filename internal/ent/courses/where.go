@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -104,19 +105,9 @@ func Description(v string) predicate.Courses {
 	return predicate.Courses(sql.FieldEQ(FieldDescription, v))
 }
 
-// Level applies equality check predicate on the "level" field. It's identical to LevelEQ.
-func Level(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldEQ(FieldLevel, v))
-}
-
 // ThumbnailURL applies equality check predicate on the "thumbnail_url" field. It's identical to ThumbnailURLEQ.
 func ThumbnailURL(v string) predicate.Courses {
 	return predicate.Courses(sql.FieldEQ(FieldThumbnailURL, v))
-}
-
-// Status applies equality check predicate on the "status" field. It's identical to StatusEQ.
-func Status(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldEQ(FieldStatus, v))
 }
 
 // TenantIDEQ applies the EQ predicate on the "tenant_id" field.
@@ -590,68 +581,23 @@ func DescriptionContainsFold(v string) predicate.Courses {
 }
 
 // LevelEQ applies the EQ predicate on the "level" field.
-func LevelEQ(v string) predicate.Courses {
+func LevelEQ(v Level) predicate.Courses {
 	return predicate.Courses(sql.FieldEQ(FieldLevel, v))
 }
 
 // LevelNEQ applies the NEQ predicate on the "level" field.
-func LevelNEQ(v string) predicate.Courses {
+func LevelNEQ(v Level) predicate.Courses {
 	return predicate.Courses(sql.FieldNEQ(FieldLevel, v))
 }
 
 // LevelIn applies the In predicate on the "level" field.
-func LevelIn(vs ...string) predicate.Courses {
+func LevelIn(vs ...Level) predicate.Courses {
 	return predicate.Courses(sql.FieldIn(FieldLevel, vs...))
 }
 
 // LevelNotIn applies the NotIn predicate on the "level" field.
-func LevelNotIn(vs ...string) predicate.Courses {
+func LevelNotIn(vs ...Level) predicate.Courses {
 	return predicate.Courses(sql.FieldNotIn(FieldLevel, vs...))
-}
-
-// LevelGT applies the GT predicate on the "level" field.
-func LevelGT(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldGT(FieldLevel, v))
-}
-
-// LevelGTE applies the GTE predicate on the "level" field.
-func LevelGTE(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldGTE(FieldLevel, v))
-}
-
-// LevelLT applies the LT predicate on the "level" field.
-func LevelLT(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldLT(FieldLevel, v))
-}
-
-// LevelLTE applies the LTE predicate on the "level" field.
-func LevelLTE(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldLTE(FieldLevel, v))
-}
-
-// LevelContains applies the Contains predicate on the "level" field.
-func LevelContains(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldContains(FieldLevel, v))
-}
-
-// LevelHasPrefix applies the HasPrefix predicate on the "level" field.
-func LevelHasPrefix(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldHasPrefix(FieldLevel, v))
-}
-
-// LevelHasSuffix applies the HasSuffix predicate on the "level" field.
-func LevelHasSuffix(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldHasSuffix(FieldLevel, v))
-}
-
-// LevelEqualFold applies the EqualFold predicate on the "level" field.
-func LevelEqualFold(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldEqualFold(FieldLevel, v))
-}
-
-// LevelContainsFold applies the ContainsFold predicate on the "level" field.
-func LevelContainsFold(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldContainsFold(FieldLevel, v))
 }
 
 // ThumbnailURLEQ applies the EQ predicate on the "thumbnail_url" field.
@@ -720,68 +666,46 @@ func ThumbnailURLContainsFold(v string) predicate.Courses {
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
-func StatusEQ(v string) predicate.Courses {
+func StatusEQ(v Status) predicate.Courses {
 	return predicate.Courses(sql.FieldEQ(FieldStatus, v))
 }
 
 // StatusNEQ applies the NEQ predicate on the "status" field.
-func StatusNEQ(v string) predicate.Courses {
+func StatusNEQ(v Status) predicate.Courses {
 	return predicate.Courses(sql.FieldNEQ(FieldStatus, v))
 }
 
 // StatusIn applies the In predicate on the "status" field.
-func StatusIn(vs ...string) predicate.Courses {
+func StatusIn(vs ...Status) predicate.Courses {
 	return predicate.Courses(sql.FieldIn(FieldStatus, vs...))
 }
 
 // StatusNotIn applies the NotIn predicate on the "status" field.
-func StatusNotIn(vs ...string) predicate.Courses {
+func StatusNotIn(vs ...Status) predicate.Courses {
 	return predicate.Courses(sql.FieldNotIn(FieldStatus, vs...))
 }
 
-// StatusGT applies the GT predicate on the "status" field.
-func StatusGT(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldGT(FieldStatus, v))
+// HasProject applies the HasEdge predicate on the "project" edge.
+func HasProject() predicate.Courses {
+	return predicate.Courses(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ProjectTable, ProjectColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
 }
 
-// StatusGTE applies the GTE predicate on the "status" field.
-func StatusGTE(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldGTE(FieldStatus, v))
-}
-
-// StatusLT applies the LT predicate on the "status" field.
-func StatusLT(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldLT(FieldStatus, v))
-}
-
-// StatusLTE applies the LTE predicate on the "status" field.
-func StatusLTE(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldLTE(FieldStatus, v))
-}
-
-// StatusContains applies the Contains predicate on the "status" field.
-func StatusContains(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldContains(FieldStatus, v))
-}
-
-// StatusHasPrefix applies the HasPrefix predicate on the "status" field.
-func StatusHasPrefix(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldHasPrefix(FieldStatus, v))
-}
-
-// StatusHasSuffix applies the HasSuffix predicate on the "status" field.
-func StatusHasSuffix(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldHasSuffix(FieldStatus, v))
-}
-
-// StatusEqualFold applies the EqualFold predicate on the "status" field.
-func StatusEqualFold(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldEqualFold(FieldStatus, v))
-}
-
-// StatusContainsFold applies the ContainsFold predicate on the "status" field.
-func StatusContainsFold(v string) predicate.Courses {
-	return predicate.Courses(sql.FieldContainsFold(FieldStatus, v))
+// HasProjectWith applies the HasEdge predicate on the "project" edge with a given conditions (other predicates).
+func HasProjectWith(preds ...predicate.Project) predicate.Courses {
+	return predicate.Courses(func(s *sql.Selector) {
+		step := newProjectStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

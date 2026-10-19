@@ -5,9 +5,6 @@ import (
 	"hexagonal-go-backend/internal/modules/courses/domain"
 )
 
-
-
-
 type CoursesFilter struct {
 	Page, Limit int
 	Search      string
@@ -17,6 +14,7 @@ type CoursesFilter struct {
 }
 
 type CreateCourseInput struct {
+	TenantID     string
 	ProjectID    string
 	Title        string
 	Slug         string
@@ -37,11 +35,10 @@ type UpdateCourseInput struct {
 	Status       *string
 }
 
-
 type CoursesRepository interface {
 	Create(context.Context, *domain.Course) error
 	FindByID(context.Context, string) (*domain.Course, error)
-	FindBySlug(context.Context, string) (*domain.Course, error)
+	FindBySlug(context.Context, string, string) (*domain.Course, error)
 	List(context.Context, CoursesFilter) ([]domain.Course, int, error)
 	Update(context.Context, *domain.Course) error
 	Delete(context.Context, string) error
@@ -50,8 +47,8 @@ type CoursesRepository interface {
 type CoursesService interface {
 	Create(context.Context, CreateCourseInput) (*domain.Course, error)
 	FindByID(context.Context, string) (*domain.Course, error)
-	FindBySlug(context.Context, string) (*domain.Course, error)
+	FindBySlug(context.Context, string, string) (*domain.Course, error)
 	List(context.Context, CoursesFilter) ([]domain.Course, int, error)
-	Update(context.Context, UpdateCourseInput) (*domain.Course, error)
+	Update(context.Context, string, UpdateCourseInput) (*domain.Course, error)
 	Delete(context.Context, string) error
 }

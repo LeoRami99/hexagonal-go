@@ -5,6 +5,7 @@ package ent
 import (
 	"fmt"
 	"hexagonal-go-backend/internal/ent/courses"
+	"hexagonal-go-backend/internal/ent/project"
 	"strings"
 	"time"
 
@@ -34,12 +35,35 @@ type Courses struct {
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// Level holds the value of the "level" field.
-	Level string `json:"level,omitempty"`
+	Level courses.Level `json:"level,omitempty"`
 	// ThumbnailURL holds the value of the "thumbnail_url" field.
 	ThumbnailURL string `json:"thumbnail_url,omitempty"`
 	// Status holds the value of the "status" field.
-	Status       string `json:"status,omitempty"`
+	Status courses.Status `json:"status,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the CoursesQuery when eager-loading is set.
+	Edges        CoursesEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// CoursesEdges holds the relations/edges for other nodes in the graph.
+type CoursesEdges struct {
+	// Project holds the value of the project edge.
+	Project *Project `json:"project,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// ProjectOrErr returns the Project value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e CoursesEdges) ProjectOrErr() (*Project, error) {
+	if e.Project != nil {
+		return e.Project, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: project.Label}
+	}
+	return nil, &NotLoadedError{edge: "project"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -124,7 +148,7 @@ func (_m *Courses) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field level", values[i])
 			} else if value.Valid {
-				_m.Level = value.String
+				_m.Level = courses.Level(value.String)
 			}
 		case courses.FieldThumbnailURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -136,7 +160,7 @@ func (_m *Courses) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				_m.Status = value.String
+				_m.Status = courses.Status(value.String)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -149,6 +173,11 @@ func (_m *Courses) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Courses) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryProject queries the "project" edge of the Courses entity.
+func (_m *Courses) QueryProject() *ProjectQuery {
+	return NewCoursesClient(_m.config).QueryProject(_m)
 }
 
 // Update returns a builder for updating this Courses.
@@ -199,13 +228,13 @@ func (_m *Courses) String() string {
 	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("level=")
-	builder.WriteString(_m.Level)
+	builder.WriteString(fmt.Sprintf("%v", _m.Level))
 	builder.WriteString(", ")
 	builder.WriteString("thumbnail_url=")
 	builder.WriteString(_m.ThumbnailURL)
 	builder.WriteString(", ")
 	builder.WriteString("status=")
-	builder.WriteString(_m.Status)
+	builder.WriteString(fmt.Sprintf("%v", _m.Status))
 	builder.WriteByte(')')
 	return builder.String()
 }

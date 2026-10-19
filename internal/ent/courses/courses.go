@@ -3,9 +3,11 @@
 package courses
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -35,8 +37,17 @@ const (
 	FieldThumbnailURL = "thumbnail_url"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// EdgeProject holds the string denoting the project edge name in mutations.
+	EdgeProject = "project"
 	// Table holds the table name of the courses in the database.
 	Table = "courses"
+	// ProjectTable is the table that holds the project relation/edge.
+	ProjectTable = "courses"
+	// ProjectInverseTable is the table name for the Project entity.
+	// It exists in this package in order to avoid circular dependency with the "project" package.
+	ProjectInverseTable = "projects"
+	// ProjectColumn is the table column denoting the project relation/edge.
+	ProjectColumn = "project_id"
 )
 
 // Columns holds all SQL columns for courses fields.
@@ -84,17 +95,64 @@ var (
 	SummaryValidator func(string) error
 	// DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
 	DescriptionValidator func(string) error
-	// LevelValidator is a validator for the "level" field. It is called by the builders before save.
-	LevelValidator func(string) error
 	// ThumbnailURLValidator is a validator for the "thumbnail_url" field. It is called by the builders before save.
 	ThumbnailURLValidator func(string) error
-	// StatusValidator is a validator for the "status" field. It is called by the builders before save.
-	StatusValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() string
 	// IDValidator is a validator for the "id" field. It is called by the builders before save.
 	IDValidator func(string) error
 )
+
+// Level defines the type for the "level" enum field.
+type Level string
+
+// Level values.
+const (
+	LevelBeginner     Level = "beginner"
+	LevelIntermediate Level = "intermediate"
+	LevelAdvanced     Level = "advanced"
+)
+
+func (l Level) String() string {
+	return string(l)
+}
+
+// LevelValidator is a validator for the "level" field enum values. It is called by the builders before save.
+func LevelValidator(l Level) error {
+	switch l {
+	case LevelBeginner, LevelIntermediate, LevelAdvanced:
+		return nil
+	default:
+		return fmt.Errorf("courses: invalid enum value for level field: %q", l)
+	}
+}
+
+// Status defines the type for the "status" enum field.
+type Status string
+
+// StatusDraft is the default value of the Status enum.
+const DefaultStatus = StatusDraft
+
+// Status values.
+const (
+	StatusDraft     Status = "draft"
+	StatusPublished Status = "published"
+	StatusArchived  Status = "archived"
+)
+
+func (s Status) String() string {
+	return string(s)
+}
+
+// StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
+func StatusValidator(s Status) error {
+	switch s {
+	case StatusDraft, StatusPublished, StatusArchived:
+		return nil
+	default:
+		return fmt.Errorf("courses: invalid enum value for status field: %q", s)
+	}
+}
 
 // OrderOption defines the ordering options for the Courses queries.
 type OrderOption func(*sql.Selector)
@@ -157,4 +215,18 @@ func ByThumbnailURL(opts ...sql.OrderTermOption) OrderOption {
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByProjectField orders the results by project field.
+func ByProjectField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newProjectStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newProjectStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ProjectInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, ProjectTable, ProjectColumn),
+	)
 }

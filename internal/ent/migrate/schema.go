@@ -14,20 +14,50 @@ var (
 		{Name: "tenant_id", Type: field.TypeString, Size: 26},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "project_id", Type: field.TypeString, Size: 100},
 		{Name: "title", Type: field.TypeString, Size: 350},
 		{Name: "slug", Type: field.TypeString, Size: 150},
 		{Name: "summary", Type: field.TypeString, Size: 2147483647},
 		{Name: "description", Type: field.TypeString, Size: 2147483647},
-		{Name: "level", Type: field.TypeString, Size: 50},
+		{Name: "level", Type: field.TypeEnum, Enums: []string{"beginner", "intermediate", "advanced"}},
 		{Name: "thumbnail_url", Type: field.TypeString, Size: 350},
-		{Name: "status", Type: field.TypeString, Size: 50},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "published", "archived"}, Default: "draft"},
+		{Name: "project_id", Type: field.TypeString, Size: 26},
 	}
 	// CoursesTable holds the schema information for the "courses" table.
 	CoursesTable = &schema.Table{
 		Name:       "courses",
 		Columns:    CoursesColumns,
 		PrimaryKey: []*schema.Column{CoursesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "courses_projects_courses",
+				Columns:    []*schema.Column{CoursesColumns[11]},
+				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "courses_project_id_slug",
+				Unique:  true,
+				Columns: []*schema.Column{CoursesColumns[11], CoursesColumns[5]},
+			},
+			{
+				Name:    "courses_tenant_id",
+				Unique:  false,
+				Columns: []*schema.Column{CoursesColumns[1]},
+			},
+			{
+				Name:    "courses_status",
+				Unique:  false,
+				Columns: []*schema.Column{CoursesColumns[10]},
+			},
+			{
+				Name:    "courses_level",
+				Unique:  false,
+				Columns: []*schema.Column{CoursesColumns[8]},
+			},
+		},
 	}
 	// FeaturesColumns holds the columns for the "features" table.
 	FeaturesColumns = []*schema.Column{
@@ -467,6 +497,7 @@ var (
 )
 
 func init() {
+	CoursesTable.ForeignKeys[0].RefTable = ProjectsTable
 	ProjectsTable.ForeignKeys[0].RefTable = TenantsTable
 	ProjectFeaturesTable.ForeignKeys[0].RefTable = FeaturesTable
 	ProjectFeaturesTable.ForeignKeys[1].RefTable = ProjectsTable

@@ -46,6 +46,7 @@ func (Project) Edges() []ent.Edge {
 		edge.To("memberships", ProjectMembership.Type),
 		edge.To("roles", ProjectRole.Type),
 		edge.To("features", ProjectFeature.Type),
+		edge.To("courses", Courses.Type),
 	}
 }
 

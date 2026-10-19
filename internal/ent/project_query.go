@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"hexagonal-go-backend/internal/ent/courses"
 	"hexagonal-go-backend/internal/ent/predicate"
 	"hexagonal-go-backend/internal/ent/project"
 	"hexagonal-go-backend/internal/ent/projectfeature"
@@ -31,6 +32,7 @@ type ProjectQuery struct {
 	withMemberships *ProjectMembershipQuery
 	withRoles       *ProjectRoleQuery
 	withFeatures    *ProjectFeatureQuery
+	withCourses     *CoursesQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -148,6 +150,28 @@ func (_q *ProjectQuery) QueryFeatures() *ProjectFeatureQuery {
 			sqlgraph.From(project.Table, project.FieldID, selector),
 			sqlgraph.To(projectfeature.Table, projectfeature.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, project.FeaturesTable, project.FeaturesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryCourses chains the current query on the "courses" edge.
+func (_q *ProjectQuery) QueryCourses() *CoursesQuery {
+	query := (&CoursesClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, selector),
+			sqlgraph.To(courses.Table, courses.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.CoursesTable, project.CoursesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -351,6 +375,7 @@ func (_q *ProjectQuery) Clone() *ProjectQuery {
 		withMemberships: _q.withMemberships.Clone(),
 		withRoles:       _q.withRoles.Clone(),
 		withFeatures:    _q.withFeatures.Clone(),
+		withCourses:     _q.withCourses.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -398,6 +423,17 @@ func (_q *ProjectQuery) WithFeatures(opts ...func(*ProjectFeatureQuery)) *Projec
 		opt(query)
 	}
 	_q.withFeatures = query
+	return _q
+}
+
+// WithCourses tells the query-builder to eager-load the nodes that are connected to
+// the "courses" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *ProjectQuery) WithCourses(opts ...func(*CoursesQuery)) *ProjectQuery {
+	query := (&CoursesClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withCourses = query
 	return _q
 }
 
@@ -479,11 +515,12 @@ func (_q *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 	var (
 		nodes       = []*Project{}
 		_spec       = _q.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			_q.withTenant != nil,
 			_q.withMemberships != nil,
 			_q.withRoles != nil,
 			_q.withFeatures != nil,
+			_q.withCourses != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -528,6 +565,13 @@ func (_q *ProjectQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Proj
 		if err := _q.loadFeatures(ctx, query, nodes,
 			func(n *Project) { n.Edges.Features = []*ProjectFeature{} },
 			func(n *Project, e *ProjectFeature) { n.Edges.Features = append(n.Edges.Features, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withCourses; query != nil {
+		if err := _q.loadCourses(ctx, query, nodes,
+			func(n *Project) { n.Edges.Courses = []*Courses{} },
+			func(n *Project, e *Courses) { n.Edges.Courses = append(n.Edges.Courses, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -638,6 +682,36 @@ func (_q *ProjectQuery) loadFeatures(ctx context.Context, query *ProjectFeatureQ
 	}
 	query.Where(predicate.ProjectFeature(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(project.FeaturesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ProjectID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "project_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *ProjectQuery) loadCourses(ctx context.Context, query *CoursesQuery, nodes []*Project, init func(*Project), assign func(*Project, *Courses)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[string]*Project)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(courses.FieldProjectID)
+	}
+	query.Where(predicate.Courses(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(project.CoursesColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

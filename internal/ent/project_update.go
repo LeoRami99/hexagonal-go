@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hexagonal-go-backend/internal/ent/courses"
 	"hexagonal-go-backend/internal/ent/predicate"
 	"hexagonal-go-backend/internal/ent/project"
 	"hexagonal-go-backend/internal/ent/projectfeature"
@@ -275,6 +276,21 @@ func (_u *ProjectUpdate) AddFeatures(v ...*ProjectFeature) *ProjectUpdate {
 	return _u.AddFeatureIDs(ids...)
 }
 
+// AddCourseIDs adds the "courses" edge to the Courses entity by IDs.
+func (_u *ProjectUpdate) AddCourseIDs(ids ...string) *ProjectUpdate {
+	_u.mutation.AddCourseIDs(ids...)
+	return _u
+}
+
+// AddCourses adds the "courses" edges to the Courses entity.
+func (_u *ProjectUpdate) AddCourses(v ...*Courses) *ProjectUpdate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCourseIDs(ids...)
+}
+
 // Mutation returns the ProjectMutation object of the builder.
 func (_u *ProjectUpdate) Mutation() *ProjectMutation {
 	return _u.mutation
@@ -347,6 +363,27 @@ func (_u *ProjectUpdate) RemoveFeatures(v ...*ProjectFeature) *ProjectUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveFeatureIDs(ids...)
+}
+
+// ClearCourses clears all "courses" edges to the Courses entity.
+func (_u *ProjectUpdate) ClearCourses() *ProjectUpdate {
+	_u.mutation.ClearCourses()
+	return _u
+}
+
+// RemoveCourseIDs removes the "courses" edge to Courses entities by IDs.
+func (_u *ProjectUpdate) RemoveCourseIDs(ids ...string) *ProjectUpdate {
+	_u.mutation.RemoveCourseIDs(ids...)
+	return _u
+}
+
+// RemoveCourses removes "courses" edges to Courses entities.
+func (_u *ProjectUpdate) RemoveCourses(v ...*Courses) *ProjectUpdate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCourseIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -658,6 +695,51 @@ func (_u *ProjectUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.CoursesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.CoursesTable,
+			Columns: []string{project.CoursesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(courses.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCoursesIDs(); len(nodes) > 0 && !_u.mutation.CoursesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.CoursesTable,
+			Columns: []string{project.CoursesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(courses.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CoursesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.CoursesTable,
+			Columns: []string{project.CoursesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(courses.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{project.Label}
@@ -920,6 +1002,21 @@ func (_u *ProjectUpdateOne) AddFeatures(v ...*ProjectFeature) *ProjectUpdateOne 
 	return _u.AddFeatureIDs(ids...)
 }
 
+// AddCourseIDs adds the "courses" edge to the Courses entity by IDs.
+func (_u *ProjectUpdateOne) AddCourseIDs(ids ...string) *ProjectUpdateOne {
+	_u.mutation.AddCourseIDs(ids...)
+	return _u
+}
+
+// AddCourses adds the "courses" edges to the Courses entity.
+func (_u *ProjectUpdateOne) AddCourses(v ...*Courses) *ProjectUpdateOne {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCourseIDs(ids...)
+}
+
 // Mutation returns the ProjectMutation object of the builder.
 func (_u *ProjectUpdateOne) Mutation() *ProjectMutation {
 	return _u.mutation
@@ -992,6 +1089,27 @@ func (_u *ProjectUpdateOne) RemoveFeatures(v ...*ProjectFeature) *ProjectUpdateO
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveFeatureIDs(ids...)
+}
+
+// ClearCourses clears all "courses" edges to the Courses entity.
+func (_u *ProjectUpdateOne) ClearCourses() *ProjectUpdateOne {
+	_u.mutation.ClearCourses()
+	return _u
+}
+
+// RemoveCourseIDs removes the "courses" edge to Courses entities by IDs.
+func (_u *ProjectUpdateOne) RemoveCourseIDs(ids ...string) *ProjectUpdateOne {
+	_u.mutation.RemoveCourseIDs(ids...)
+	return _u
+}
+
+// RemoveCourses removes "courses" edges to Courses entities.
+func (_u *ProjectUpdateOne) RemoveCourses(v ...*Courses) *ProjectUpdateOne {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCourseIDs(ids...)
 }
 
 // Where appends a list predicates to the ProjectUpdate builder.
@@ -1326,6 +1444,51 @@ func (_u *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err er
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(projectfeature.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.CoursesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.CoursesTable,
+			Columns: []string{project.CoursesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(courses.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCoursesIDs(); len(nodes) > 0 && !_u.mutation.CoursesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.CoursesTable,
+			Columns: []string{project.CoursesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(courses.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CoursesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   project.CoursesTable,
+			Columns: []string{project.CoursesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(courses.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

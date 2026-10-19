@@ -23,6 +23,10 @@ func NewUserRepository(client *entclient.Client) *UserRepository {
 	return &UserRepository{client: client}
 }
 
+func NewUserRepositoryWithClient(client *entclient.Client) *UserRepository {
+	return &UserRepository{client: client}
+}
+
 func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {
 	builder := r.client.User.Create().
 		SetID(user.ID).

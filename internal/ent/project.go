@@ -63,9 +63,11 @@ type ProjectEdges struct {
 	Roles []*ProjectRole `json:"roles,omitempty"`
 	// Features holds the value of the features edge.
 	Features []*ProjectFeature `json:"features,omitempty"`
+	// Courses holds the value of the courses edge.
+	Courses []*Courses `json:"courses,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // TenantOrErr returns the Tenant value or an error if the edge
@@ -104,6 +106,15 @@ func (e ProjectEdges) FeaturesOrErr() ([]*ProjectFeature, error) {
 		return e.Features, nil
 	}
 	return nil, &NotLoadedError{edge: "features"}
+}
+
+// CoursesOrErr returns the Courses value or an error if the edge
+// was not loaded in eager-loading.
+func (e ProjectEdges) CoursesOrErr() ([]*Courses, error) {
+	if e.loadedTypes[4] {
+		return e.Courses, nil
+	}
+	return nil, &NotLoadedError{edge: "courses"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -262,6 +273,11 @@ func (_m *Project) QueryRoles() *ProjectRoleQuery {
 // QueryFeatures queries the "features" edge of the Project entity.
 func (_m *Project) QueryFeatures() *ProjectFeatureQuery {
 	return NewProjectClient(_m.config).QueryFeatures(_m)
+}
+
+// QueryCourses queries the "courses" edge of the Project entity.
+func (_m *Project) QueryCourses() *CoursesQuery {
+	return NewProjectClient(_m.config).QueryCourses(_m)
 }
 
 // Update returns a builder for updating this Project.

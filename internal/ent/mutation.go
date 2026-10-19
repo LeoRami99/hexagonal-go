@@ -50,24 +50,25 @@ const (
 // CoursesMutation represents an operation that mutates the Courses nodes in the graph.
 type CoursesMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *string
-	tenant_id     *string
-	created_at    *time.Time
-	updated_at    *time.Time
-	project_id    *string
-	title         *string
-	slug          *string
-	summary       *string
-	description   *string
-	level         *string
-	thumbnail_url *string
-	status        *string
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Courses, error)
-	predicates    []predicate.Courses
+	op             Op
+	typ            string
+	id             *string
+	tenant_id      *string
+	created_at     *time.Time
+	updated_at     *time.Time
+	title          *string
+	slug           *string
+	summary        *string
+	description    *string
+	level          *courses.Level
+	thumbnail_url  *string
+	status         *courses.Status
+	clearedFields  map[string]struct{}
+	project        *string
+	clearedproject bool
+	done           bool
+	oldValue       func(context.Context) (*Courses, error)
+	predicates     []predicate.Courses
 }
 
 var _ ent.Mutation = (*CoursesMutation)(nil)
@@ -284,12 +285,12 @@ func (m *CoursesMutation) ResetUpdatedAt() {
 
 // SetProjectID sets the "project_id" field.
 func (m *CoursesMutation) SetProjectID(s string) {
-	m.project_id = &s
+	m.project = &s
 }
 
 // ProjectID returns the value of the "project_id" field in the mutation.
 func (m *CoursesMutation) ProjectID() (r string, exists bool) {
-	v := m.project_id
+	v := m.project
 	if v == nil {
 		return
 	}
@@ -315,7 +316,7 @@ func (m *CoursesMutation) OldProjectID(ctx context.Context) (v string, err error
 
 // ResetProjectID resets all changes to the "project_id" field.
 func (m *CoursesMutation) ResetProjectID() {
-	m.project_id = nil
+	m.project = nil
 }
 
 // SetTitle sets the "title" field.
@@ -463,12 +464,12 @@ func (m *CoursesMutation) ResetDescription() {
 }
 
 // SetLevel sets the "level" field.
-func (m *CoursesMutation) SetLevel(s string) {
-	m.level = &s
+func (m *CoursesMutation) SetLevel(c courses.Level) {
+	m.level = &c
 }
 
 // Level returns the value of the "level" field in the mutation.
-func (m *CoursesMutation) Level() (r string, exists bool) {
+func (m *CoursesMutation) Level() (r courses.Level, exists bool) {
 	v := m.level
 	if v == nil {
 		return
@@ -479,7 +480,7 @@ func (m *CoursesMutation) Level() (r string, exists bool) {
 // OldLevel returns the old "level" field's value of the Courses entity.
 // If the Courses object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CoursesMutation) OldLevel(ctx context.Context) (v string, err error) {
+func (m *CoursesMutation) OldLevel(ctx context.Context) (v courses.Level, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldLevel is only allowed on UpdateOne operations")
 	}
@@ -535,12 +536,12 @@ func (m *CoursesMutation) ResetThumbnailURL() {
 }
 
 // SetStatus sets the "status" field.
-func (m *CoursesMutation) SetStatus(s string) {
-	m.status = &s
+func (m *CoursesMutation) SetStatus(c courses.Status) {
+	m.status = &c
 }
 
 // Status returns the value of the "status" field in the mutation.
-func (m *CoursesMutation) Status() (r string, exists bool) {
+func (m *CoursesMutation) Status() (r courses.Status, exists bool) {
 	v := m.status
 	if v == nil {
 		return
@@ -551,7 +552,7 @@ func (m *CoursesMutation) Status() (r string, exists bool) {
 // OldStatus returns the old "status" field's value of the Courses entity.
 // If the Courses object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *CoursesMutation) OldStatus(ctx context.Context) (v string, err error) {
+func (m *CoursesMutation) OldStatus(ctx context.Context) (v courses.Status, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
 	}
@@ -568,6 +569,33 @@ func (m *CoursesMutation) OldStatus(ctx context.Context) (v string, err error) {
 // ResetStatus resets all changes to the "status" field.
 func (m *CoursesMutation) ResetStatus() {
 	m.status = nil
+}
+
+// ClearProject clears the "project" edge to the Project entity.
+func (m *CoursesMutation) ClearProject() {
+	m.clearedproject = true
+	m.clearedFields[courses.FieldProjectID] = struct{}{}
+}
+
+// ProjectCleared reports if the "project" edge to the Project entity was cleared.
+func (m *CoursesMutation) ProjectCleared() bool {
+	return m.clearedproject
+}
+
+// ProjectIDs returns the "project" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ProjectID instead. It exists only for internal usage by the builders.
+func (m *CoursesMutation) ProjectIDs() (ids []string) {
+	if id := m.project; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetProject resets all changes to the "project" edge.
+func (m *CoursesMutation) ResetProject() {
+	m.project = nil
+	m.clearedproject = false
 }
 
 // Where appends a list predicates to the CoursesMutation builder.
@@ -614,7 +642,7 @@ func (m *CoursesMutation) Fields() []string {
 	if m.updated_at != nil {
 		fields = append(fields, courses.FieldUpdatedAt)
 	}
-	if m.project_id != nil {
+	if m.project != nil {
 		fields = append(fields, courses.FieldProjectID)
 	}
 	if m.title != nil {
@@ -765,7 +793,7 @@ func (m *CoursesMutation) SetField(name string, value ent.Value) error {
 		m.SetDescription(v)
 		return nil
 	case courses.FieldLevel:
-		v, ok := value.(string)
+		v, ok := value.(courses.Level)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -779,7 +807,7 @@ func (m *CoursesMutation) SetField(name string, value ent.Value) error {
 		m.SetThumbnailURL(v)
 		return nil
 	case courses.FieldStatus:
-		v, ok := value.(string)
+		v, ok := value.(courses.Status)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -873,19 +901,28 @@ func (m *CoursesMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *CoursesMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.project != nil {
+		edges = append(edges, courses.EdgeProject)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *CoursesMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case courses.EdgeProject:
+		if id := m.project; id != nil {
+			return []ent.Value{*id}
+		}
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *CoursesMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
 	return edges
 }
 
@@ -897,25 +934,42 @@ func (m *CoursesMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *CoursesMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedproject {
+		edges = append(edges, courses.EdgeProject)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *CoursesMutation) EdgeCleared(name string) bool {
+	switch name {
+	case courses.EdgeProject:
+		return m.clearedproject
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *CoursesMutation) ClearEdge(name string) error {
+	switch name {
+	case courses.EdgeProject:
+		m.ClearProject()
+		return nil
+	}
 	return fmt.Errorf("unknown Courses unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *CoursesMutation) ResetEdge(name string) error {
+	switch name {
+	case courses.EdgeProject:
+		m.ResetProject()
+		return nil
+	}
 	return fmt.Errorf("unknown Courses edge %s", name)
 }
 
@@ -2277,6 +2331,9 @@ type ProjectMutation struct {
 	features           map[string]struct{}
 	removedfeatures    map[string]struct{}
 	clearedfeatures    bool
+	courses            map[string]struct{}
+	removedcourses     map[string]struct{}
+	clearedcourses     bool
 	done               bool
 	oldValue           func(context.Context) (*Project, error)
 	predicates         []predicate.Project
@@ -3173,6 +3230,60 @@ func (m *ProjectMutation) ResetFeatures() {
 	m.removedfeatures = nil
 }
 
+// AddCourseIDs adds the "courses" edge to the Courses entity by ids.
+func (m *ProjectMutation) AddCourseIDs(ids ...string) {
+	if m.courses == nil {
+		m.courses = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.courses[ids[i]] = struct{}{}
+	}
+}
+
+// ClearCourses clears the "courses" edge to the Courses entity.
+func (m *ProjectMutation) ClearCourses() {
+	m.clearedcourses = true
+}
+
+// CoursesCleared reports if the "courses" edge to the Courses entity was cleared.
+func (m *ProjectMutation) CoursesCleared() bool {
+	return m.clearedcourses
+}
+
+// RemoveCourseIDs removes the "courses" edge to the Courses entity by IDs.
+func (m *ProjectMutation) RemoveCourseIDs(ids ...string) {
+	if m.removedcourses == nil {
+		m.removedcourses = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.courses, ids[i])
+		m.removedcourses[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedCourses returns the removed IDs of the "courses" edge to the Courses entity.
+func (m *ProjectMutation) RemovedCoursesIDs() (ids []string) {
+	for id := range m.removedcourses {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// CoursesIDs returns the "courses" edge IDs in the mutation.
+func (m *ProjectMutation) CoursesIDs() (ids []string) {
+	for id := range m.courses {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetCourses resets all changes to the "courses" edge.
+func (m *ProjectMutation) ResetCourses() {
+	m.courses = nil
+	m.clearedcourses = false
+	m.removedcourses = nil
+}
+
 // Where appends a list predicates to the ProjectMutation builder.
 func (m *ProjectMutation) Where(ps ...predicate.Project) {
 	m.predicates = append(m.predicates, ps...)
@@ -3566,7 +3677,7 @@ func (m *ProjectMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ProjectMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.tenant != nil {
 		edges = append(edges, project.EdgeTenant)
 	}
@@ -3578,6 +3689,9 @@ func (m *ProjectMutation) AddedEdges() []string {
 	}
 	if m.features != nil {
 		edges = append(edges, project.EdgeFeatures)
+	}
+	if m.courses != nil {
+		edges = append(edges, project.EdgeCourses)
 	}
 	return edges
 }
@@ -3608,13 +3722,19 @@ func (m *ProjectMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case project.EdgeCourses:
+		ids := make([]ent.Value, 0, len(m.courses))
+		for id := range m.courses {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *ProjectMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removedmemberships != nil {
 		edges = append(edges, project.EdgeMemberships)
 	}
@@ -3623,6 +3743,9 @@ func (m *ProjectMutation) RemovedEdges() []string {
 	}
 	if m.removedfeatures != nil {
 		edges = append(edges, project.EdgeFeatures)
+	}
+	if m.removedcourses != nil {
+		edges = append(edges, project.EdgeCourses)
 	}
 	return edges
 }
@@ -3649,13 +3772,19 @@ func (m *ProjectMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case project.EdgeCourses:
+		ids := make([]ent.Value, 0, len(m.removedcourses))
+		for id := range m.removedcourses {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ProjectMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedtenant {
 		edges = append(edges, project.EdgeTenant)
 	}
@@ -3667,6 +3796,9 @@ func (m *ProjectMutation) ClearedEdges() []string {
 	}
 	if m.clearedfeatures {
 		edges = append(edges, project.EdgeFeatures)
+	}
+	if m.clearedcourses {
+		edges = append(edges, project.EdgeCourses)
 	}
 	return edges
 }
@@ -3683,6 +3815,8 @@ func (m *ProjectMutation) EdgeCleared(name string) bool {
 		return m.clearedroles
 	case project.EdgeFeatures:
 		return m.clearedfeatures
+	case project.EdgeCourses:
+		return m.clearedcourses
 	}
 	return false
 }
@@ -3713,6 +3847,9 @@ func (m *ProjectMutation) ResetEdge(name string) error {
 		return nil
 	case project.EdgeFeatures:
 		m.ResetFeatures()
+		return nil
+	case project.EdgeCourses:
+		m.ResetCourses()
 		return nil
 	}
 	return fmt.Errorf("unknown Project edge %s", name)

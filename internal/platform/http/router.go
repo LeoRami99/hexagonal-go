@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"time"
 
+	courseshttp "hexagonal-go-backend/internal/modules/courses/delivery/http/v1"
+
 	authapp "hexagonal-go-backend/internal/modules/auth/application"
 	authhttp "hexagonal-go-backend/internal/modules/auth/delivery/http/v1"
 	tenanthttp "hexagonal-go-backend/internal/modules/tenants/delivery/http/v1"
@@ -34,6 +36,14 @@ import (
 // @description                Escribe "Bearer " seguido de tu token JWT
 
 func NewRouter(cfg config.Config, logger *slog.Logger, users *usershttp.Controller, auth *authhttp.Controller, tokens authapp.TokenProvider, userRepo usersapp.UserRepository, tenants ...*tenanthttp.Controller) *gin.Engine {
+	return newRouter(cfg, logger, users, auth, nil, tokens, userRepo, tenants...)
+}
+
+func NewRouterWithCourses(cfg config.Config, logger *slog.Logger, users *usershttp.Controller, auth *authhttp.Controller, courses *courseshttp.Controller, tokens authapp.TokenProvider, userRepo usersapp.UserRepository, tenants ...*tenanthttp.Controller) *gin.Engine {
+	return newRouter(cfg, logger, users, auth, courses, tokens, userRepo, tenants...)
+}
+
+func newRouter(cfg config.Config, logger *slog.Logger, users *usershttp.Controller, auth *authhttp.Controller, courses *courseshttp.Controller, tokens authapp.TokenProvider, userRepo usersapp.UserRepository, tenants ...*tenanthttp.Controller) *gin.Engine {
 	docs.SwaggerInfo.Host = ""
 	if cfg.App.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -64,9 +74,12 @@ func NewRouter(cfg config.Config, logger *slog.Logger, users *usershttp.Controll
 	admin.PUT("/users/:id", users.Update)
 	admin.DELETE("/users/:id", users.Delete)
 
+	if courses != nil {
+		courses.RegisterRoutes(protected)
+	}
+
 	if len(tenants) > 0 && tenants[0] != nil {
 		tenants[0].RegisterRoutes(admin)
 	}
 	return router
 }
-
