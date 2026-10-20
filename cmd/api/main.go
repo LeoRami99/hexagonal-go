@@ -23,7 +23,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	log := logger.New(cfg.App.LogLevel)
+	log := logger.New(cfg.App.LogLevel, cfg.App.Env)
 	autoMigrate := cfg.App.Env == "development"
 	entClient, _, err := database.OpenPostgres(context.Background(), cfg.Database.URL, cfg.Database.MaxOpenConns, cfg.Database.MaxIdleConns, cfg.Database.ConnMaxLifetime, autoMigrate)
 	if err != nil {

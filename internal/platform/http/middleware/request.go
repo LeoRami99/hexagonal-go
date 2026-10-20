@@ -26,7 +26,14 @@ func Logger(l *slog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
-		l.Info("http request", "request_id", c.GetString("request_id"), "method", c.Request.Method, "path", c.Request.URL.Path, "status", c.Writer.Status(), "duration", time.Since(start).String())
+		status := c.Writer.Status()
+		level := slog.LevelInfo
+		if status >= 500 {
+			level = slog.LevelError
+		} else if status >= 400 {
+			level = slog.LevelWarn
+		}
+		l.Log(c.Request.Context(), level, "http request", "request_id", c.GetString("request_id"), "method", c.Request.Method, "path", c.Request.URL.Path, "status", status, "duration", time.Since(start).String())
 	}
 }
 func Recovery(l *slog.Logger) gin.HandlerFunc {

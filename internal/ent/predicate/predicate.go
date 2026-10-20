@@ -6,29 +6,35 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// Activities is the predicate function for activities builders.
-type Activities func(*sql.Selector)
+// Courses is the predicate function for courses builders.
+type Courses func(*sql.Selector)
 
-// CourseCategories is the predicate function for coursecategories builders.
-type CourseCategories func(*sql.Selector)
+// Feature is the predicate function for feature builders.
+type Feature func(*sql.Selector)
 
-// CourseModules is the predicate function for coursemodules builders.
-type CourseModules func(*sql.Selector)
+// Permission is the predicate function for permission builders.
+type Permission func(*sql.Selector)
 
-// CourseResources is the predicate function for courseresources builders.
-type CourseResources func(*sql.Selector)
+// Project is the predicate function for project builders.
+type Project func(*sql.Selector)
 
-// CourseTemplates is the predicate function for coursetemplates builders.
-type CourseTemplates func(*sql.Selector)
+// ProjectFeature is the predicate function for projectfeature builders.
+type ProjectFeature func(*sql.Selector)
 
-// CourseVersions is the predicate function for courseversions builders.
-type CourseVersions func(*sql.Selector)
+// ProjectMembership is the predicate function for projectmembership builders.
+type ProjectMembership func(*sql.Selector)
 
-// Lessons is the predicate function for lessons builders.
-type Lessons func(*sql.Selector)
+// ProjectRole is the predicate function for projectrole builders.
+type ProjectRole func(*sql.Selector)
 
-// Syllabi is the predicate function for syllabi builders.
-type Syllabi func(*sql.Selector)
+// TenantMembership is the predicate function for tenantmembership builders.
+type TenantMembership func(*sql.Selector)
+
+// Tenants is the predicate function for tenants builders.
+type Tenants func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
+
+// UserProfile is the predicate function for userprofile builders.
+type UserProfile func(*sql.Selector)

@@ -9,11 +9,362 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
     "basePath": "/api/v1",
     "paths": {
-        "/api/v1/courses": {
+        "/auth/login": {
             "post": {
+                "description": "Autentica credenciales de usuario y genera un par de tokens JWT (Access y Refresh).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Iniciar sesión",
+                "parameters": [
+                    {
+                        "description": "Credenciales de acceso",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_auth_delivery_http_v1.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_modules_auth_delivery_http_v1.TokenResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Formato de request inválido",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "INVALID_CREDENTIALS: email o contraseña incorrectos",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "ACCOUNT_DISABLED: cuenta deshabilitada",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "423": {
+                        "description": "ACCOUNT_LOCKED: cuenta bloqueada temporalmente",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "IDENTITY_PROVIDER_UNAVAILABLE: servicio de autenticación no disponible",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "description": "Invalida el refresh token del usuario.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Cerrar sesión",
+                "parameters": [
+                    {
+                        "description": "Refresh token a revocar",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_auth_delivery_http_v1.TokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Sin contenido"
+                    },
+                    "400": {
+                        "description": "Formato de request inválido",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Token inválido",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retorna los datos del usuario, sus organizaciones (tenants) y membresías de proyectos/campus con sus roles asociados.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Obtener sesión y contexto del usuario autenticado",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/hexagonal-go-backend_internal_modules_auth_application.SessionContext"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "Genera un nuevo par de tokens JWT utilizando un refresh token válido.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Renovar token de acceso",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_auth_delivery_http_v1.TokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_modules_auth_delivery_http_v1.TokenResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Formato de request inválido",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Token inválido o expirado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/courses": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retorna cursos paginados y permite buscar por título, slug o resumen, filtrar por nivel y estado, y ordenar el resultado.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "courses"
+                ],
+                "summary": "Listar cursos",
+                "parameters": [
+                    {
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Número de página",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Elementos por página",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Texto para buscar en título, slug o resumen",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "beginner",
+                            "intermediate",
+                            "advanced"
+                        ],
+                        "type": "string",
+                        "description": "Nivel del curso",
+                        "name": "level",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "draft",
+                            "published",
+                            "archived"
+                        ],
+                        "type": "string",
+                        "description": "Estado del curso",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "created_at",
+                            "updated_at",
+                            "title"
+                        ],
+                        "type": "string",
+                        "default": "created_at",
+                        "description": "Campo de ordenamiento",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "default": "desc",
+                        "description": "Dirección del ordenamiento",
+                        "name": "order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.CreateCourseResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Crea un curso asociado a un proyecto y tenant. El slug debe ser único dentro del proyecto.",
                 "consumes": [
                     "application/json"
                 ],
@@ -23,11 +374,11 @@
                 "tags": [
                     "courses"
                 ],
-                "summary": "Create course with its full content tree",
+                "summary": "Crear curso",
                 "parameters": [
                     {
-                        "description": "Course",
-                        "name": "body",
+                        "description": "Datos del curso",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
@@ -39,29 +390,47 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.CreateCourseResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Petición malformada",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
                     },
                     "409": {
-                        "description": "Conflict",
+                        "description": "Ya existe un curso con el mismo slug en el proyecto",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
                     },
                     "422": {
-                        "description": "Unprocessable Entity",
+                        "description": "Datos del curso inválidos",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Error interno",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
@@ -69,194 +438,27 @@
                 }
             }
         },
-        "/api/v1/courses/categories": {
+        "/courses/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retorna un curso por su identificador ULID.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "courses"
                 ],
-                "summary": "List course categories",
+                "summary": "Obtener curso",
                 "parameters": [
                     {
+                        "maxLength": 26,
+                        "minLength": 26,
                         "type": "string",
-                        "description": "Tenant ID",
-                        "name": "tenant_id",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "courses"
-                ],
-                "summary": "Create course category",
-                "parameters": [
-                    {
-                        "description": "Category",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.CreateCategoryRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/courses/templates": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "courses"
-                ],
-                "summary": "List course templates",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "courses"
-                ],
-                "summary": "Create course template",
-                "parameters": [
-                    {
-                        "description": "Template",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.CreateTemplateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/courses/templates/{id}": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "courses"
-                ],
-                "summary": "Get course template",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Template ID",
+                        "description": "ULID del curso",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -266,183 +468,41 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.CreateCourseResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "401": {
+                        "description": "No autenticado",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/courses/templates/{id}/versions": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "courses"
-                ],
-                "summary": "List course versions",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Template ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "courses"
-                ],
-                "summary": "Create course version",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Template ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Version",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.CreateVersionRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Conflict",
+                        "description": "Curso no encontrado",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
                     },
                     "422": {
-                        "description": "Unprocessable Entity",
+                        "description": "Identificador inválido",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/courses/versions/{id}/syllabus": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "courses"
-                ],
-                "summary": "Get course syllabus",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Version ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
+                        "description": "Error interno",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
@@ -450,6 +510,12 @@
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Actualiza parcialmente un curso. Solo se modifican los campos enviados en el cuerpo.",
                 "consumes": [
                     "application/json"
                 ],
@@ -459,22 +525,24 @@
                 "tags": [
                     "courses"
                 ],
-                "summary": "Set course syllabus",
+                "summary": "Actualizar curso",
                 "parameters": [
                     {
+                        "maxLength": 26,
+                        "minLength": 26,
                         "type": "string",
-                        "description": "Version ID",
+                        "description": "ULID del curso",
                         "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Syllabus",
-                        "name": "body",
+                        "description": "Campos del curso que se desean actualizar",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.SetSyllabusRequest"
+                            "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.UpdateCourseRequest"
                         }
                     }
                 ],
@@ -482,29 +550,105 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.CreateCourseResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Petición malformada",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Curso no encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "El slug ya está utilizado en el proyecto",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
                     },
                     "422": {
-                        "description": "Unprocessable Entity",
+                        "description": "Datos del curso inválidos",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Error interno",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Elimina permanentemente un curso por su identificador.",
+                "tags": [
+                    "courses"
+                ],
+                "summary": "Eliminar curso",
+                "parameters": [
+                    {
+                        "maxLength": 26,
+                        "minLength": 26,
+                        "type": "string",
+                        "description": "ULID del curso",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Curso eliminado"
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Curso no encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Identificador inválido",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
@@ -512,19 +656,108 @@
                 }
             }
         },
-        "/api/v1/courses/{id}": {
+        "/tenants": {
             "get": {
+                "description": "Retorna la lista de todos los tenants registrados.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "courses"
+                    "tenants"
                 ],
-                "summary": "Get course by version ID with its full content tree",
+                "summary": "Listar tenants",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Crea una nueva organización/tenant en la plataforma.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tenants"
+                ],
+                "summary": "Crear tenant",
+                "parameters": [
+                    {
+                        "description": "Datos de creación del tenant",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_modules_tenants_application.CreateTenantInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Datos inválidos",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "409": {
+                        "description": "El tenant ya existe",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/tenants/{id}": {
+            "get": {
+                "description": "Retorna los detalles de un tenant por su ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tenants"
+                ],
+                "summary": "Obtener tenant por ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Version ID",
+                        "description": "ID del tenant",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -534,23 +767,573 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant no encontrado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Actualiza la información de un tenant existente.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tenants"
+                ],
+                "summary": "Actualizar tenant",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID del tenant",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Campos a actualizar del tenant",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_modules_tenants_application.UpdateTenantInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Datos inválidos",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant no encontrado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Elimina un tenant por su ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tenants"
+                ],
+                "summary": "Eliminar tenant",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID del tenant",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Sin contenido"
+                    },
+                    "404": {
+                        "description": "Tenant no encontrado",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Error interno",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retorna una lista paginada de usuarios con filtros opcionales.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Listar usuarios",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Número de página",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Límite por página",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Término de búsqueda",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "ACTIVE",
+                            "INACTIVE",
+                            "SUSPENDED",
+                            "BLOCKED"
+                        ],
+                        "type": "string",
+                        "description": "Filtrar por estado",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filtrar por estado activo",
+                        "name": "active",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_modules_users_delivery_http_v1.UserResponse"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Registra un nuevo usuario en la plataforma.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Crear usuario",
+                "parameters": [
+                    {
+                        "description": "Payload de creación de usuario",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_users_delivery_http_v1.CreateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_modules_users_delivery_http_v1.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Petición inválida o datos malformados",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Requiere privilegios de Super Administrador",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "El email ya está registrado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/me/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retorna los datos extendidos del perfil del usuario en sesión.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Obtener perfil del usuario autenticado",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_modules_users_delivery_http_v1.UserProfileResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Actualiza la información personal/demográfica del usuario en sesión.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Actualizar perfil del usuario autenticado",
+                "parameters": [
+                    {
+                        "description": "Datos de perfil a actualizar",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_users_delivery_http_v1.UpdateProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_modules_users_delivery_http_v1.UserProfileResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Petición inválida",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retorna la información de un usuario por su ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Obtener usuario",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID del usuario",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_modules_users_delivery_http_v1.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
                     },
                     "404": {
-                        "description": "Not Found",
+                        "description": "Usuario no encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Actualiza la información de un usuario existente.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Actualizar usuario",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID del usuario",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Datos a actualizar del usuario",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_modules_users_delivery_http_v1.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.Envelope"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_modules_users_delivery_http_v1.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Petición inválida",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
                     },
-                    "500": {
-                        "description": "Internal Server Error",
+                    "401": {
+                        "description": "No autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Elimina un usuario por su ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Eliminar usuario",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID del usuario",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Sin contenido"
+                    },
+                    "401": {
+                        "description": "No autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
                         "schema": {
                             "$ref": "#/definitions/hexagonal-go-backend_internal_platform_http_response.ErrorResponse"
                         }
@@ -560,6 +1343,161 @@
         }
     },
     "definitions": {
+        "hexagonal-go-backend_internal_modules_auth_application.ProjectMembershipContext": {
+            "type": "object",
+            "properties": {
+                "project_id": {
+                    "type": "string"
+                },
+                "project_name": {
+                    "type": "string"
+                },
+                "project_slug": {
+                    "type": "string"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tenant_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "hexagonal-go-backend_internal_modules_auth_application.SessionContext": {
+            "type": "object",
+            "properties": {
+                "projects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/hexagonal-go-backend_internal_modules_auth_application.ProjectMembershipContext"
+                    }
+                },
+                "tenants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/hexagonal-go-backend_internal_modules_auth_application.TenantContext"
+                    }
+                },
+                "user": {
+                    "$ref": "#/definitions/hexagonal-go-backend_internal_modules_auth_application.UserInfo"
+                }
+            }
+        },
+        "hexagonal-go-backend_internal_modules_auth_application.TenantContext": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "hexagonal-go-backend_internal_modules_auth_application.UserInfo": {
+            "type": "object",
+            "properties": {
+                "auth_id": {
+                    "type": "string"
+                },
+                "avatar_url": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_super_admin": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "hexagonal-go-backend_internal_modules_tenants_application.CreateTenantInput": {
+            "type": "object",
+            "properties": {
+                "contact_email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "settings": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "hexagonal-go-backend_internal_modules_tenants_application.UpdateTenantInput": {
+            "type": "object",
+            "properties": {
+                "contact_email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "settings": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "hexagonal-go-backend_internal_modules_users_domain.Gender": {
+            "type": "string",
+            "enum": [
+                "MALE",
+                "FEMALE",
+                "NON_BINARY",
+                "PREFER_NOT_TO_SAY"
+            ],
+            "x-enum-varnames": [
+                "GenderMale",
+                "GenderFemale",
+                "GenderNonBinary",
+                "GenderPreferNotToSay"
+            ]
+        },
+        "hexagonal-go-backend_internal_modules_users_domain.UserStatus": {
+            "type": "string",
+            "enum": [
+                "ACTIVE",
+                "INACTIVE",
+                "SUSPENDED",
+                "BLOCKED"
+            ],
+            "x-enum-varnames": [
+                "StatusActive",
+                "StatusInactive",
+                "StatusSuspended",
+                "StatusBlocked"
+            ]
+        },
         "hexagonal-go-backend_internal_platform_http_response.Envelope": {
             "type": "object",
             "properties": {
@@ -595,54 +1533,45 @@
                 }
             }
         },
-        "internal_modules_courses_delivery_http_v1.CreateActivityRequest": {
+        "internal_modules_auth_delivery_http_v1.LoginRequest": {
             "type": "object",
             "required": [
-                "title",
-                "type"
+                "email",
+                "password"
             ],
             "properties": {
-                "is_required": {
-                    "type": "boolean"
-                },
-                "resources": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.CreateResourceRequest"
-                    }
-                },
-                "sequence_order": {
-                    "type": "integer"
-                },
-                "title": {
+                "email": {
                     "type": "string"
                 },
-                "type": {
+                "password": {
                     "type": "string"
                 }
             }
         },
-        "internal_modules_courses_delivery_http_v1.CreateCategoryRequest": {
+        "internal_modules_auth_delivery_http_v1.TokenRequest": {
             "type": "object",
             "required": [
-                "code",
-                "name",
-                "tenant_id"
+                "refresh_token"
             ],
             "properties": {
-                "code": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_modules_auth_delivery_http_v1.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
                     "type": "string"
                 },
-                "description": {
+                "expires_in": {
+                    "type": "integer"
+                },
+                "refresh_token": {
                     "type": "string"
                 },
-                "name": {
-                    "type": "string"
-                },
-                "parent_id": {
-                    "type": "string"
-                },
-                "tenant_id": {
+                "token_type": {
                     "type": "string"
                 }
             }
@@ -650,159 +1579,326 @@
         "internal_modules_courses_delivery_http_v1.CreateCourseRequest": {
             "type": "object",
             "required": [
-                "template",
-                "version"
-            ],
-            "properties": {
-                "modules": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.CreateModuleRequest"
-                    }
-                },
-                "syllabus": {
-                    "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.SetSyllabusRequest"
-                },
-                "template": {
-                    "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.CreateTemplateRequest"
-                },
-                "version": {
-                    "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.CreateVersionRequest"
-                }
-            }
-        },
-        "internal_modules_courses_delivery_http_v1.CreateLessonRequest": {
-            "type": "object",
-            "required": [
+                "description",
+                "level",
+                "project_id",
+                "slug",
+                "status",
+                "summary",
+                "tenant_id",
+                "thumbnail_url",
                 "title"
             ],
             "properties": {
-                "activities": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.CreateActivityRequest"
-                    }
+                "description": {
+                    "type": "string",
+                    "minLength": 2
                 },
-                "sequence_order": {
-                    "type": "integer"
+                "level": {
+                    "type": "string",
+                    "enum": [
+                        "beginner",
+                        "intermediate",
+                        "advanced"
+                    ]
+                },
+                "project_id": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string",
+                    "maxLength": 150,
+                    "minLength": 2
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "draft",
+                        "published",
+                        "archived"
+                    ]
+                },
+                "summary": {
+                    "type": "string",
+                    "maxLength": 350,
+                    "minLength": 2
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "thumbnail_url": {
+                    "type": "string"
                 },
                 "title": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 350,
+                    "minLength": 2
                 }
             }
         },
-        "internal_modules_courses_delivery_http_v1.CreateModuleRequest": {
+        "internal_modules_courses_delivery_http_v1.CreateCourseResponse": {
             "type": "object",
-            "required": [
-                "title"
-            ],
             "properties": {
-                "lessons": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/internal_modules_courses_delivery_http_v1.CreateLessonRequest"
-                    }
-                },
-                "sequence_order": {
-                    "type": "integer"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
-        "internal_modules_courses_delivery_http_v1.CreateResourceRequest": {
-            "type": "object",
-            "required": [
-                "name",
-                "type",
-                "url_storage_key"
-            ],
-            "properties": {
-                "metadata": {
-                    "type": "object",
-                    "additionalProperties": {}
-                },
-                "mime_type": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "position": {
-                    "type": "integer"
-                },
-                "size_bytes": {
-                    "type": "integer",
-                    "minimum": 0
-                },
-                "type": {
-                    "type": "string"
-                },
-                "url_storage_key": {
-                    "type": "string"
-                }
-            }
-        },
-        "internal_modules_courses_delivery_http_v1.CreateTemplateRequest": {
-            "type": "object",
-            "required": [
-                "code",
-                "title"
-            ],
-            "properties": {
-                "code": {
+                "created_at": {
                     "type": "string"
                 },
                 "description": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "string"
+                },
+                "level": {
+                    "type": "string"
+                },
+                "project_id": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "tenant_id": {
+                    "type": "string"
+                },
+                "thumbnail_url": {
+                    "type": "string"
+                },
                 "title": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
         },
-        "internal_modules_courses_delivery_http_v1.CreateVersionRequest": {
+        "internal_modules_courses_delivery_http_v1.UpdateCourseRequest": {
             "type": "object",
-            "required": [
-                "status",
-                "tag"
-            ],
             "properties": {
-                "estimated_hours": {
-                    "type": "integer",
-                    "minimum": 0
+                "description": {
+                    "type": "string",
+                    "minLength": 2
+                },
+                "level": {
+                    "type": "string",
+                    "enum": [
+                        "beginner",
+                        "intermediate",
+                        "advanced"
+                    ]
+                },
+                "slug": {
+                    "type": "string",
+                    "maxLength": 150,
+                    "minLength": 2
                 },
                 "status": {
                     "type": "string",
                     "enum": [
-                        "DRAFT",
-                        "PUBLISHED",
-                        "ARCHIVED"
+                        "draft",
+                        "published",
+                        "archived"
                     ]
                 },
-                "tag": {
+                "summary": {
+                    "type": "string",
+                    "minLength": 2
+                },
+                "thumbnail_url": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 350,
+                    "minLength": 2
+                }
+            }
+        },
+        "internal_modules_users_delivery_http_v1.CreateUserRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "name"
+            ],
+            "properties": {
+                "auth_id": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "is_super_admin": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                }
+            }
+        },
+        "internal_modules_users_delivery_http_v1.UpdateProfileRequest": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "birth_date": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "first_name": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "gender": {
+                    "enum": [
+                        "MALE",
+                        "FEMALE",
+                        "NON_BINARY",
+                        "PREFER_NOT_TO_SAY"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_modules_users_domain.Gender"
+                        }
+                    ]
+                },
+                "last_name": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 30
+                },
+                "photo_url": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "sociodemographic_data": {
+                    "type": "object",
+                    "additionalProperties": {}
+                }
+            }
+        },
+        "internal_modules_users_delivery_http_v1.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "status": {
+                    "enum": [
+                        "ACTIVE",
+                        "INACTIVE",
+                        "SUSPENDED",
+                        "BLOCKED"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/hexagonal-go-backend_internal_modules_users_domain.UserStatus"
+                        }
+                    ]
+                }
+            }
+        },
+        "internal_modules_users_delivery_http_v1.UserProfileResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "bio": {
+                    "type": "string"
+                },
+                "birth_date": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "$ref": "#/definitions/hexagonal-go-backend_internal_modules_users_domain.Gender"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "photo_url": {
+                    "type": "string"
+                },
+                "sociodemographic_data": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
                     "type": "string"
                 }
             }
         },
-        "internal_modules_courses_delivery_http_v1.SetSyllabusRequest": {
+        "internal_modules_users_delivery_http_v1.UserResponse": {
             "type": "object",
             "properties": {
-                "duration_hours": {
-                    "type": "integer",
-                    "minimum": 0
+                "active": {
+                    "type": "boolean"
                 },
-                "entry_profile": {
+                "auth_id": {
                     "type": "string"
                 },
-                "exit_profile": {
+                "avatar_url": {
                     "type": "string"
                 },
-                "methodology": {
+                "created_at": {
                     "type": "string"
                 },
-                "objectives": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_super_admin": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "profile": {
+                    "$ref": "#/definitions/internal_modules_users_delivery_http_v1.UserProfileResponse"
+                },
+                "status": {
+                    "$ref": "#/definitions/hexagonal-go-backend_internal_modules_users_domain.UserStatus"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }

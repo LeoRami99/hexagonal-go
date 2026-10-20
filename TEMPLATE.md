@@ -13,7 +13,7 @@ Este repositorio incluye una referencia ejecutable de arquitectura hexagonal. La
 - Request ID, logs JSON, recovery, CORS, rate limit, límite de body y security headers.
 - `/health`, `/ready`, timeouts y graceful shutdown.
 - Configuración por entorno con validación fail-fast en producción.
-- Esquema automático de Ent en desarrollo y migraciones versionadas con Atlas en producción, además de OpenAPI, Docker, Compose, Makefile y GitHub Actions.
+- Esquema automático de Ent en desarrollo y migraciones versionadas (formato Atlas, vía `cmd/migrate` en Go) en producción, además de OpenAPI, Docker, Compose, Makefile y GitHub Actions.
 - Pruebas unitarias, HTTP y detector de carreras.
 
 ## Puntos de extensión deliberados

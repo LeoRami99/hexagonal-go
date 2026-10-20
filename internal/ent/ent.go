@@ -6,15 +6,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"hexagonal-go-backend/internal/ent/activities"
-	"hexagonal-go-backend/internal/ent/coursecategories"
-	"hexagonal-go-backend/internal/ent/coursemodules"
-	"hexagonal-go-backend/internal/ent/courseresources"
-	"hexagonal-go-backend/internal/ent/coursetemplates"
-	"hexagonal-go-backend/internal/ent/courseversions"
-	"hexagonal-go-backend/internal/ent/lessons"
-	"hexagonal-go-backend/internal/ent/syllabi"
+	"hexagonal-go-backend/internal/ent/courses"
+	"hexagonal-go-backend/internal/ent/feature"
+	"hexagonal-go-backend/internal/ent/permission"
+	"hexagonal-go-backend/internal/ent/project"
+	"hexagonal-go-backend/internal/ent/projectfeature"
+	"hexagonal-go-backend/internal/ent/projectmembership"
+	"hexagonal-go-backend/internal/ent/projectrole"
+	"hexagonal-go-backend/internal/ent/tenantmembership"
+	"hexagonal-go-backend/internal/ent/tenants"
 	"hexagonal-go-backend/internal/ent/user"
+	"hexagonal-go-backend/internal/ent/userprofile"
 	"reflect"
 	"sync"
 
@@ -81,15 +83,17 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			activities.Table:       activities.ValidColumn,
-			coursecategories.Table: coursecategories.ValidColumn,
-			coursemodules.Table:    coursemodules.ValidColumn,
-			courseresources.Table:  courseresources.ValidColumn,
-			coursetemplates.Table:  coursetemplates.ValidColumn,
-			courseversions.Table:   courseversions.ValidColumn,
-			lessons.Table:          lessons.ValidColumn,
-			syllabi.Table:          syllabi.ValidColumn,
-			user.Table:             user.ValidColumn,
+			courses.Table:           courses.ValidColumn,
+			feature.Table:           feature.ValidColumn,
+			permission.Table:        permission.ValidColumn,
+			project.Table:           project.ValidColumn,
+			projectfeature.Table:    projectfeature.ValidColumn,
+			projectmembership.Table: projectmembership.ValidColumn,
+			projectrole.Table:       projectrole.ValidColumn,
+			tenantmembership.Table:  tenantmembership.ValidColumn,
+			tenants.Table:           tenants.ValidColumn,
+			user.Table:              user.ValidColumn,
+			userprofile.Table:       userprofile.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

@@ -1,312 +1,174 @@
 package v1
 
 import (
-	"context"
-	"errors"
 	"net/http"
-	"strings"
+	"strconv"
 
-	"hexagonal-go-backend/internal/modules/courses/domain"
 	"hexagonal-go-backend/internal/platform/http/response"
+
+	"hexagonal-go-backend/internal/modules/courses/application"
 
 	"github.com/gin-gonic/gin"
 )
 
-// Service is satisfied by the courses application service.
-type Service interface {
-	CreateCourse(context.Context, domain.Course) (domain.Course, error)
-	GetCourse(context.Context, string) (domain.Course, error)
-	CreateCategory(context.Context, domain.Category) (domain.Category, error)
-	ListCategories(context.Context, string) ([]domain.Category, error)
-	CreateTemplate(context.Context, domain.Template) (domain.Template, error)
-	ListTemplates(context.Context) ([]domain.Template, error)
-	GetTemplate(context.Context, string) (domain.Template, error)
-	CreateVersion(context.Context, domain.Version) (domain.Version, error)
-	ListVersions(context.Context, string) ([]domain.Version, error)
-	SetSyllabus(context.Context, domain.Syllabus) (domain.Syllabus, error)
-	GetSyllabus(context.Context, string) (domain.Syllabus, error)
+type Controller struct{ service application.CoursesService }
+
+func NewController(service application.CoursesService) *Controller {
+	return &Controller{service: service}
 }
 
-type Controller struct{ service Service }
-
-func NewController(service Service) *Controller { return &Controller{service: service} }
-
-func writeError(c *gin.Context, err error) {
-	status, code, message := http.StatusInternalServerError, "INTERNAL_ERROR", "Internal server error"
-	switch {
-	case errors.Is(err, domain.ErrInvalid):
-		status, code, message = http.StatusUnprocessableEntity, "INVALID_COURSE_DATA", err.Error()
-	case errors.Is(err, domain.ErrNotFound):
-		status, code, message = http.StatusNotFound, "COURSE_ITEM_NOT_FOUND", err.Error()
-	case errors.Is(err, domain.ErrConflict):
-		status, code, message = http.StatusConflict, "COURSE_ITEM_CONFLICT", err.Error()
-	}
-	c.JSON(status, response.ErrorResponse{Error: response.ErrorBody{Code: code, Message: message}, RequestID: c.GetString("request_id")})
+func (h *Controller) RegisterRoutes(rg *gin.RouterGroup) {
+	routes := rg.Group("/courses")
+	routes.POST("", h.Create)
+	routes.GET("", h.List)
+	routes.GET("/:id", h.FindByID)
+	routes.PUT("/:id", h.Update)
+	routes.DELETE("/:id", h.Delete)
 }
 
-func requiredParam(c *gin.Context, name string) string {
-	value := strings.TrimSpace(c.Param(name))
-	if value == "" {
-		response.ValidationError(c, errors.New("missing "+name))
-	}
-	return value
-}
-
-// CreateCourse godoc
-// @Summary Create course with its full content tree
-// @Tags courses
-// @Accept json
-// @Produce json
-// @Param body body CreateCourseRequest true "Course"
-// @Success 201 {object} response.Envelope
-// @Failure 400,409,422,500 {object} response.ErrorResponse
-// @Router /api/v1/courses [post]
-func (h *Controller) CreateCourse(c *gin.Context) {
-	var req CreateCourseRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+// Create godoc
+// @Summary      Crear curso
+// @Description  Crea un curso asociado a un proyecto y tenant. El slug debe ser único dentro del proyecto.
+// @Tags         courses
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request body CreateCourseRequest true "Datos del curso"
+// @Success      201 {object} response.Envelope{data=CreateCourseResponse}
+// @Failure      400 {object} response.ErrorResponse "Petición malformada"
+// @Failure      401 {object} response.ErrorResponse "No autenticado"
+// @Failure      409 {object} response.ErrorResponse "Ya existe un curso con el mismo slug en el proyecto"
+// @Failure      422 {object} response.ErrorResponse "Datos del curso inválidos"
+// @Failure      500 {object} response.ErrorResponse "Error interno"
+// @Router       /courses [post]
+func (h *Controller) Create(c *gin.Context) {
+	var request CreateCourseRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
 		response.ValidationError(c, err)
 		return
 	}
-	result, err := h.service.CreateCourse(c.Request.Context(), req.toDomain())
+
+	course, err := h.service.Create(c.Request.Context(), application.CreateCourseInput{
+		TenantID:     request.TenantID,
+		ProjectID:    request.ProjectID,
+		Title:        request.Title,
+		Slug:         request.Slug,
+		Summary:      request.Summary,
+		Description:  request.Description,
+		Level:        request.Level,
+		ThumbnailURL: request.ThumbnailURL,
+		Status:       request.Status,
+	})
 	if err != nil {
-		writeError(c, err)
+		response.WriteError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, response.Envelope{Data: courseResponse(result)})
+
+	c.JSON(http.StatusCreated, response.Envelope{Data: createCourseResponse(course)})
 }
 
-// GetCourse godoc
-// @Summary Get course by version ID with its full content tree
-// @Tags courses
-// @Produce json
-// @Param id path string true "Version ID"
-// @Success 200 {object} response.Envelope
-// @Failure 400,404,500 {object} response.ErrorResponse
-// @Router /api/v1/courses/{id} [get]
-func (h *Controller) GetCourse(c *gin.Context) {
-	id := requiredParam(c, "id")
-	if id == "" {
-		return
-	}
-	result, err := h.service.GetCourse(c.Request.Context(), id)
+// FindByID godoc
+// @Summary      Obtener curso
+// @Description  Retorna un curso por su identificador ULID.
+// @Tags         courses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id path string true "ULID del curso" minlength(26) maxlength(26)
+// @Success      200 {object} response.Envelope{data=CreateCourseResponse}
+// @Failure      401 {object} response.ErrorResponse "No autenticado"
+// @Failure      404 {object} response.ErrorResponse "Curso no encontrado"
+// @Failure      422 {object} response.ErrorResponse "Identificador inválido"
+// @Failure      500 {object} response.ErrorResponse "Error interno"
+// @Router       /courses/{id} [get]
+func (h *Controller) FindByID(c *gin.Context) {
+	course, err := h.service.FindByID(c.Request.Context(), c.Param("id"))
 	if err != nil {
-		writeError(c, err)
+		response.WriteError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, response.Envelope{Data: courseResponse(result)})
+	c.JSON(http.StatusOK, response.Envelope{Data: createCourseResponse(course)})
 }
 
-// CreateCategory godoc
-// @Summary Create course category
-// @Tags courses
-// @Accept json
-// @Produce json
-// @Param body body CreateCategoryRequest true "Category"
-// @Success 201 {object} response.Envelope
-// @Failure 400,409,422,500 {object} response.ErrorResponse
-// @Router /api/v1/courses/categories [post]
-func (h *Controller) CreateCategory(c *gin.Context) {
-	var req CreateCategoryRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+// List godoc
+// @Summary      Listar cursos
+// @Description  Retorna cursos paginados y permite buscar por título, slug o resumen, filtrar por nivel y estado, y ordenar el resultado.
+// @Tags         courses
+// @Produce      json
+// @Security     BearerAuth
+// @Param        page   query int    false "Número de página" default(1) minimum(1)
+// @Param        limit  query int    false "Elementos por página" default(20) minimum(1) maximum(100)
+// @Param        search query string false "Texto para buscar en título, slug o resumen"
+// @Param        level  query string false "Nivel del curso" Enums(beginner, intermediate, advanced)
+// @Param        status query string false "Estado del curso" Enums(draft, published, archived)
+// @Param        sort   query string false "Campo de ordenamiento" Enums(created_at, updated_at, title) default(created_at)
+// @Param        order  query string false "Dirección del ordenamiento" Enums(asc, desc) default(desc)
+// @Success      200 {object} response.Envelope{data=[]CreateCourseResponse,meta=object}
+// @Failure      401 {object} response.ErrorResponse "No autenticado"
+// @Failure      500 {object} response.ErrorResponse "Error interno"
+// @Router       /courses [get]
+func (h *Controller) List(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	filter := application.CoursesFilter{Page: page, Limit: limit, Search: c.Query("search"), Level: c.Query("level"), Status: c.Query("status"), Sort: c.DefaultQuery("sort", "created_at"), Order: c.DefaultQuery("order", "desc")}
+	courses, total, err := h.service.List(c.Request.Context(), filter)
+	if err != nil {
+		response.WriteError(c, err)
+		return
+	}
+	output := make([]CreateCourseResponse, len(courses))
+	for i := range courses {
+		output[i] = createCourseResponse(&courses[i])
+	}
+	c.JSON(http.StatusOK, response.Envelope{Data: output, Meta: gin.H{"page": page, "limit": limit, "total": total}})
+}
+
+// Update godoc
+// @Summary      Actualizar curso
+// @Description  Actualiza parcialmente un curso. Solo se modifican los campos enviados en el cuerpo.
+// @Tags         courses
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id path string true "ULID del curso" minlength(26) maxlength(26)
+// @Param        request body UpdateCourseRequest true "Campos del curso que se desean actualizar"
+// @Success      200 {object} response.Envelope{data=CreateCourseResponse}
+// @Failure      400 {object} response.ErrorResponse "Petición malformada"
+// @Failure      401 {object} response.ErrorResponse "No autenticado"
+// @Failure      404 {object} response.ErrorResponse "Curso no encontrado"
+// @Failure      409 {object} response.ErrorResponse "El slug ya está utilizado en el proyecto"
+// @Failure      422 {object} response.ErrorResponse "Datos del curso inválidos"
+// @Failure      500 {object} response.ErrorResponse "Error interno"
+// @Router       /courses/{id} [put]
+func (h *Controller) Update(c *gin.Context) {
+	var request UpdateCourseRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
 		response.ValidationError(c, err)
 		return
 	}
-	result, err := h.service.CreateCategory(c.Request.Context(), domain.Category{TenantID: req.TenantID, Code: req.Code, Name: req.Name, Description: req.Description, ParentID: req.ParentID})
+	course, err := h.service.Update(c.Request.Context(), c.Param("id"), application.UpdateCourseInput{Title: request.Title, Slug: request.Slug, Summary: request.Summary, Description: request.Description, Level: request.Level, ThumbnailURL: request.ThumbnailURL, Status: request.Status})
 	if err != nil {
-		writeError(c, err)
+		response.WriteError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, response.Envelope{Data: categoryResponse(result)})
+	c.JSON(http.StatusOK, response.Envelope{Data: createCourseResponse(course)})
 }
 
-// ListCategories godoc
-// @Summary List course categories
-// @Tags courses
-// @Produce json
-// @Param tenant_id query string true "Tenant ID"
-// @Success 200 {object} response.Envelope
-// @Failure 400,500 {object} response.ErrorResponse
-// @Router /api/v1/courses/categories [get]
-func (h *Controller) ListCategories(c *gin.Context) {
-	tenantID := strings.TrimSpace(c.Query("tenant_id"))
-	if tenantID == "" {
-		response.ValidationError(c, errors.New("missing tenant_id"))
+// Delete godoc
+// @Summary      Eliminar curso
+// @Description  Elimina permanentemente un curso por su identificador.
+// @Tags         courses
+// @Security     BearerAuth
+// @Param        id path string true "ULID del curso" minlength(26) maxlength(26)
+// @Success      204 "Curso eliminado"
+// @Failure      401 {object} response.ErrorResponse "No autenticado"
+// @Failure      404 {object} response.ErrorResponse "Curso no encontrado"
+// @Failure      422 {object} response.ErrorResponse "Identificador inválido"
+// @Failure      500 {object} response.ErrorResponse "Error interno"
+// @Router       /courses/{id} [delete]
+func (h *Controller) Delete(c *gin.Context) {
+	if err := h.service.Delete(c.Request.Context(), c.Param("id")); err != nil {
+		response.WriteError(c, err)
 		return
 	}
-	items, err := h.service.ListCategories(c.Request.Context(), tenantID)
-	if err != nil {
-		writeError(c, err)
-		return
-	}
-	output := make([]CategoryResponse, len(items))
-	for i, item := range items {
-		output[i] = categoryResponse(item)
-	}
-	c.JSON(http.StatusOK, response.Envelope{Data: output})
-}
-
-// CreateTemplate godoc
-// @Summary Create course template
-// @Tags courses
-// @Accept json
-// @Produce json
-// @Param body body CreateTemplateRequest true "Template"
-// @Success 201 {object} response.Envelope
-// @Failure 400,409,422,500 {object} response.ErrorResponse
-// @Router /api/v1/courses/templates [post]
-func (h *Controller) CreateTemplate(c *gin.Context) {
-	var req CreateTemplateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.ValidationError(c, err)
-		return
-	}
-	result, err := h.service.CreateTemplate(c.Request.Context(), domain.Template{Code: req.Code, Title: req.Title, Description: req.Description})
-	if err != nil {
-		writeError(c, err)
-		return
-	}
-	c.JSON(http.StatusCreated, response.Envelope{Data: templateResponse(result)})
-}
-
-// ListTemplates godoc
-// @Summary List course templates
-// @Tags courses
-// @Produce json
-// @Success 200 {object} response.Envelope
-// @Failure 500 {object} response.ErrorResponse
-// @Router /api/v1/courses/templates [get]
-func (h *Controller) ListTemplates(c *gin.Context) {
-	items, err := h.service.ListTemplates(c.Request.Context())
-	if err != nil {
-		writeError(c, err)
-		return
-	}
-	output := make([]TemplateResponse, len(items))
-	for i, item := range items {
-		output[i] = templateResponse(item)
-	}
-	c.JSON(http.StatusOK, response.Envelope{Data: output})
-}
-
-// GetTemplate godoc
-// @Summary Get course template
-// @Tags courses
-// @Produce json
-// @Param id path string true "Template ID"
-// @Success 200 {object} response.Envelope
-// @Failure 400,404,500 {object} response.ErrorResponse
-// @Router /api/v1/courses/templates/{id} [get]
-func (h *Controller) GetTemplate(c *gin.Context) {
-	id := requiredParam(c, "id")
-	if id == "" {
-		return
-	}
-	result, err := h.service.GetTemplate(c.Request.Context(), id)
-	if err != nil {
-		writeError(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, response.Envelope{Data: templateResponse(result)})
-}
-
-// CreateVersion godoc
-// @Summary Create course version
-// @Tags courses
-// @Accept json
-// @Produce json
-// @Param id path string true "Template ID"
-// @Param body body CreateVersionRequest true "Version"
-// @Success 201 {object} response.Envelope
-// @Failure 400,404,409,422,500 {object} response.ErrorResponse
-// @Router /api/v1/courses/templates/{id}/versions [post]
-func (h *Controller) CreateVersion(c *gin.Context) {
-	id := requiredParam(c, "id")
-	if id == "" {
-		return
-	}
-	var req CreateVersionRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.ValidationError(c, err)
-		return
-	}
-	result, err := h.service.CreateVersion(c.Request.Context(), domain.Version{TemplateID: id, Tag: req.Tag, Status: req.Status, EstimatedHours: req.EstimatedHours})
-	if err != nil {
-		writeError(c, err)
-		return
-	}
-	c.JSON(http.StatusCreated, response.Envelope{Data: versionResponse(result)})
-}
-
-// ListVersions godoc
-// @Summary List course versions
-// @Tags courses
-// @Produce json
-// @Param id path string true "Template ID"
-// @Success 200 {object} response.Envelope
-// @Failure 400,404,500 {object} response.ErrorResponse
-// @Router /api/v1/courses/templates/{id}/versions [get]
-func (h *Controller) ListVersions(c *gin.Context) {
-	id := requiredParam(c, "id")
-	if id == "" {
-		return
-	}
-	items, err := h.service.ListVersions(c.Request.Context(), id)
-	if err != nil {
-		writeError(c, err)
-		return
-	}
-	output := make([]VersionResponse, len(items))
-	for i, item := range items {
-		output[i] = versionResponse(item)
-	}
-	c.JSON(http.StatusOK, response.Envelope{Data: output})
-}
-
-// SetSyllabus godoc
-// @Summary Set course syllabus
-// @Tags courses
-// @Accept json
-// @Produce json
-// @Param id path string true "Version ID"
-// @Param body body SetSyllabusRequest true "Syllabus"
-// @Success 200 {object} response.Envelope
-// @Failure 400,404,422,500 {object} response.ErrorResponse
-// @Router /api/v1/courses/versions/{id}/syllabus [put]
-func (h *Controller) SetSyllabus(c *gin.Context) {
-	id := requiredParam(c, "id")
-	if id == "" {
-		return
-	}
-	var req SetSyllabusRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.ValidationError(c, err)
-		return
-	}
-	result, err := h.service.SetSyllabus(c.Request.Context(), domain.Syllabus{VersionID: id, Objectives: req.Objectives, EntryProfile: req.EntryProfile, ExitProfile: req.ExitProfile, Methodology: req.Methodology, DurationHours: req.DurationHours})
-	if err != nil {
-		writeError(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, response.Envelope{Data: syllabusResponse(result)})
-}
-
-// GetSyllabus godoc
-// @Summary Get course syllabus
-// @Tags courses
-// @Produce json
-// @Param id path string true "Version ID"
-// @Success 200 {object} response.Envelope
-// @Failure 400,404,500 {object} response.ErrorResponse
-// @Router /api/v1/courses/versions/{id}/syllabus [get]
-func (h *Controller) GetSyllabus(c *gin.Context) {
-	id := requiredParam(c, "id")
-	if id == "" {
-		return
-	}
-	result, err := h.service.GetSyllabus(c.Request.Context(), id)
-	if err != nil {
-		writeError(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, response.Envelope{Data: syllabusResponse(result)})
+	c.Status(http.StatusNoContent)
 }

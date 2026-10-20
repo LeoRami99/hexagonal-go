@@ -11,15 +11,17 @@ import (
 
 	"hexagonal-go-backend/internal/ent/migrate"
 
-	"hexagonal-go-backend/internal/ent/activities"
-	"hexagonal-go-backend/internal/ent/coursecategories"
-	"hexagonal-go-backend/internal/ent/coursemodules"
-	"hexagonal-go-backend/internal/ent/courseresources"
-	"hexagonal-go-backend/internal/ent/coursetemplates"
-	"hexagonal-go-backend/internal/ent/courseversions"
-	"hexagonal-go-backend/internal/ent/lessons"
-	"hexagonal-go-backend/internal/ent/syllabi"
+	"hexagonal-go-backend/internal/ent/courses"
+	"hexagonal-go-backend/internal/ent/feature"
+	"hexagonal-go-backend/internal/ent/permission"
+	"hexagonal-go-backend/internal/ent/project"
+	"hexagonal-go-backend/internal/ent/projectfeature"
+	"hexagonal-go-backend/internal/ent/projectmembership"
+	"hexagonal-go-backend/internal/ent/projectrole"
+	"hexagonal-go-backend/internal/ent/tenantmembership"
+	"hexagonal-go-backend/internal/ent/tenants"
 	"hexagonal-go-backend/internal/ent/user"
+	"hexagonal-go-backend/internal/ent/userprofile"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
@@ -32,24 +34,28 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
-	// Activities is the client for interacting with the Activities builders.
-	Activities *ActivitiesClient
-	// CourseCategories is the client for interacting with the CourseCategories builders.
-	CourseCategories *CourseCategoriesClient
-	// CourseModules is the client for interacting with the CourseModules builders.
-	CourseModules *CourseModulesClient
-	// CourseResources is the client for interacting with the CourseResources builders.
-	CourseResources *CourseResourcesClient
-	// CourseTemplates is the client for interacting with the CourseTemplates builders.
-	CourseTemplates *CourseTemplatesClient
-	// CourseVersions is the client for interacting with the CourseVersions builders.
-	CourseVersions *CourseVersionsClient
-	// Lessons is the client for interacting with the Lessons builders.
-	Lessons *LessonsClient
-	// Syllabi is the client for interacting with the Syllabi builders.
-	Syllabi *SyllabiClient
+	// Courses is the client for interacting with the Courses builders.
+	Courses *CoursesClient
+	// Feature is the client for interacting with the Feature builders.
+	Feature *FeatureClient
+	// Permission is the client for interacting with the Permission builders.
+	Permission *PermissionClient
+	// Project is the client for interacting with the Project builders.
+	Project *ProjectClient
+	// ProjectFeature is the client for interacting with the ProjectFeature builders.
+	ProjectFeature *ProjectFeatureClient
+	// ProjectMembership is the client for interacting with the ProjectMembership builders.
+	ProjectMembership *ProjectMembershipClient
+	// ProjectRole is the client for interacting with the ProjectRole builders.
+	ProjectRole *ProjectRoleClient
+	// TenantMembership is the client for interacting with the TenantMembership builders.
+	TenantMembership *TenantMembershipClient
+	// Tenants is the client for interacting with the Tenants builders.
+	Tenants *TenantsClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// UserProfile is the client for interacting with the UserProfile builders.
+	UserProfile *UserProfileClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -61,15 +67,17 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
-	c.Activities = NewActivitiesClient(c.config)
-	c.CourseCategories = NewCourseCategoriesClient(c.config)
-	c.CourseModules = NewCourseModulesClient(c.config)
-	c.CourseResources = NewCourseResourcesClient(c.config)
-	c.CourseTemplates = NewCourseTemplatesClient(c.config)
-	c.CourseVersions = NewCourseVersionsClient(c.config)
-	c.Lessons = NewLessonsClient(c.config)
-	c.Syllabi = NewSyllabiClient(c.config)
+	c.Courses = NewCoursesClient(c.config)
+	c.Feature = NewFeatureClient(c.config)
+	c.Permission = NewPermissionClient(c.config)
+	c.Project = NewProjectClient(c.config)
+	c.ProjectFeature = NewProjectFeatureClient(c.config)
+	c.ProjectMembership = NewProjectMembershipClient(c.config)
+	c.ProjectRole = NewProjectRoleClient(c.config)
+	c.TenantMembership = NewTenantMembershipClient(c.config)
+	c.Tenants = NewTenantsClient(c.config)
 	c.User = NewUserClient(c.config)
+	c.UserProfile = NewUserProfileClient(c.config)
 }
 
 type (
@@ -160,17 +168,19 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:              ctx,
-		config:           cfg,
-		Activities:       NewActivitiesClient(cfg),
-		CourseCategories: NewCourseCategoriesClient(cfg),
-		CourseModules:    NewCourseModulesClient(cfg),
-		CourseResources:  NewCourseResourcesClient(cfg),
-		CourseTemplates:  NewCourseTemplatesClient(cfg),
-		CourseVersions:   NewCourseVersionsClient(cfg),
-		Lessons:          NewLessonsClient(cfg),
-		Syllabi:          NewSyllabiClient(cfg),
-		User:             NewUserClient(cfg),
+		ctx:               ctx,
+		config:            cfg,
+		Courses:           NewCoursesClient(cfg),
+		Feature:           NewFeatureClient(cfg),
+		Permission:        NewPermissionClient(cfg),
+		Project:           NewProjectClient(cfg),
+		ProjectFeature:    NewProjectFeatureClient(cfg),
+		ProjectMembership: NewProjectMembershipClient(cfg),
+		ProjectRole:       NewProjectRoleClient(cfg),
+		TenantMembership:  NewTenantMembershipClient(cfg),
+		Tenants:           NewTenantsClient(cfg),
+		User:              NewUserClient(cfg),
+		UserProfile:       NewUserProfileClient(cfg),
 	}, nil
 }
 
@@ -188,24 +198,26 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:              ctx,
-		config:           cfg,
-		Activities:       NewActivitiesClient(cfg),
-		CourseCategories: NewCourseCategoriesClient(cfg),
-		CourseModules:    NewCourseModulesClient(cfg),
-		CourseResources:  NewCourseResourcesClient(cfg),
-		CourseTemplates:  NewCourseTemplatesClient(cfg),
-		CourseVersions:   NewCourseVersionsClient(cfg),
-		Lessons:          NewLessonsClient(cfg),
-		Syllabi:          NewSyllabiClient(cfg),
-		User:             NewUserClient(cfg),
+		ctx:               ctx,
+		config:            cfg,
+		Courses:           NewCoursesClient(cfg),
+		Feature:           NewFeatureClient(cfg),
+		Permission:        NewPermissionClient(cfg),
+		Project:           NewProjectClient(cfg),
+		ProjectFeature:    NewProjectFeatureClient(cfg),
+		ProjectMembership: NewProjectMembershipClient(cfg),
+		ProjectRole:       NewProjectRoleClient(cfg),
+		TenantMembership:  NewTenantMembershipClient(cfg),
+		Tenants:           NewTenantsClient(cfg),
+		User:              NewUserClient(cfg),
+		UserProfile:       NewUserProfileClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Activities.
+//		Courses.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -228,8 +240,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Activities, c.CourseCategories, c.CourseModules, c.CourseResources,
-		c.CourseTemplates, c.CourseVersions, c.Lessons, c.Syllabi, c.User,
+		c.Courses, c.Feature, c.Permission, c.Project, c.ProjectFeature,
+		c.ProjectMembership, c.ProjectRole, c.TenantMembership, c.Tenants, c.User,
+		c.UserProfile,
 	} {
 		n.Use(hooks...)
 	}
@@ -239,8 +252,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Activities, c.CourseCategories, c.CourseModules, c.CourseResources,
-		c.CourseTemplates, c.CourseVersions, c.Lessons, c.Syllabi, c.User,
+		c.Courses, c.Feature, c.Permission, c.Project, c.ProjectFeature,
+		c.ProjectMembership, c.ProjectRole, c.TenantMembership, c.Tenants, c.User,
+		c.UserProfile,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -249,130 +263,134 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
-	case *ActivitiesMutation:
-		return c.Activities.mutate(ctx, m)
-	case *CourseCategoriesMutation:
-		return c.CourseCategories.mutate(ctx, m)
-	case *CourseModulesMutation:
-		return c.CourseModules.mutate(ctx, m)
-	case *CourseResourcesMutation:
-		return c.CourseResources.mutate(ctx, m)
-	case *CourseTemplatesMutation:
-		return c.CourseTemplates.mutate(ctx, m)
-	case *CourseVersionsMutation:
-		return c.CourseVersions.mutate(ctx, m)
-	case *LessonsMutation:
-		return c.Lessons.mutate(ctx, m)
-	case *SyllabiMutation:
-		return c.Syllabi.mutate(ctx, m)
+	case *CoursesMutation:
+		return c.Courses.mutate(ctx, m)
+	case *FeatureMutation:
+		return c.Feature.mutate(ctx, m)
+	case *PermissionMutation:
+		return c.Permission.mutate(ctx, m)
+	case *ProjectMutation:
+		return c.Project.mutate(ctx, m)
+	case *ProjectFeatureMutation:
+		return c.ProjectFeature.mutate(ctx, m)
+	case *ProjectMembershipMutation:
+		return c.ProjectMembership.mutate(ctx, m)
+	case *ProjectRoleMutation:
+		return c.ProjectRole.mutate(ctx, m)
+	case *TenantMembershipMutation:
+		return c.TenantMembership.mutate(ctx, m)
+	case *TenantsMutation:
+		return c.Tenants.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
+	case *UserProfileMutation:
+		return c.UserProfile.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
 }
 
-// ActivitiesClient is a client for the Activities schema.
-type ActivitiesClient struct {
+// CoursesClient is a client for the Courses schema.
+type CoursesClient struct {
 	config
 }
 
-// NewActivitiesClient returns a client for the Activities from the given config.
-func NewActivitiesClient(c config) *ActivitiesClient {
-	return &ActivitiesClient{config: c}
+// NewCoursesClient returns a client for the Courses from the given config.
+func NewCoursesClient(c config) *CoursesClient {
+	return &CoursesClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `activities.Hooks(f(g(h())))`.
-func (c *ActivitiesClient) Use(hooks ...Hook) {
-	c.hooks.Activities = append(c.hooks.Activities, hooks...)
+// A call to `Use(f, g, h)` equals to `courses.Hooks(f(g(h())))`.
+func (c *CoursesClient) Use(hooks ...Hook) {
+	c.hooks.Courses = append(c.hooks.Courses, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `activities.Intercept(f(g(h())))`.
-func (c *ActivitiesClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Activities = append(c.inters.Activities, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `courses.Intercept(f(g(h())))`.
+func (c *CoursesClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Courses = append(c.inters.Courses, interceptors...)
 }
 
-// Create returns a builder for creating a Activities entity.
-func (c *ActivitiesClient) Create() *ActivitiesCreate {
-	mutation := newActivitiesMutation(c.config, OpCreate)
-	return &ActivitiesCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a Courses entity.
+func (c *CoursesClient) Create() *CoursesCreate {
+	mutation := newCoursesMutation(c.config, OpCreate)
+	return &CoursesCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of Activities entities.
-func (c *ActivitiesClient) CreateBulk(builders ...*ActivitiesCreate) *ActivitiesCreateBulk {
-	return &ActivitiesCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of Courses entities.
+func (c *CoursesClient) CreateBulk(builders ...*CoursesCreate) *CoursesCreateBulk {
+	return &CoursesCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *ActivitiesClient) MapCreateBulk(slice any, setFunc func(*ActivitiesCreate, int)) *ActivitiesCreateBulk {
+func (c *CoursesClient) MapCreateBulk(slice any, setFunc func(*CoursesCreate, int)) *CoursesCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &ActivitiesCreateBulk{err: fmt.Errorf("calling to ActivitiesClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &CoursesCreateBulk{err: fmt.Errorf("calling to CoursesClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*ActivitiesCreate, rv.Len())
+	builders := make([]*CoursesCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &ActivitiesCreateBulk{config: c.config, builders: builders}
+	return &CoursesCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for Activities.
-func (c *ActivitiesClient) Update() *ActivitiesUpdate {
-	mutation := newActivitiesMutation(c.config, OpUpdate)
-	return &ActivitiesUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for Courses.
+func (c *CoursesClient) Update() *CoursesUpdate {
+	mutation := newCoursesMutation(c.config, OpUpdate)
+	return &CoursesUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *ActivitiesClient) UpdateOne(_m *Activities) *ActivitiesUpdateOne {
-	mutation := newActivitiesMutation(c.config, OpUpdateOne, withActivities(_m))
-	return &ActivitiesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *CoursesClient) UpdateOne(_m *Courses) *CoursesUpdateOne {
+	mutation := newCoursesMutation(c.config, OpUpdateOne, withCourses(_m))
+	return &CoursesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *ActivitiesClient) UpdateOneID(id string) *ActivitiesUpdateOne {
-	mutation := newActivitiesMutation(c.config, OpUpdateOne, withActivitiesID(id))
-	return &ActivitiesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *CoursesClient) UpdateOneID(id string) *CoursesUpdateOne {
+	mutation := newCoursesMutation(c.config, OpUpdateOne, withCoursesID(id))
+	return &CoursesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for Activities.
-func (c *ActivitiesClient) Delete() *ActivitiesDelete {
-	mutation := newActivitiesMutation(c.config, OpDelete)
-	return &ActivitiesDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for Courses.
+func (c *CoursesClient) Delete() *CoursesDelete {
+	mutation := newCoursesMutation(c.config, OpDelete)
+	return &CoursesDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *ActivitiesClient) DeleteOne(_m *Activities) *ActivitiesDeleteOne {
+func (c *CoursesClient) DeleteOne(_m *Courses) *CoursesDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *ActivitiesClient) DeleteOneID(id string) *ActivitiesDeleteOne {
-	builder := c.Delete().Where(activities.ID(id))
+func (c *CoursesClient) DeleteOneID(id string) *CoursesDeleteOne {
+	builder := c.Delete().Where(courses.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &ActivitiesDeleteOne{builder}
+	return &CoursesDeleteOne{builder}
 }
 
-// Query returns a query builder for Activities.
-func (c *ActivitiesClient) Query() *ActivitiesQuery {
-	return &ActivitiesQuery{
+// Query returns a query builder for Courses.
+func (c *CoursesClient) Query() *CoursesQuery {
+	return &CoursesQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeActivities},
+		ctx:    &QueryContext{Type: TypeCourses},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a Activities entity by its id.
-func (c *ActivitiesClient) Get(ctx context.Context, id string) (*Activities, error) {
-	return c.Query().Where(activities.ID(id)).Only(ctx)
+// Get returns a Courses entity by its id.
+func (c *CoursesClient) Get(ctx context.Context, id string) (*Courses, error) {
+	return c.Query().Where(courses.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *ActivitiesClient) GetX(ctx context.Context, id string) *Activities {
+func (c *CoursesClient) GetX(ctx context.Context, id string) *Courses {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -380,31 +398,15 @@ func (c *ActivitiesClient) GetX(ctx context.Context, id string) *Activities {
 	return obj
 }
 
-// QueryLesson queries the lesson edge of a Activities.
-func (c *ActivitiesClient) QueryLesson(_m *Activities) *LessonsQuery {
-	query := (&LessonsClient{config: c.config}).Query()
+// QueryProject queries the project edge of a Courses.
+func (c *CoursesClient) QueryProject(_m *Courses) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(activities.Table, activities.FieldID, id),
-			sqlgraph.To(lessons.Table, lessons.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, activities.LessonTable, activities.LessonColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryResources queries the resources edge of a Activities.
-func (c *ActivitiesClient) QueryResources(_m *Activities) *CourseResourcesQuery {
-	query := (&CourseResourcesClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(activities.Table, activities.FieldID, id),
-			sqlgraph.To(courseresources.Table, courseresources.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, activities.ResourcesTable, activities.ResourcesColumn),
+			sqlgraph.From(courses.Table, courses.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, courses.ProjectTable, courses.ProjectColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -413,131 +415,131 @@ func (c *ActivitiesClient) QueryResources(_m *Activities) *CourseResourcesQuery 
 }
 
 // Hooks returns the client hooks.
-func (c *ActivitiesClient) Hooks() []Hook {
-	return c.hooks.Activities
+func (c *CoursesClient) Hooks() []Hook {
+	return c.hooks.Courses
 }
 
 // Interceptors returns the client interceptors.
-func (c *ActivitiesClient) Interceptors() []Interceptor {
-	return c.inters.Activities
+func (c *CoursesClient) Interceptors() []Interceptor {
+	return c.inters.Courses
 }
 
-func (c *ActivitiesClient) mutate(ctx context.Context, m *ActivitiesMutation) (Value, error) {
+func (c *CoursesClient) mutate(ctx context.Context, m *CoursesMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&ActivitiesCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&CoursesCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&ActivitiesUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&CoursesUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&ActivitiesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&CoursesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&ActivitiesDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&CoursesDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown Activities mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown Courses mutation op: %q", m.Op())
 	}
 }
 
-// CourseCategoriesClient is a client for the CourseCategories schema.
-type CourseCategoriesClient struct {
+// FeatureClient is a client for the Feature schema.
+type FeatureClient struct {
 	config
 }
 
-// NewCourseCategoriesClient returns a client for the CourseCategories from the given config.
-func NewCourseCategoriesClient(c config) *CourseCategoriesClient {
-	return &CourseCategoriesClient{config: c}
+// NewFeatureClient returns a client for the Feature from the given config.
+func NewFeatureClient(c config) *FeatureClient {
+	return &FeatureClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `coursecategories.Hooks(f(g(h())))`.
-func (c *CourseCategoriesClient) Use(hooks ...Hook) {
-	c.hooks.CourseCategories = append(c.hooks.CourseCategories, hooks...)
+// A call to `Use(f, g, h)` equals to `feature.Hooks(f(g(h())))`.
+func (c *FeatureClient) Use(hooks ...Hook) {
+	c.hooks.Feature = append(c.hooks.Feature, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `coursecategories.Intercept(f(g(h())))`.
-func (c *CourseCategoriesClient) Intercept(interceptors ...Interceptor) {
-	c.inters.CourseCategories = append(c.inters.CourseCategories, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `feature.Intercept(f(g(h())))`.
+func (c *FeatureClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Feature = append(c.inters.Feature, interceptors...)
 }
 
-// Create returns a builder for creating a CourseCategories entity.
-func (c *CourseCategoriesClient) Create() *CourseCategoriesCreate {
-	mutation := newCourseCategoriesMutation(c.config, OpCreate)
-	return &CourseCategoriesCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a Feature entity.
+func (c *FeatureClient) Create() *FeatureCreate {
+	mutation := newFeatureMutation(c.config, OpCreate)
+	return &FeatureCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of CourseCategories entities.
-func (c *CourseCategoriesClient) CreateBulk(builders ...*CourseCategoriesCreate) *CourseCategoriesCreateBulk {
-	return &CourseCategoriesCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of Feature entities.
+func (c *FeatureClient) CreateBulk(builders ...*FeatureCreate) *FeatureCreateBulk {
+	return &FeatureCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *CourseCategoriesClient) MapCreateBulk(slice any, setFunc func(*CourseCategoriesCreate, int)) *CourseCategoriesCreateBulk {
+func (c *FeatureClient) MapCreateBulk(slice any, setFunc func(*FeatureCreate, int)) *FeatureCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &CourseCategoriesCreateBulk{err: fmt.Errorf("calling to CourseCategoriesClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &FeatureCreateBulk{err: fmt.Errorf("calling to FeatureClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*CourseCategoriesCreate, rv.Len())
+	builders := make([]*FeatureCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &CourseCategoriesCreateBulk{config: c.config, builders: builders}
+	return &FeatureCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for CourseCategories.
-func (c *CourseCategoriesClient) Update() *CourseCategoriesUpdate {
-	mutation := newCourseCategoriesMutation(c.config, OpUpdate)
-	return &CourseCategoriesUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for Feature.
+func (c *FeatureClient) Update() *FeatureUpdate {
+	mutation := newFeatureMutation(c.config, OpUpdate)
+	return &FeatureUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *CourseCategoriesClient) UpdateOne(_m *CourseCategories) *CourseCategoriesUpdateOne {
-	mutation := newCourseCategoriesMutation(c.config, OpUpdateOne, withCourseCategories(_m))
-	return &CourseCategoriesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *FeatureClient) UpdateOne(_m *Feature) *FeatureUpdateOne {
+	mutation := newFeatureMutation(c.config, OpUpdateOne, withFeature(_m))
+	return &FeatureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *CourseCategoriesClient) UpdateOneID(id string) *CourseCategoriesUpdateOne {
-	mutation := newCourseCategoriesMutation(c.config, OpUpdateOne, withCourseCategoriesID(id))
-	return &CourseCategoriesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *FeatureClient) UpdateOneID(id string) *FeatureUpdateOne {
+	mutation := newFeatureMutation(c.config, OpUpdateOne, withFeatureID(id))
+	return &FeatureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for CourseCategories.
-func (c *CourseCategoriesClient) Delete() *CourseCategoriesDelete {
-	mutation := newCourseCategoriesMutation(c.config, OpDelete)
-	return &CourseCategoriesDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for Feature.
+func (c *FeatureClient) Delete() *FeatureDelete {
+	mutation := newFeatureMutation(c.config, OpDelete)
+	return &FeatureDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *CourseCategoriesClient) DeleteOne(_m *CourseCategories) *CourseCategoriesDeleteOne {
+func (c *FeatureClient) DeleteOne(_m *Feature) *FeatureDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *CourseCategoriesClient) DeleteOneID(id string) *CourseCategoriesDeleteOne {
-	builder := c.Delete().Where(coursecategories.ID(id))
+func (c *FeatureClient) DeleteOneID(id string) *FeatureDeleteOne {
+	builder := c.Delete().Where(feature.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &CourseCategoriesDeleteOne{builder}
+	return &FeatureDeleteOne{builder}
 }
 
-// Query returns a query builder for CourseCategories.
-func (c *CourseCategoriesClient) Query() *CourseCategoriesQuery {
-	return &CourseCategoriesQuery{
+// Query returns a query builder for Feature.
+func (c *FeatureClient) Query() *FeatureQuery {
+	return &FeatureQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeCourseCategories},
+		ctx:    &QueryContext{Type: TypeFeature},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a CourseCategories entity by its id.
-func (c *CourseCategoriesClient) Get(ctx context.Context, id string) (*CourseCategories, error) {
-	return c.Query().Where(coursecategories.ID(id)).Only(ctx)
+// Get returns a Feature entity by its id.
+func (c *FeatureClient) Get(ctx context.Context, id string) (*Feature, error) {
+	return c.Query().Where(feature.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *CourseCategoriesClient) GetX(ctx context.Context, id string) *CourseCategories {
+func (c *FeatureClient) GetX(ctx context.Context, id string) *Feature {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -545,164 +547,15 @@ func (c *CourseCategoriesClient) GetX(ctx context.Context, id string) *CourseCat
 	return obj
 }
 
-// Hooks returns the client hooks.
-func (c *CourseCategoriesClient) Hooks() []Hook {
-	return c.hooks.CourseCategories
-}
-
-// Interceptors returns the client interceptors.
-func (c *CourseCategoriesClient) Interceptors() []Interceptor {
-	return c.inters.CourseCategories
-}
-
-func (c *CourseCategoriesClient) mutate(ctx context.Context, m *CourseCategoriesMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&CourseCategoriesCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&CourseCategoriesUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&CourseCategoriesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&CourseCategoriesDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown CourseCategories mutation op: %q", m.Op())
-	}
-}
-
-// CourseModulesClient is a client for the CourseModules schema.
-type CourseModulesClient struct {
-	config
-}
-
-// NewCourseModulesClient returns a client for the CourseModules from the given config.
-func NewCourseModulesClient(c config) *CourseModulesClient {
-	return &CourseModulesClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `coursemodules.Hooks(f(g(h())))`.
-func (c *CourseModulesClient) Use(hooks ...Hook) {
-	c.hooks.CourseModules = append(c.hooks.CourseModules, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `coursemodules.Intercept(f(g(h())))`.
-func (c *CourseModulesClient) Intercept(interceptors ...Interceptor) {
-	c.inters.CourseModules = append(c.inters.CourseModules, interceptors...)
-}
-
-// Create returns a builder for creating a CourseModules entity.
-func (c *CourseModulesClient) Create() *CourseModulesCreate {
-	mutation := newCourseModulesMutation(c.config, OpCreate)
-	return &CourseModulesCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of CourseModules entities.
-func (c *CourseModulesClient) CreateBulk(builders ...*CourseModulesCreate) *CourseModulesCreateBulk {
-	return &CourseModulesCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *CourseModulesClient) MapCreateBulk(slice any, setFunc func(*CourseModulesCreate, int)) *CourseModulesCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &CourseModulesCreateBulk{err: fmt.Errorf("calling to CourseModulesClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*CourseModulesCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &CourseModulesCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for CourseModules.
-func (c *CourseModulesClient) Update() *CourseModulesUpdate {
-	mutation := newCourseModulesMutation(c.config, OpUpdate)
-	return &CourseModulesUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *CourseModulesClient) UpdateOne(_m *CourseModules) *CourseModulesUpdateOne {
-	mutation := newCourseModulesMutation(c.config, OpUpdateOne, withCourseModules(_m))
-	return &CourseModulesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *CourseModulesClient) UpdateOneID(id string) *CourseModulesUpdateOne {
-	mutation := newCourseModulesMutation(c.config, OpUpdateOne, withCourseModulesID(id))
-	return &CourseModulesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for CourseModules.
-func (c *CourseModulesClient) Delete() *CourseModulesDelete {
-	mutation := newCourseModulesMutation(c.config, OpDelete)
-	return &CourseModulesDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *CourseModulesClient) DeleteOne(_m *CourseModules) *CourseModulesDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *CourseModulesClient) DeleteOneID(id string) *CourseModulesDeleteOne {
-	builder := c.Delete().Where(coursemodules.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &CourseModulesDeleteOne{builder}
-}
-
-// Query returns a query builder for CourseModules.
-func (c *CourseModulesClient) Query() *CourseModulesQuery {
-	return &CourseModulesQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeCourseModules},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a CourseModules entity by its id.
-func (c *CourseModulesClient) Get(ctx context.Context, id string) (*CourseModules, error) {
-	return c.Query().Where(coursemodules.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *CourseModulesClient) GetX(ctx context.Context, id string) *CourseModules {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QueryVersion queries the version edge of a CourseModules.
-func (c *CourseModulesClient) QueryVersion(_m *CourseModules) *CourseVersionsQuery {
-	query := (&CourseVersionsClient{config: c.config}).Query()
+// QueryProjectFeatures queries the project_features edge of a Feature.
+func (c *FeatureClient) QueryProjectFeatures(_m *Feature) *ProjectFeatureQuery {
+	query := (&ProjectFeatureClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(coursemodules.Table, coursemodules.FieldID, id),
-			sqlgraph.To(courseversions.Table, courseversions.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, coursemodules.VersionTable, coursemodules.VersionColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryLessons queries the lessons edge of a CourseModules.
-func (c *CourseModulesClient) QueryLessons(_m *CourseModules) *LessonsQuery {
-	query := (&LessonsClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(coursemodules.Table, coursemodules.FieldID, id),
-			sqlgraph.To(lessons.Table, lessons.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, coursemodules.LessonsTable, coursemodules.LessonsColumn),
+			sqlgraph.From(feature.Table, feature.FieldID, id),
+			sqlgraph.To(projectfeature.Table, projectfeature.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, feature.ProjectFeaturesTable, feature.ProjectFeaturesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -711,131 +564,131 @@ func (c *CourseModulesClient) QueryLessons(_m *CourseModules) *LessonsQuery {
 }
 
 // Hooks returns the client hooks.
-func (c *CourseModulesClient) Hooks() []Hook {
-	return c.hooks.CourseModules
+func (c *FeatureClient) Hooks() []Hook {
+	return c.hooks.Feature
 }
 
 // Interceptors returns the client interceptors.
-func (c *CourseModulesClient) Interceptors() []Interceptor {
-	return c.inters.CourseModules
+func (c *FeatureClient) Interceptors() []Interceptor {
+	return c.inters.Feature
 }
 
-func (c *CourseModulesClient) mutate(ctx context.Context, m *CourseModulesMutation) (Value, error) {
+func (c *FeatureClient) mutate(ctx context.Context, m *FeatureMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&CourseModulesCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&FeatureCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&CourseModulesUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&FeatureUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&CourseModulesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&FeatureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&CourseModulesDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&FeatureDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown CourseModules mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown Feature mutation op: %q", m.Op())
 	}
 }
 
-// CourseResourcesClient is a client for the CourseResources schema.
-type CourseResourcesClient struct {
+// PermissionClient is a client for the Permission schema.
+type PermissionClient struct {
 	config
 }
 
-// NewCourseResourcesClient returns a client for the CourseResources from the given config.
-func NewCourseResourcesClient(c config) *CourseResourcesClient {
-	return &CourseResourcesClient{config: c}
+// NewPermissionClient returns a client for the Permission from the given config.
+func NewPermissionClient(c config) *PermissionClient {
+	return &PermissionClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `courseresources.Hooks(f(g(h())))`.
-func (c *CourseResourcesClient) Use(hooks ...Hook) {
-	c.hooks.CourseResources = append(c.hooks.CourseResources, hooks...)
+// A call to `Use(f, g, h)` equals to `permission.Hooks(f(g(h())))`.
+func (c *PermissionClient) Use(hooks ...Hook) {
+	c.hooks.Permission = append(c.hooks.Permission, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `courseresources.Intercept(f(g(h())))`.
-func (c *CourseResourcesClient) Intercept(interceptors ...Interceptor) {
-	c.inters.CourseResources = append(c.inters.CourseResources, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `permission.Intercept(f(g(h())))`.
+func (c *PermissionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Permission = append(c.inters.Permission, interceptors...)
 }
 
-// Create returns a builder for creating a CourseResources entity.
-func (c *CourseResourcesClient) Create() *CourseResourcesCreate {
-	mutation := newCourseResourcesMutation(c.config, OpCreate)
-	return &CourseResourcesCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a Permission entity.
+func (c *PermissionClient) Create() *PermissionCreate {
+	mutation := newPermissionMutation(c.config, OpCreate)
+	return &PermissionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of CourseResources entities.
-func (c *CourseResourcesClient) CreateBulk(builders ...*CourseResourcesCreate) *CourseResourcesCreateBulk {
-	return &CourseResourcesCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of Permission entities.
+func (c *PermissionClient) CreateBulk(builders ...*PermissionCreate) *PermissionCreateBulk {
+	return &PermissionCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *CourseResourcesClient) MapCreateBulk(slice any, setFunc func(*CourseResourcesCreate, int)) *CourseResourcesCreateBulk {
+func (c *PermissionClient) MapCreateBulk(slice any, setFunc func(*PermissionCreate, int)) *PermissionCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &CourseResourcesCreateBulk{err: fmt.Errorf("calling to CourseResourcesClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &PermissionCreateBulk{err: fmt.Errorf("calling to PermissionClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*CourseResourcesCreate, rv.Len())
+	builders := make([]*PermissionCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &CourseResourcesCreateBulk{config: c.config, builders: builders}
+	return &PermissionCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for CourseResources.
-func (c *CourseResourcesClient) Update() *CourseResourcesUpdate {
-	mutation := newCourseResourcesMutation(c.config, OpUpdate)
-	return &CourseResourcesUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for Permission.
+func (c *PermissionClient) Update() *PermissionUpdate {
+	mutation := newPermissionMutation(c.config, OpUpdate)
+	return &PermissionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *CourseResourcesClient) UpdateOne(_m *CourseResources) *CourseResourcesUpdateOne {
-	mutation := newCourseResourcesMutation(c.config, OpUpdateOne, withCourseResources(_m))
-	return &CourseResourcesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *PermissionClient) UpdateOne(_m *Permission) *PermissionUpdateOne {
+	mutation := newPermissionMutation(c.config, OpUpdateOne, withPermission(_m))
+	return &PermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *CourseResourcesClient) UpdateOneID(id string) *CourseResourcesUpdateOne {
-	mutation := newCourseResourcesMutation(c.config, OpUpdateOne, withCourseResourcesID(id))
-	return &CourseResourcesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *PermissionClient) UpdateOneID(id string) *PermissionUpdateOne {
+	mutation := newPermissionMutation(c.config, OpUpdateOne, withPermissionID(id))
+	return &PermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for CourseResources.
-func (c *CourseResourcesClient) Delete() *CourseResourcesDelete {
-	mutation := newCourseResourcesMutation(c.config, OpDelete)
-	return &CourseResourcesDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for Permission.
+func (c *PermissionClient) Delete() *PermissionDelete {
+	mutation := newPermissionMutation(c.config, OpDelete)
+	return &PermissionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *CourseResourcesClient) DeleteOne(_m *CourseResources) *CourseResourcesDeleteOne {
+func (c *PermissionClient) DeleteOne(_m *Permission) *PermissionDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *CourseResourcesClient) DeleteOneID(id string) *CourseResourcesDeleteOne {
-	builder := c.Delete().Where(courseresources.ID(id))
+func (c *PermissionClient) DeleteOneID(id string) *PermissionDeleteOne {
+	builder := c.Delete().Where(permission.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &CourseResourcesDeleteOne{builder}
+	return &PermissionDeleteOne{builder}
 }
 
-// Query returns a query builder for CourseResources.
-func (c *CourseResourcesClient) Query() *CourseResourcesQuery {
-	return &CourseResourcesQuery{
+// Query returns a query builder for Permission.
+func (c *PermissionClient) Query() *PermissionQuery {
+	return &PermissionQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeCourseResources},
+		ctx:    &QueryContext{Type: TypePermission},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a CourseResources entity by its id.
-func (c *CourseResourcesClient) Get(ctx context.Context, id string) (*CourseResources, error) {
-	return c.Query().Where(courseresources.ID(id)).Only(ctx)
+// Get returns a Permission entity by its id.
+func (c *PermissionClient) Get(ctx context.Context, id string) (*Permission, error) {
+	return c.Query().Where(permission.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *CourseResourcesClient) GetX(ctx context.Context, id string) *CourseResources {
+func (c *PermissionClient) GetX(ctx context.Context, id string) *Permission {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -843,15 +696,15 @@ func (c *CourseResourcesClient) GetX(ctx context.Context, id string) *CourseReso
 	return obj
 }
 
-// QueryActivity queries the activity edge of a CourseResources.
-func (c *CourseResourcesClient) QueryActivity(_m *CourseResources) *ActivitiesQuery {
-	query := (&ActivitiesClient{config: c.config}).Query()
+// QueryRoles queries the roles edge of a Permission.
+func (c *PermissionClient) QueryRoles(_m *Permission) *ProjectRoleQuery {
+	query := (&ProjectRoleClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(courseresources.Table, courseresources.FieldID, id),
-			sqlgraph.To(activities.Table, activities.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, courseresources.ActivityTable, courseresources.ActivityColumn),
+			sqlgraph.From(permission.Table, permission.FieldID, id),
+			sqlgraph.To(projectrole.Table, projectrole.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, permission.RolesTable, permission.RolesPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -860,131 +713,131 @@ func (c *CourseResourcesClient) QueryActivity(_m *CourseResources) *ActivitiesQu
 }
 
 // Hooks returns the client hooks.
-func (c *CourseResourcesClient) Hooks() []Hook {
-	return c.hooks.CourseResources
+func (c *PermissionClient) Hooks() []Hook {
+	return c.hooks.Permission
 }
 
 // Interceptors returns the client interceptors.
-func (c *CourseResourcesClient) Interceptors() []Interceptor {
-	return c.inters.CourseResources
+func (c *PermissionClient) Interceptors() []Interceptor {
+	return c.inters.Permission
 }
 
-func (c *CourseResourcesClient) mutate(ctx context.Context, m *CourseResourcesMutation) (Value, error) {
+func (c *PermissionClient) mutate(ctx context.Context, m *PermissionMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&CourseResourcesCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&PermissionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&CourseResourcesUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&PermissionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&CourseResourcesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&PermissionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&CourseResourcesDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&PermissionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown CourseResources mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown Permission mutation op: %q", m.Op())
 	}
 }
 
-// CourseTemplatesClient is a client for the CourseTemplates schema.
-type CourseTemplatesClient struct {
+// ProjectClient is a client for the Project schema.
+type ProjectClient struct {
 	config
 }
 
-// NewCourseTemplatesClient returns a client for the CourseTemplates from the given config.
-func NewCourseTemplatesClient(c config) *CourseTemplatesClient {
-	return &CourseTemplatesClient{config: c}
+// NewProjectClient returns a client for the Project from the given config.
+func NewProjectClient(c config) *ProjectClient {
+	return &ProjectClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `coursetemplates.Hooks(f(g(h())))`.
-func (c *CourseTemplatesClient) Use(hooks ...Hook) {
-	c.hooks.CourseTemplates = append(c.hooks.CourseTemplates, hooks...)
+// A call to `Use(f, g, h)` equals to `project.Hooks(f(g(h())))`.
+func (c *ProjectClient) Use(hooks ...Hook) {
+	c.hooks.Project = append(c.hooks.Project, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `coursetemplates.Intercept(f(g(h())))`.
-func (c *CourseTemplatesClient) Intercept(interceptors ...Interceptor) {
-	c.inters.CourseTemplates = append(c.inters.CourseTemplates, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `project.Intercept(f(g(h())))`.
+func (c *ProjectClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Project = append(c.inters.Project, interceptors...)
 }
 
-// Create returns a builder for creating a CourseTemplates entity.
-func (c *CourseTemplatesClient) Create() *CourseTemplatesCreate {
-	mutation := newCourseTemplatesMutation(c.config, OpCreate)
-	return &CourseTemplatesCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a Project entity.
+func (c *ProjectClient) Create() *ProjectCreate {
+	mutation := newProjectMutation(c.config, OpCreate)
+	return &ProjectCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of CourseTemplates entities.
-func (c *CourseTemplatesClient) CreateBulk(builders ...*CourseTemplatesCreate) *CourseTemplatesCreateBulk {
-	return &CourseTemplatesCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of Project entities.
+func (c *ProjectClient) CreateBulk(builders ...*ProjectCreate) *ProjectCreateBulk {
+	return &ProjectCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *CourseTemplatesClient) MapCreateBulk(slice any, setFunc func(*CourseTemplatesCreate, int)) *CourseTemplatesCreateBulk {
+func (c *ProjectClient) MapCreateBulk(slice any, setFunc func(*ProjectCreate, int)) *ProjectCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &CourseTemplatesCreateBulk{err: fmt.Errorf("calling to CourseTemplatesClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &ProjectCreateBulk{err: fmt.Errorf("calling to ProjectClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*CourseTemplatesCreate, rv.Len())
+	builders := make([]*ProjectCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &CourseTemplatesCreateBulk{config: c.config, builders: builders}
+	return &ProjectCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for CourseTemplates.
-func (c *CourseTemplatesClient) Update() *CourseTemplatesUpdate {
-	mutation := newCourseTemplatesMutation(c.config, OpUpdate)
-	return &CourseTemplatesUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for Project.
+func (c *ProjectClient) Update() *ProjectUpdate {
+	mutation := newProjectMutation(c.config, OpUpdate)
+	return &ProjectUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *CourseTemplatesClient) UpdateOne(_m *CourseTemplates) *CourseTemplatesUpdateOne {
-	mutation := newCourseTemplatesMutation(c.config, OpUpdateOne, withCourseTemplates(_m))
-	return &CourseTemplatesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ProjectClient) UpdateOne(_m *Project) *ProjectUpdateOne {
+	mutation := newProjectMutation(c.config, OpUpdateOne, withProject(_m))
+	return &ProjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *CourseTemplatesClient) UpdateOneID(id string) *CourseTemplatesUpdateOne {
-	mutation := newCourseTemplatesMutation(c.config, OpUpdateOne, withCourseTemplatesID(id))
-	return &CourseTemplatesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ProjectClient) UpdateOneID(id string) *ProjectUpdateOne {
+	mutation := newProjectMutation(c.config, OpUpdateOne, withProjectID(id))
+	return &ProjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for CourseTemplates.
-func (c *CourseTemplatesClient) Delete() *CourseTemplatesDelete {
-	mutation := newCourseTemplatesMutation(c.config, OpDelete)
-	return &CourseTemplatesDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for Project.
+func (c *ProjectClient) Delete() *ProjectDelete {
+	mutation := newProjectMutation(c.config, OpDelete)
+	return &ProjectDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *CourseTemplatesClient) DeleteOne(_m *CourseTemplates) *CourseTemplatesDeleteOne {
+func (c *ProjectClient) DeleteOne(_m *Project) *ProjectDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *CourseTemplatesClient) DeleteOneID(id string) *CourseTemplatesDeleteOne {
-	builder := c.Delete().Where(coursetemplates.ID(id))
+func (c *ProjectClient) DeleteOneID(id string) *ProjectDeleteOne {
+	builder := c.Delete().Where(project.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &CourseTemplatesDeleteOne{builder}
+	return &ProjectDeleteOne{builder}
 }
 
-// Query returns a query builder for CourseTemplates.
-func (c *CourseTemplatesClient) Query() *CourseTemplatesQuery {
-	return &CourseTemplatesQuery{
+// Query returns a query builder for Project.
+func (c *ProjectClient) Query() *ProjectQuery {
+	return &ProjectQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeCourseTemplates},
+		ctx:    &QueryContext{Type: TypeProject},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a CourseTemplates entity by its id.
-func (c *CourseTemplatesClient) Get(ctx context.Context, id string) (*CourseTemplates, error) {
-	return c.Query().Where(coursetemplates.ID(id)).Only(ctx)
+// Get returns a Project entity by its id.
+func (c *ProjectClient) Get(ctx context.Context, id string) (*Project, error) {
+	return c.Query().Where(project.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *CourseTemplatesClient) GetX(ctx context.Context, id string) *CourseTemplates {
+func (c *ProjectClient) GetX(ctx context.Context, id string) *Project {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -992,15 +845,79 @@ func (c *CourseTemplatesClient) GetX(ctx context.Context, id string) *CourseTemp
 	return obj
 }
 
-// QueryVersions queries the versions edge of a CourseTemplates.
-func (c *CourseTemplatesClient) QueryVersions(_m *CourseTemplates) *CourseVersionsQuery {
-	query := (&CourseVersionsClient{config: c.config}).Query()
+// QueryTenant queries the tenant edge of a Project.
+func (c *ProjectClient) QueryTenant(_m *Project) *TenantsQuery {
+	query := (&TenantsClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(coursetemplates.Table, coursetemplates.FieldID, id),
-			sqlgraph.To(courseversions.Table, courseversions.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, coursetemplates.VersionsTable, coursetemplates.VersionsColumn),
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(tenants.Table, tenants.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, project.TenantTable, project.TenantColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMemberships queries the memberships edge of a Project.
+func (c *ProjectClient) QueryMemberships(_m *Project) *ProjectMembershipQuery {
+	query := (&ProjectMembershipClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(projectmembership.Table, projectmembership.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.MembershipsTable, project.MembershipsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRoles queries the roles edge of a Project.
+func (c *ProjectClient) QueryRoles(_m *Project) *ProjectRoleQuery {
+	query := (&ProjectRoleClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(projectrole.Table, projectrole.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.RolesTable, project.RolesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryFeatures queries the features edge of a Project.
+func (c *ProjectClient) QueryFeatures(_m *Project) *ProjectFeatureQuery {
+	query := (&ProjectFeatureClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(projectfeature.Table, projectfeature.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.FeaturesTable, project.FeaturesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCourses queries the courses edge of a Project.
+func (c *ProjectClient) QueryCourses(_m *Project) *CoursesQuery {
+	query := (&CoursesClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(project.Table, project.FieldID, id),
+			sqlgraph.To(courses.Table, courses.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, project.CoursesTable, project.CoursesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1009,131 +926,131 @@ func (c *CourseTemplatesClient) QueryVersions(_m *CourseTemplates) *CourseVersio
 }
 
 // Hooks returns the client hooks.
-func (c *CourseTemplatesClient) Hooks() []Hook {
-	return c.hooks.CourseTemplates
+func (c *ProjectClient) Hooks() []Hook {
+	return c.hooks.Project
 }
 
 // Interceptors returns the client interceptors.
-func (c *CourseTemplatesClient) Interceptors() []Interceptor {
-	return c.inters.CourseTemplates
+func (c *ProjectClient) Interceptors() []Interceptor {
+	return c.inters.Project
 }
 
-func (c *CourseTemplatesClient) mutate(ctx context.Context, m *CourseTemplatesMutation) (Value, error) {
+func (c *ProjectClient) mutate(ctx context.Context, m *ProjectMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&CourseTemplatesCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProjectCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&CourseTemplatesUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProjectUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&CourseTemplatesUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProjectUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&CourseTemplatesDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&ProjectDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown CourseTemplates mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown Project mutation op: %q", m.Op())
 	}
 }
 
-// CourseVersionsClient is a client for the CourseVersions schema.
-type CourseVersionsClient struct {
+// ProjectFeatureClient is a client for the ProjectFeature schema.
+type ProjectFeatureClient struct {
 	config
 }
 
-// NewCourseVersionsClient returns a client for the CourseVersions from the given config.
-func NewCourseVersionsClient(c config) *CourseVersionsClient {
-	return &CourseVersionsClient{config: c}
+// NewProjectFeatureClient returns a client for the ProjectFeature from the given config.
+func NewProjectFeatureClient(c config) *ProjectFeatureClient {
+	return &ProjectFeatureClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `courseversions.Hooks(f(g(h())))`.
-func (c *CourseVersionsClient) Use(hooks ...Hook) {
-	c.hooks.CourseVersions = append(c.hooks.CourseVersions, hooks...)
+// A call to `Use(f, g, h)` equals to `projectfeature.Hooks(f(g(h())))`.
+func (c *ProjectFeatureClient) Use(hooks ...Hook) {
+	c.hooks.ProjectFeature = append(c.hooks.ProjectFeature, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `courseversions.Intercept(f(g(h())))`.
-func (c *CourseVersionsClient) Intercept(interceptors ...Interceptor) {
-	c.inters.CourseVersions = append(c.inters.CourseVersions, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `projectfeature.Intercept(f(g(h())))`.
+func (c *ProjectFeatureClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ProjectFeature = append(c.inters.ProjectFeature, interceptors...)
 }
 
-// Create returns a builder for creating a CourseVersions entity.
-func (c *CourseVersionsClient) Create() *CourseVersionsCreate {
-	mutation := newCourseVersionsMutation(c.config, OpCreate)
-	return &CourseVersionsCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a ProjectFeature entity.
+func (c *ProjectFeatureClient) Create() *ProjectFeatureCreate {
+	mutation := newProjectFeatureMutation(c.config, OpCreate)
+	return &ProjectFeatureCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of CourseVersions entities.
-func (c *CourseVersionsClient) CreateBulk(builders ...*CourseVersionsCreate) *CourseVersionsCreateBulk {
-	return &CourseVersionsCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of ProjectFeature entities.
+func (c *ProjectFeatureClient) CreateBulk(builders ...*ProjectFeatureCreate) *ProjectFeatureCreateBulk {
+	return &ProjectFeatureCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *CourseVersionsClient) MapCreateBulk(slice any, setFunc func(*CourseVersionsCreate, int)) *CourseVersionsCreateBulk {
+func (c *ProjectFeatureClient) MapCreateBulk(slice any, setFunc func(*ProjectFeatureCreate, int)) *ProjectFeatureCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &CourseVersionsCreateBulk{err: fmt.Errorf("calling to CourseVersionsClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &ProjectFeatureCreateBulk{err: fmt.Errorf("calling to ProjectFeatureClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*CourseVersionsCreate, rv.Len())
+	builders := make([]*ProjectFeatureCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &CourseVersionsCreateBulk{config: c.config, builders: builders}
+	return &ProjectFeatureCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for CourseVersions.
-func (c *CourseVersionsClient) Update() *CourseVersionsUpdate {
-	mutation := newCourseVersionsMutation(c.config, OpUpdate)
-	return &CourseVersionsUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for ProjectFeature.
+func (c *ProjectFeatureClient) Update() *ProjectFeatureUpdate {
+	mutation := newProjectFeatureMutation(c.config, OpUpdate)
+	return &ProjectFeatureUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *CourseVersionsClient) UpdateOne(_m *CourseVersions) *CourseVersionsUpdateOne {
-	mutation := newCourseVersionsMutation(c.config, OpUpdateOne, withCourseVersions(_m))
-	return &CourseVersionsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ProjectFeatureClient) UpdateOne(_m *ProjectFeature) *ProjectFeatureUpdateOne {
+	mutation := newProjectFeatureMutation(c.config, OpUpdateOne, withProjectFeature(_m))
+	return &ProjectFeatureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *CourseVersionsClient) UpdateOneID(id string) *CourseVersionsUpdateOne {
-	mutation := newCourseVersionsMutation(c.config, OpUpdateOne, withCourseVersionsID(id))
-	return &CourseVersionsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ProjectFeatureClient) UpdateOneID(id string) *ProjectFeatureUpdateOne {
+	mutation := newProjectFeatureMutation(c.config, OpUpdateOne, withProjectFeatureID(id))
+	return &ProjectFeatureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for CourseVersions.
-func (c *CourseVersionsClient) Delete() *CourseVersionsDelete {
-	mutation := newCourseVersionsMutation(c.config, OpDelete)
-	return &CourseVersionsDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for ProjectFeature.
+func (c *ProjectFeatureClient) Delete() *ProjectFeatureDelete {
+	mutation := newProjectFeatureMutation(c.config, OpDelete)
+	return &ProjectFeatureDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *CourseVersionsClient) DeleteOne(_m *CourseVersions) *CourseVersionsDeleteOne {
+func (c *ProjectFeatureClient) DeleteOne(_m *ProjectFeature) *ProjectFeatureDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *CourseVersionsClient) DeleteOneID(id string) *CourseVersionsDeleteOne {
-	builder := c.Delete().Where(courseversions.ID(id))
+func (c *ProjectFeatureClient) DeleteOneID(id string) *ProjectFeatureDeleteOne {
+	builder := c.Delete().Where(projectfeature.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &CourseVersionsDeleteOne{builder}
+	return &ProjectFeatureDeleteOne{builder}
 }
 
-// Query returns a query builder for CourseVersions.
-func (c *CourseVersionsClient) Query() *CourseVersionsQuery {
-	return &CourseVersionsQuery{
+// Query returns a query builder for ProjectFeature.
+func (c *ProjectFeatureClient) Query() *ProjectFeatureQuery {
+	return &ProjectFeatureQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeCourseVersions},
+		ctx:    &QueryContext{Type: TypeProjectFeature},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a CourseVersions entity by its id.
-func (c *CourseVersionsClient) Get(ctx context.Context, id string) (*CourseVersions, error) {
-	return c.Query().Where(courseversions.ID(id)).Only(ctx)
+// Get returns a ProjectFeature entity by its id.
+func (c *ProjectFeatureClient) Get(ctx context.Context, id string) (*ProjectFeature, error) {
+	return c.Query().Where(projectfeature.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *CourseVersionsClient) GetX(ctx context.Context, id string) *CourseVersions {
+func (c *ProjectFeatureClient) GetX(ctx context.Context, id string) *ProjectFeature {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -1141,15 +1058,15 @@ func (c *CourseVersionsClient) GetX(ctx context.Context, id string) *CourseVersi
 	return obj
 }
 
-// QueryTemplate queries the template edge of a CourseVersions.
-func (c *CourseVersionsClient) QueryTemplate(_m *CourseVersions) *CourseTemplatesQuery {
-	query := (&CourseTemplatesClient{config: c.config}).Query()
+// QueryProject queries the project edge of a ProjectFeature.
+func (c *ProjectFeatureClient) QueryProject(_m *ProjectFeature) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(courseversions.Table, courseversions.FieldID, id),
-			sqlgraph.To(coursetemplates.Table, coursetemplates.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, courseversions.TemplateTable, courseversions.TemplateColumn),
+			sqlgraph.From(projectfeature.Table, projectfeature.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, projectfeature.ProjectTable, projectfeature.ProjectColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1157,31 +1074,15 @@ func (c *CourseVersionsClient) QueryTemplate(_m *CourseVersions) *CourseTemplate
 	return query
 }
 
-// QuerySyllabi queries the syllabi edge of a CourseVersions.
-func (c *CourseVersionsClient) QuerySyllabi(_m *CourseVersions) *SyllabiQuery {
-	query := (&SyllabiClient{config: c.config}).Query()
+// QueryFeature queries the feature edge of a ProjectFeature.
+func (c *ProjectFeatureClient) QueryFeature(_m *ProjectFeature) *FeatureQuery {
+	query := (&FeatureClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(courseversions.Table, courseversions.FieldID, id),
-			sqlgraph.To(syllabi.Table, syllabi.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, courseversions.SyllabiTable, courseversions.SyllabiColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryModules queries the modules edge of a CourseVersions.
-func (c *CourseVersionsClient) QueryModules(_m *CourseVersions) *CourseModulesQuery {
-	query := (&CourseModulesClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(courseversions.Table, courseversions.FieldID, id),
-			sqlgraph.To(coursemodules.Table, coursemodules.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, courseversions.ModulesTable, courseversions.ModulesColumn),
+			sqlgraph.From(projectfeature.Table, projectfeature.FieldID, id),
+			sqlgraph.To(feature.Table, feature.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, projectfeature.FeatureTable, projectfeature.FeatureColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1190,131 +1091,131 @@ func (c *CourseVersionsClient) QueryModules(_m *CourseVersions) *CourseModulesQu
 }
 
 // Hooks returns the client hooks.
-func (c *CourseVersionsClient) Hooks() []Hook {
-	return c.hooks.CourseVersions
+func (c *ProjectFeatureClient) Hooks() []Hook {
+	return c.hooks.ProjectFeature
 }
 
 // Interceptors returns the client interceptors.
-func (c *CourseVersionsClient) Interceptors() []Interceptor {
-	return c.inters.CourseVersions
+func (c *ProjectFeatureClient) Interceptors() []Interceptor {
+	return c.inters.ProjectFeature
 }
 
-func (c *CourseVersionsClient) mutate(ctx context.Context, m *CourseVersionsMutation) (Value, error) {
+func (c *ProjectFeatureClient) mutate(ctx context.Context, m *ProjectFeatureMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&CourseVersionsCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProjectFeatureCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&CourseVersionsUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProjectFeatureUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&CourseVersionsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProjectFeatureUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&CourseVersionsDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&ProjectFeatureDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown CourseVersions mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown ProjectFeature mutation op: %q", m.Op())
 	}
 }
 
-// LessonsClient is a client for the Lessons schema.
-type LessonsClient struct {
+// ProjectMembershipClient is a client for the ProjectMembership schema.
+type ProjectMembershipClient struct {
 	config
 }
 
-// NewLessonsClient returns a client for the Lessons from the given config.
-func NewLessonsClient(c config) *LessonsClient {
-	return &LessonsClient{config: c}
+// NewProjectMembershipClient returns a client for the ProjectMembership from the given config.
+func NewProjectMembershipClient(c config) *ProjectMembershipClient {
+	return &ProjectMembershipClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `lessons.Hooks(f(g(h())))`.
-func (c *LessonsClient) Use(hooks ...Hook) {
-	c.hooks.Lessons = append(c.hooks.Lessons, hooks...)
+// A call to `Use(f, g, h)` equals to `projectmembership.Hooks(f(g(h())))`.
+func (c *ProjectMembershipClient) Use(hooks ...Hook) {
+	c.hooks.ProjectMembership = append(c.hooks.ProjectMembership, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `lessons.Intercept(f(g(h())))`.
-func (c *LessonsClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Lessons = append(c.inters.Lessons, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `projectmembership.Intercept(f(g(h())))`.
+func (c *ProjectMembershipClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ProjectMembership = append(c.inters.ProjectMembership, interceptors...)
 }
 
-// Create returns a builder for creating a Lessons entity.
-func (c *LessonsClient) Create() *LessonsCreate {
-	mutation := newLessonsMutation(c.config, OpCreate)
-	return &LessonsCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a ProjectMembership entity.
+func (c *ProjectMembershipClient) Create() *ProjectMembershipCreate {
+	mutation := newProjectMembershipMutation(c.config, OpCreate)
+	return &ProjectMembershipCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of Lessons entities.
-func (c *LessonsClient) CreateBulk(builders ...*LessonsCreate) *LessonsCreateBulk {
-	return &LessonsCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of ProjectMembership entities.
+func (c *ProjectMembershipClient) CreateBulk(builders ...*ProjectMembershipCreate) *ProjectMembershipCreateBulk {
+	return &ProjectMembershipCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *LessonsClient) MapCreateBulk(slice any, setFunc func(*LessonsCreate, int)) *LessonsCreateBulk {
+func (c *ProjectMembershipClient) MapCreateBulk(slice any, setFunc func(*ProjectMembershipCreate, int)) *ProjectMembershipCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &LessonsCreateBulk{err: fmt.Errorf("calling to LessonsClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &ProjectMembershipCreateBulk{err: fmt.Errorf("calling to ProjectMembershipClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*LessonsCreate, rv.Len())
+	builders := make([]*ProjectMembershipCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &LessonsCreateBulk{config: c.config, builders: builders}
+	return &ProjectMembershipCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for Lessons.
-func (c *LessonsClient) Update() *LessonsUpdate {
-	mutation := newLessonsMutation(c.config, OpUpdate)
-	return &LessonsUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for ProjectMembership.
+func (c *ProjectMembershipClient) Update() *ProjectMembershipUpdate {
+	mutation := newProjectMembershipMutation(c.config, OpUpdate)
+	return &ProjectMembershipUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *LessonsClient) UpdateOne(_m *Lessons) *LessonsUpdateOne {
-	mutation := newLessonsMutation(c.config, OpUpdateOne, withLessons(_m))
-	return &LessonsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ProjectMembershipClient) UpdateOne(_m *ProjectMembership) *ProjectMembershipUpdateOne {
+	mutation := newProjectMembershipMutation(c.config, OpUpdateOne, withProjectMembership(_m))
+	return &ProjectMembershipUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *LessonsClient) UpdateOneID(id string) *LessonsUpdateOne {
-	mutation := newLessonsMutation(c.config, OpUpdateOne, withLessonsID(id))
-	return &LessonsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ProjectMembershipClient) UpdateOneID(id string) *ProjectMembershipUpdateOne {
+	mutation := newProjectMembershipMutation(c.config, OpUpdateOne, withProjectMembershipID(id))
+	return &ProjectMembershipUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for Lessons.
-func (c *LessonsClient) Delete() *LessonsDelete {
-	mutation := newLessonsMutation(c.config, OpDelete)
-	return &LessonsDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for ProjectMembership.
+func (c *ProjectMembershipClient) Delete() *ProjectMembershipDelete {
+	mutation := newProjectMembershipMutation(c.config, OpDelete)
+	return &ProjectMembershipDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *LessonsClient) DeleteOne(_m *Lessons) *LessonsDeleteOne {
+func (c *ProjectMembershipClient) DeleteOne(_m *ProjectMembership) *ProjectMembershipDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *LessonsClient) DeleteOneID(id string) *LessonsDeleteOne {
-	builder := c.Delete().Where(lessons.ID(id))
+func (c *ProjectMembershipClient) DeleteOneID(id string) *ProjectMembershipDeleteOne {
+	builder := c.Delete().Where(projectmembership.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &LessonsDeleteOne{builder}
+	return &ProjectMembershipDeleteOne{builder}
 }
 
-// Query returns a query builder for Lessons.
-func (c *LessonsClient) Query() *LessonsQuery {
-	return &LessonsQuery{
+// Query returns a query builder for ProjectMembership.
+func (c *ProjectMembershipClient) Query() *ProjectMembershipQuery {
+	return &ProjectMembershipQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeLessons},
+		ctx:    &QueryContext{Type: TypeProjectMembership},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a Lessons entity by its id.
-func (c *LessonsClient) Get(ctx context.Context, id string) (*Lessons, error) {
-	return c.Query().Where(lessons.ID(id)).Only(ctx)
+// Get returns a ProjectMembership entity by its id.
+func (c *ProjectMembershipClient) Get(ctx context.Context, id string) (*ProjectMembership, error) {
+	return c.Query().Where(projectmembership.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *LessonsClient) GetX(ctx context.Context, id string) *Lessons {
+func (c *ProjectMembershipClient) GetX(ctx context.Context, id string) *ProjectMembership {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -1322,15 +1223,15 @@ func (c *LessonsClient) GetX(ctx context.Context, id string) *Lessons {
 	return obj
 }
 
-// QueryModule queries the module edge of a Lessons.
-func (c *LessonsClient) QueryModule(_m *Lessons) *CourseModulesQuery {
-	query := (&CourseModulesClient{config: c.config}).Query()
+// QueryProject queries the project edge of a ProjectMembership.
+func (c *ProjectMembershipClient) QueryProject(_m *ProjectMembership) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(lessons.Table, lessons.FieldID, id),
-			sqlgraph.To(coursemodules.Table, coursemodules.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, lessons.ModuleTable, lessons.ModuleColumn),
+			sqlgraph.From(projectmembership.Table, projectmembership.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, projectmembership.ProjectTable, projectmembership.ProjectColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1338,15 +1239,31 @@ func (c *LessonsClient) QueryModule(_m *Lessons) *CourseModulesQuery {
 	return query
 }
 
-// QueryActivities queries the activities edge of a Lessons.
-func (c *LessonsClient) QueryActivities(_m *Lessons) *ActivitiesQuery {
-	query := (&ActivitiesClient{config: c.config}).Query()
+// QueryTenantMembership queries the tenant_membership edge of a ProjectMembership.
+func (c *ProjectMembershipClient) QueryTenantMembership(_m *ProjectMembership) *TenantMembershipQuery {
+	query := (&TenantMembershipClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(lessons.Table, lessons.FieldID, id),
-			sqlgraph.To(activities.Table, activities.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, lessons.ActivitiesTable, lessons.ActivitiesColumn),
+			sqlgraph.From(projectmembership.Table, projectmembership.FieldID, id),
+			sqlgraph.To(tenantmembership.Table, tenantmembership.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, projectmembership.TenantMembershipTable, projectmembership.TenantMembershipColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRoles queries the roles edge of a ProjectMembership.
+func (c *ProjectMembershipClient) QueryRoles(_m *ProjectMembership) *ProjectRoleQuery {
+	query := (&ProjectRoleClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(projectmembership.Table, projectmembership.FieldID, id),
+			sqlgraph.To(projectrole.Table, projectrole.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, projectmembership.RolesTable, projectmembership.RolesPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1355,131 +1272,131 @@ func (c *LessonsClient) QueryActivities(_m *Lessons) *ActivitiesQuery {
 }
 
 // Hooks returns the client hooks.
-func (c *LessonsClient) Hooks() []Hook {
-	return c.hooks.Lessons
+func (c *ProjectMembershipClient) Hooks() []Hook {
+	return c.hooks.ProjectMembership
 }
 
 // Interceptors returns the client interceptors.
-func (c *LessonsClient) Interceptors() []Interceptor {
-	return c.inters.Lessons
+func (c *ProjectMembershipClient) Interceptors() []Interceptor {
+	return c.inters.ProjectMembership
 }
 
-func (c *LessonsClient) mutate(ctx context.Context, m *LessonsMutation) (Value, error) {
+func (c *ProjectMembershipClient) mutate(ctx context.Context, m *ProjectMembershipMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&LessonsCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProjectMembershipCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&LessonsUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProjectMembershipUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&LessonsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProjectMembershipUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&LessonsDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&ProjectMembershipDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown Lessons mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown ProjectMembership mutation op: %q", m.Op())
 	}
 }
 
-// SyllabiClient is a client for the Syllabi schema.
-type SyllabiClient struct {
+// ProjectRoleClient is a client for the ProjectRole schema.
+type ProjectRoleClient struct {
 	config
 }
 
-// NewSyllabiClient returns a client for the Syllabi from the given config.
-func NewSyllabiClient(c config) *SyllabiClient {
-	return &SyllabiClient{config: c}
+// NewProjectRoleClient returns a client for the ProjectRole from the given config.
+func NewProjectRoleClient(c config) *ProjectRoleClient {
+	return &ProjectRoleClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `syllabi.Hooks(f(g(h())))`.
-func (c *SyllabiClient) Use(hooks ...Hook) {
-	c.hooks.Syllabi = append(c.hooks.Syllabi, hooks...)
+// A call to `Use(f, g, h)` equals to `projectrole.Hooks(f(g(h())))`.
+func (c *ProjectRoleClient) Use(hooks ...Hook) {
+	c.hooks.ProjectRole = append(c.hooks.ProjectRole, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `syllabi.Intercept(f(g(h())))`.
-func (c *SyllabiClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Syllabi = append(c.inters.Syllabi, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `projectrole.Intercept(f(g(h())))`.
+func (c *ProjectRoleClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ProjectRole = append(c.inters.ProjectRole, interceptors...)
 }
 
-// Create returns a builder for creating a Syllabi entity.
-func (c *SyllabiClient) Create() *SyllabiCreate {
-	mutation := newSyllabiMutation(c.config, OpCreate)
-	return &SyllabiCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a ProjectRole entity.
+func (c *ProjectRoleClient) Create() *ProjectRoleCreate {
+	mutation := newProjectRoleMutation(c.config, OpCreate)
+	return &ProjectRoleCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of Syllabi entities.
-func (c *SyllabiClient) CreateBulk(builders ...*SyllabiCreate) *SyllabiCreateBulk {
-	return &SyllabiCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of ProjectRole entities.
+func (c *ProjectRoleClient) CreateBulk(builders ...*ProjectRoleCreate) *ProjectRoleCreateBulk {
+	return &ProjectRoleCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *SyllabiClient) MapCreateBulk(slice any, setFunc func(*SyllabiCreate, int)) *SyllabiCreateBulk {
+func (c *ProjectRoleClient) MapCreateBulk(slice any, setFunc func(*ProjectRoleCreate, int)) *ProjectRoleCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &SyllabiCreateBulk{err: fmt.Errorf("calling to SyllabiClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &ProjectRoleCreateBulk{err: fmt.Errorf("calling to ProjectRoleClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*SyllabiCreate, rv.Len())
+	builders := make([]*ProjectRoleCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &SyllabiCreateBulk{config: c.config, builders: builders}
+	return &ProjectRoleCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for Syllabi.
-func (c *SyllabiClient) Update() *SyllabiUpdate {
-	mutation := newSyllabiMutation(c.config, OpUpdate)
-	return &SyllabiUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for ProjectRole.
+func (c *ProjectRoleClient) Update() *ProjectRoleUpdate {
+	mutation := newProjectRoleMutation(c.config, OpUpdate)
+	return &ProjectRoleUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *SyllabiClient) UpdateOne(_m *Syllabi) *SyllabiUpdateOne {
-	mutation := newSyllabiMutation(c.config, OpUpdateOne, withSyllabi(_m))
-	return &SyllabiUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ProjectRoleClient) UpdateOne(_m *ProjectRole) *ProjectRoleUpdateOne {
+	mutation := newProjectRoleMutation(c.config, OpUpdateOne, withProjectRole(_m))
+	return &ProjectRoleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *SyllabiClient) UpdateOneID(id string) *SyllabiUpdateOne {
-	mutation := newSyllabiMutation(c.config, OpUpdateOne, withSyllabiID(id))
-	return &SyllabiUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *ProjectRoleClient) UpdateOneID(id string) *ProjectRoleUpdateOne {
+	mutation := newProjectRoleMutation(c.config, OpUpdateOne, withProjectRoleID(id))
+	return &ProjectRoleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for Syllabi.
-func (c *SyllabiClient) Delete() *SyllabiDelete {
-	mutation := newSyllabiMutation(c.config, OpDelete)
-	return &SyllabiDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for ProjectRole.
+func (c *ProjectRoleClient) Delete() *ProjectRoleDelete {
+	mutation := newProjectRoleMutation(c.config, OpDelete)
+	return &ProjectRoleDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *SyllabiClient) DeleteOne(_m *Syllabi) *SyllabiDeleteOne {
+func (c *ProjectRoleClient) DeleteOne(_m *ProjectRole) *ProjectRoleDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *SyllabiClient) DeleteOneID(id string) *SyllabiDeleteOne {
-	builder := c.Delete().Where(syllabi.ID(id))
+func (c *ProjectRoleClient) DeleteOneID(id string) *ProjectRoleDeleteOne {
+	builder := c.Delete().Where(projectrole.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &SyllabiDeleteOne{builder}
+	return &ProjectRoleDeleteOne{builder}
 }
 
-// Query returns a query builder for Syllabi.
-func (c *SyllabiClient) Query() *SyllabiQuery {
-	return &SyllabiQuery{
+// Query returns a query builder for ProjectRole.
+func (c *ProjectRoleClient) Query() *ProjectRoleQuery {
+	return &ProjectRoleQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeSyllabi},
+		ctx:    &QueryContext{Type: TypeProjectRole},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a Syllabi entity by its id.
-func (c *SyllabiClient) Get(ctx context.Context, id string) (*Syllabi, error) {
-	return c.Query().Where(syllabi.ID(id)).Only(ctx)
+// Get returns a ProjectRole entity by its id.
+func (c *ProjectRoleClient) Get(ctx context.Context, id string) (*ProjectRole, error) {
+	return c.Query().Where(projectrole.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *SyllabiClient) GetX(ctx context.Context, id string) *Syllabi {
+func (c *ProjectRoleClient) GetX(ctx context.Context, id string) *ProjectRole {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -1487,15 +1404,47 @@ func (c *SyllabiClient) GetX(ctx context.Context, id string) *Syllabi {
 	return obj
 }
 
-// QueryVersion queries the version edge of a Syllabi.
-func (c *SyllabiClient) QueryVersion(_m *Syllabi) *CourseVersionsQuery {
-	query := (&CourseVersionsClient{config: c.config}).Query()
+// QueryProject queries the project edge of a ProjectRole.
+func (c *ProjectRoleClient) QueryProject(_m *ProjectRole) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(syllabi.Table, syllabi.FieldID, id),
-			sqlgraph.To(courseversions.Table, courseversions.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, syllabi.VersionTable, syllabi.VersionColumn),
+			sqlgraph.From(projectrole.Table, projectrole.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, projectrole.ProjectTable, projectrole.ProjectColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPermissions queries the permissions edge of a ProjectRole.
+func (c *ProjectRoleClient) QueryPermissions(_m *ProjectRole) *PermissionQuery {
+	query := (&PermissionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(projectrole.Table, projectrole.FieldID, id),
+			sqlgraph.To(permission.Table, permission.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, projectrole.PermissionsTable, projectrole.PermissionsPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMemberships queries the memberships edge of a ProjectRole.
+func (c *ProjectRoleClient) QueryMemberships(_m *ProjectRole) *ProjectMembershipQuery {
+	query := (&ProjectMembershipClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(projectrole.Table, projectrole.FieldID, id),
+			sqlgraph.To(projectmembership.Table, projectmembership.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, projectrole.MembershipsTable, projectrole.MembershipsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1504,27 +1453,373 @@ func (c *SyllabiClient) QueryVersion(_m *Syllabi) *CourseVersionsQuery {
 }
 
 // Hooks returns the client hooks.
-func (c *SyllabiClient) Hooks() []Hook {
-	return c.hooks.Syllabi
+func (c *ProjectRoleClient) Hooks() []Hook {
+	return c.hooks.ProjectRole
 }
 
 // Interceptors returns the client interceptors.
-func (c *SyllabiClient) Interceptors() []Interceptor {
-	return c.inters.Syllabi
+func (c *ProjectRoleClient) Interceptors() []Interceptor {
+	return c.inters.ProjectRole
 }
 
-func (c *SyllabiClient) mutate(ctx context.Context, m *SyllabiMutation) (Value, error) {
+func (c *ProjectRoleClient) mutate(ctx context.Context, m *ProjectRoleMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&SyllabiCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProjectRoleCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&SyllabiUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProjectRoleUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&SyllabiUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&ProjectRoleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&SyllabiDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&ProjectRoleDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown Syllabi mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown ProjectRole mutation op: %q", m.Op())
+	}
+}
+
+// TenantMembershipClient is a client for the TenantMembership schema.
+type TenantMembershipClient struct {
+	config
+}
+
+// NewTenantMembershipClient returns a client for the TenantMembership from the given config.
+func NewTenantMembershipClient(c config) *TenantMembershipClient {
+	return &TenantMembershipClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `tenantmembership.Hooks(f(g(h())))`.
+func (c *TenantMembershipClient) Use(hooks ...Hook) {
+	c.hooks.TenantMembership = append(c.hooks.TenantMembership, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `tenantmembership.Intercept(f(g(h())))`.
+func (c *TenantMembershipClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TenantMembership = append(c.inters.TenantMembership, interceptors...)
+}
+
+// Create returns a builder for creating a TenantMembership entity.
+func (c *TenantMembershipClient) Create() *TenantMembershipCreate {
+	mutation := newTenantMembershipMutation(c.config, OpCreate)
+	return &TenantMembershipCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TenantMembership entities.
+func (c *TenantMembershipClient) CreateBulk(builders ...*TenantMembershipCreate) *TenantMembershipCreateBulk {
+	return &TenantMembershipCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TenantMembershipClient) MapCreateBulk(slice any, setFunc func(*TenantMembershipCreate, int)) *TenantMembershipCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TenantMembershipCreateBulk{err: fmt.Errorf("calling to TenantMembershipClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TenantMembershipCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TenantMembershipCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TenantMembership.
+func (c *TenantMembershipClient) Update() *TenantMembershipUpdate {
+	mutation := newTenantMembershipMutation(c.config, OpUpdate)
+	return &TenantMembershipUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TenantMembershipClient) UpdateOne(_m *TenantMembership) *TenantMembershipUpdateOne {
+	mutation := newTenantMembershipMutation(c.config, OpUpdateOne, withTenantMembership(_m))
+	return &TenantMembershipUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TenantMembershipClient) UpdateOneID(id string) *TenantMembershipUpdateOne {
+	mutation := newTenantMembershipMutation(c.config, OpUpdateOne, withTenantMembershipID(id))
+	return &TenantMembershipUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TenantMembership.
+func (c *TenantMembershipClient) Delete() *TenantMembershipDelete {
+	mutation := newTenantMembershipMutation(c.config, OpDelete)
+	return &TenantMembershipDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TenantMembershipClient) DeleteOne(_m *TenantMembership) *TenantMembershipDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TenantMembershipClient) DeleteOneID(id string) *TenantMembershipDeleteOne {
+	builder := c.Delete().Where(tenantmembership.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TenantMembershipDeleteOne{builder}
+}
+
+// Query returns a query builder for TenantMembership.
+func (c *TenantMembershipClient) Query() *TenantMembershipQuery {
+	return &TenantMembershipQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTenantMembership},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TenantMembership entity by its id.
+func (c *TenantMembershipClient) Get(ctx context.Context, id string) (*TenantMembership, error) {
+	return c.Query().Where(tenantmembership.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TenantMembershipClient) GetX(ctx context.Context, id string) *TenantMembership {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTenant queries the tenant edge of a TenantMembership.
+func (c *TenantMembershipClient) QueryTenant(_m *TenantMembership) *TenantsQuery {
+	query := (&TenantsClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tenantmembership.Table, tenantmembership.FieldID, id),
+			sqlgraph.To(tenants.Table, tenants.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, tenantmembership.TenantTable, tenantmembership.TenantColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a TenantMembership.
+func (c *TenantMembershipClient) QueryUser(_m *TenantMembership) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tenantmembership.Table, tenantmembership.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, tenantmembership.UserTable, tenantmembership.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryProjectMemberships queries the project_memberships edge of a TenantMembership.
+func (c *TenantMembershipClient) QueryProjectMemberships(_m *TenantMembership) *ProjectMembershipQuery {
+	query := (&ProjectMembershipClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tenantmembership.Table, tenantmembership.FieldID, id),
+			sqlgraph.To(projectmembership.Table, projectmembership.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, tenantmembership.ProjectMembershipsTable, tenantmembership.ProjectMembershipsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TenantMembershipClient) Hooks() []Hook {
+	return c.hooks.TenantMembership
+}
+
+// Interceptors returns the client interceptors.
+func (c *TenantMembershipClient) Interceptors() []Interceptor {
+	return c.inters.TenantMembership
+}
+
+func (c *TenantMembershipClient) mutate(ctx context.Context, m *TenantMembershipMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TenantMembershipCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TenantMembershipUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TenantMembershipUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TenantMembershipDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TenantMembership mutation op: %q", m.Op())
+	}
+}
+
+// TenantsClient is a client for the Tenants schema.
+type TenantsClient struct {
+	config
+}
+
+// NewTenantsClient returns a client for the Tenants from the given config.
+func NewTenantsClient(c config) *TenantsClient {
+	return &TenantsClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `tenants.Hooks(f(g(h())))`.
+func (c *TenantsClient) Use(hooks ...Hook) {
+	c.hooks.Tenants = append(c.hooks.Tenants, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `tenants.Intercept(f(g(h())))`.
+func (c *TenantsClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Tenants = append(c.inters.Tenants, interceptors...)
+}
+
+// Create returns a builder for creating a Tenants entity.
+func (c *TenantsClient) Create() *TenantsCreate {
+	mutation := newTenantsMutation(c.config, OpCreate)
+	return &TenantsCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Tenants entities.
+func (c *TenantsClient) CreateBulk(builders ...*TenantsCreate) *TenantsCreateBulk {
+	return &TenantsCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TenantsClient) MapCreateBulk(slice any, setFunc func(*TenantsCreate, int)) *TenantsCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TenantsCreateBulk{err: fmt.Errorf("calling to TenantsClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TenantsCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TenantsCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Tenants.
+func (c *TenantsClient) Update() *TenantsUpdate {
+	mutation := newTenantsMutation(c.config, OpUpdate)
+	return &TenantsUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TenantsClient) UpdateOne(_m *Tenants) *TenantsUpdateOne {
+	mutation := newTenantsMutation(c.config, OpUpdateOne, withTenants(_m))
+	return &TenantsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TenantsClient) UpdateOneID(id string) *TenantsUpdateOne {
+	mutation := newTenantsMutation(c.config, OpUpdateOne, withTenantsID(id))
+	return &TenantsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Tenants.
+func (c *TenantsClient) Delete() *TenantsDelete {
+	mutation := newTenantsMutation(c.config, OpDelete)
+	return &TenantsDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TenantsClient) DeleteOne(_m *Tenants) *TenantsDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TenantsClient) DeleteOneID(id string) *TenantsDeleteOne {
+	builder := c.Delete().Where(tenants.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TenantsDeleteOne{builder}
+}
+
+// Query returns a query builder for Tenants.
+func (c *TenantsClient) Query() *TenantsQuery {
+	return &TenantsQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTenants},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Tenants entity by its id.
+func (c *TenantsClient) Get(ctx context.Context, id string) (*Tenants, error) {
+	return c.Query().Where(tenants.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TenantsClient) GetX(ctx context.Context, id string) *Tenants {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryProjects queries the projects edge of a Tenants.
+func (c *TenantsClient) QueryProjects(_m *Tenants) *ProjectQuery {
+	query := (&ProjectClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tenants.Table, tenants.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, tenants.ProjectsTable, tenants.ProjectsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMemberships queries the memberships edge of a Tenants.
+func (c *TenantsClient) QueryMemberships(_m *Tenants) *TenantMembershipQuery {
+	query := (&TenantMembershipClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tenants.Table, tenants.FieldID, id),
+			sqlgraph.To(tenantmembership.Table, tenantmembership.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, tenants.MembershipsTable, tenants.MembershipsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TenantsClient) Hooks() []Hook {
+	return c.hooks.Tenants
+}
+
+// Interceptors returns the client interceptors.
+func (c *TenantsClient) Interceptors() []Interceptor {
+	return c.inters.Tenants
+}
+
+func (c *TenantsClient) mutate(ctx context.Context, m *TenantsMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TenantsCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TenantsUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TenantsUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TenantsDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Tenants mutation op: %q", m.Op())
 	}
 }
 
@@ -1636,6 +1931,38 @@ func (c *UserClient) GetX(ctx context.Context, id string) *User {
 	return obj
 }
 
+// QueryProfile queries the profile edge of a User.
+func (c *UserClient) QueryProfile(_m *User) *UserProfileQuery {
+	query := (&UserProfileClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(userprofile.Table, userprofile.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.ProfileTable, user.ProfileColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTenantMemberships queries the tenant_memberships edge of a User.
+func (c *UserClient) QueryTenantMemberships(_m *User) *TenantMembershipQuery {
+	query := (&TenantMembershipClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(tenantmembership.Table, tenantmembership.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.TenantMembershipsTable, user.TenantMembershipsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -1661,14 +1988,163 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 	}
 }
 
+// UserProfileClient is a client for the UserProfile schema.
+type UserProfileClient struct {
+	config
+}
+
+// NewUserProfileClient returns a client for the UserProfile from the given config.
+func NewUserProfileClient(c config) *UserProfileClient {
+	return &UserProfileClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `userprofile.Hooks(f(g(h())))`.
+func (c *UserProfileClient) Use(hooks ...Hook) {
+	c.hooks.UserProfile = append(c.hooks.UserProfile, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `userprofile.Intercept(f(g(h())))`.
+func (c *UserProfileClient) Intercept(interceptors ...Interceptor) {
+	c.inters.UserProfile = append(c.inters.UserProfile, interceptors...)
+}
+
+// Create returns a builder for creating a UserProfile entity.
+func (c *UserProfileClient) Create() *UserProfileCreate {
+	mutation := newUserProfileMutation(c.config, OpCreate)
+	return &UserProfileCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of UserProfile entities.
+func (c *UserProfileClient) CreateBulk(builders ...*UserProfileCreate) *UserProfileCreateBulk {
+	return &UserProfileCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UserProfileClient) MapCreateBulk(slice any, setFunc func(*UserProfileCreate, int)) *UserProfileCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UserProfileCreateBulk{err: fmt.Errorf("calling to UserProfileClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UserProfileCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UserProfileCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for UserProfile.
+func (c *UserProfileClient) Update() *UserProfileUpdate {
+	mutation := newUserProfileMutation(c.config, OpUpdate)
+	return &UserProfileUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserProfileClient) UpdateOne(_m *UserProfile) *UserProfileUpdateOne {
+	mutation := newUserProfileMutation(c.config, OpUpdateOne, withUserProfile(_m))
+	return &UserProfileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserProfileClient) UpdateOneID(id string) *UserProfileUpdateOne {
+	mutation := newUserProfileMutation(c.config, OpUpdateOne, withUserProfileID(id))
+	return &UserProfileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for UserProfile.
+func (c *UserProfileClient) Delete() *UserProfileDelete {
+	mutation := newUserProfileMutation(c.config, OpDelete)
+	return &UserProfileDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UserProfileClient) DeleteOne(_m *UserProfile) *UserProfileDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UserProfileClient) DeleteOneID(id string) *UserProfileDeleteOne {
+	builder := c.Delete().Where(userprofile.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UserProfileDeleteOne{builder}
+}
+
+// Query returns a query builder for UserProfile.
+func (c *UserProfileClient) Query() *UserProfileQuery {
+	return &UserProfileQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUserProfile},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a UserProfile entity by its id.
+func (c *UserProfileClient) Get(ctx context.Context, id string) (*UserProfile, error) {
+	return c.Query().Where(userprofile.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserProfileClient) GetX(ctx context.Context, id string) *UserProfile {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a UserProfile.
+func (c *UserProfileClient) QueryUser(_m *UserProfile) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userprofile.Table, userprofile.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, userprofile.UserTable, userprofile.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UserProfileClient) Hooks() []Hook {
+	return c.hooks.UserProfile
+}
+
+// Interceptors returns the client interceptors.
+func (c *UserProfileClient) Interceptors() []Interceptor {
+	return c.inters.UserProfile
+}
+
+func (c *UserProfileClient) mutate(ctx context.Context, m *UserProfileMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UserProfileCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UserProfileUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UserProfileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UserProfileDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown UserProfile mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Activities, CourseCategories, CourseModules, CourseResources, CourseTemplates,
-		CourseVersions, Lessons, Syllabi, User []ent.Hook
+		Courses, Feature, Permission, Project, ProjectFeature, ProjectMembership,
+		ProjectRole, TenantMembership, Tenants, User, UserProfile []ent.Hook
 	}
 	inters struct {
-		Activities, CourseCategories, CourseModules, CourseResources, CourseTemplates,
-		CourseVersions, Lessons, Syllabi, User []ent.Interceptor
+		Courses, Feature, Permission, Project, ProjectFeature, ProjectMembership,
+		ProjectRole, TenantMembership, Tenants, User, UserProfile []ent.Interceptor
 	}
 )

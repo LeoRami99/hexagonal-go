@@ -12,24 +12,28 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
-	// Activities is the client for interacting with the Activities builders.
-	Activities *ActivitiesClient
-	// CourseCategories is the client for interacting with the CourseCategories builders.
-	CourseCategories *CourseCategoriesClient
-	// CourseModules is the client for interacting with the CourseModules builders.
-	CourseModules *CourseModulesClient
-	// CourseResources is the client for interacting with the CourseResources builders.
-	CourseResources *CourseResourcesClient
-	// CourseTemplates is the client for interacting with the CourseTemplates builders.
-	CourseTemplates *CourseTemplatesClient
-	// CourseVersions is the client for interacting with the CourseVersions builders.
-	CourseVersions *CourseVersionsClient
-	// Lessons is the client for interacting with the Lessons builders.
-	Lessons *LessonsClient
-	// Syllabi is the client for interacting with the Syllabi builders.
-	Syllabi *SyllabiClient
+	// Courses is the client for interacting with the Courses builders.
+	Courses *CoursesClient
+	// Feature is the client for interacting with the Feature builders.
+	Feature *FeatureClient
+	// Permission is the client for interacting with the Permission builders.
+	Permission *PermissionClient
+	// Project is the client for interacting with the Project builders.
+	Project *ProjectClient
+	// ProjectFeature is the client for interacting with the ProjectFeature builders.
+	ProjectFeature *ProjectFeatureClient
+	// ProjectMembership is the client for interacting with the ProjectMembership builders.
+	ProjectMembership *ProjectMembershipClient
+	// ProjectRole is the client for interacting with the ProjectRole builders.
+	ProjectRole *ProjectRoleClient
+	// TenantMembership is the client for interacting with the TenantMembership builders.
+	TenantMembership *TenantMembershipClient
+	// Tenants is the client for interacting with the Tenants builders.
+	Tenants *TenantsClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// UserProfile is the client for interacting with the UserProfile builders.
+	UserProfile *UserProfileClient
 
 	// lazily loaded.
 	client     *Client
@@ -161,15 +165,17 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
-	tx.Activities = NewActivitiesClient(tx.config)
-	tx.CourseCategories = NewCourseCategoriesClient(tx.config)
-	tx.CourseModules = NewCourseModulesClient(tx.config)
-	tx.CourseResources = NewCourseResourcesClient(tx.config)
-	tx.CourseTemplates = NewCourseTemplatesClient(tx.config)
-	tx.CourseVersions = NewCourseVersionsClient(tx.config)
-	tx.Lessons = NewLessonsClient(tx.config)
-	tx.Syllabi = NewSyllabiClient(tx.config)
+	tx.Courses = NewCoursesClient(tx.config)
+	tx.Feature = NewFeatureClient(tx.config)
+	tx.Permission = NewPermissionClient(tx.config)
+	tx.Project = NewProjectClient(tx.config)
+	tx.ProjectFeature = NewProjectFeatureClient(tx.config)
+	tx.ProjectMembership = NewProjectMembershipClient(tx.config)
+	tx.ProjectRole = NewProjectRoleClient(tx.config)
+	tx.TenantMembership = NewTenantMembershipClient(tx.config)
+	tx.Tenants = NewTenantsClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.UserProfile = NewUserProfileClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.
@@ -179,7 +185,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Activities.QueryXXX(), the query will be executed
+// applies a query, for example: Courses.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

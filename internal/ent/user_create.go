@@ -6,7 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hexagonal-go-backend/internal/ent/tenantmembership"
 	"hexagonal-go-backend/internal/ent/user"
+	"hexagonal-go-backend/internal/ent/userprofile"
 	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -18,6 +20,12 @@ type UserCreate struct {
 	config
 	mutation *UserMutation
 	hooks    []Hook
+}
+
+// SetAuthID sets the "auth_id" field.
+func (_c *UserCreate) SetAuthID(v string) *UserCreate {
+	_c.mutation.SetAuthID(v)
+	return _c
 }
 
 // SetName sets the "name" field.
@@ -32,22 +40,44 @@ func (_c *UserCreate) SetEmail(v string) *UserCreate {
 	return _c
 }
 
-// SetPasswordHash sets the "password_hash" field.
-func (_c *UserCreate) SetPasswordHash(v string) *UserCreate {
-	_c.mutation.SetPasswordHash(v)
+// SetAvatarURL sets the "avatar_url" field.
+func (_c *UserCreate) SetAvatarURL(v string) *UserCreate {
+	_c.mutation.SetAvatarURL(v)
 	return _c
 }
 
-// SetRole sets the "role" field.
-func (_c *UserCreate) SetRole(v user.Role) *UserCreate {
-	_c.mutation.SetRole(v)
-	return _c
-}
-
-// SetNillableRole sets the "role" field if the given value is not nil.
-func (_c *UserCreate) SetNillableRole(v *user.Role) *UserCreate {
+// SetNillableAvatarURL sets the "avatar_url" field if the given value is not nil.
+func (_c *UserCreate) SetNillableAvatarURL(v *string) *UserCreate {
 	if v != nil {
-		_c.SetRole(*v)
+		_c.SetAvatarURL(*v)
+	}
+	return _c
+}
+
+// SetIsSuperAdmin sets the "is_super_admin" field.
+func (_c *UserCreate) SetIsSuperAdmin(v bool) *UserCreate {
+	_c.mutation.SetIsSuperAdmin(v)
+	return _c
+}
+
+// SetNillableIsSuperAdmin sets the "is_super_admin" field if the given value is not nil.
+func (_c *UserCreate) SetNillableIsSuperAdmin(v *bool) *UserCreate {
+	if v != nil {
+		_c.SetIsSuperAdmin(*v)
+	}
+	return _c
+}
+
+// SetStatus sets the "status" field.
+func (_c *UserCreate) SetStatus(v user.Status) *UserCreate {
+	_c.mutation.SetStatus(v)
+	return _c
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (_c *UserCreate) SetNillableStatus(v *user.Status) *UserCreate {
+	if v != nil {
+		_c.SetStatus(*v)
 	}
 	return _c
 }
@@ -108,6 +138,40 @@ func (_c *UserCreate) SetNillableID(v *string) *UserCreate {
 	return _c
 }
 
+// SetProfileID sets the "profile" edge to the UserProfile entity by ID.
+func (_c *UserCreate) SetProfileID(id string) *UserCreate {
+	_c.mutation.SetProfileID(id)
+	return _c
+}
+
+// SetNillableProfileID sets the "profile" edge to the UserProfile entity by ID if the given value is not nil.
+func (_c *UserCreate) SetNillableProfileID(id *string) *UserCreate {
+	if id != nil {
+		_c = _c.SetProfileID(*id)
+	}
+	return _c
+}
+
+// SetProfile sets the "profile" edge to the UserProfile entity.
+func (_c *UserCreate) SetProfile(v *UserProfile) *UserCreate {
+	return _c.SetProfileID(v.ID)
+}
+
+// AddTenantMembershipIDs adds the "tenant_memberships" edge to the TenantMembership entity by IDs.
+func (_c *UserCreate) AddTenantMembershipIDs(ids ...string) *UserCreate {
+	_c.mutation.AddTenantMembershipIDs(ids...)
+	return _c
+}
+
+// AddTenantMemberships adds the "tenant_memberships" edges to the TenantMembership entity.
+func (_c *UserCreate) AddTenantMemberships(v ...*TenantMembership) *UserCreate {
+	ids := make([]string, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddTenantMembershipIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -143,9 +207,13 @@ func (_c *UserCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *UserCreate) defaults() {
-	if _, ok := _c.mutation.Role(); !ok {
-		v := user.DefaultRole
-		_c.mutation.SetRole(v)
+	if _, ok := _c.mutation.IsSuperAdmin(); !ok {
+		v := user.DefaultIsSuperAdmin
+		_c.mutation.SetIsSuperAdmin(v)
+	}
+	if _, ok := _c.mutation.Status(); !ok {
+		v := user.DefaultStatus
+		_c.mutation.SetStatus(v)
 	}
 	if _, ok := _c.mutation.Active(); !ok {
 		v := user.DefaultActive
@@ -167,6 +235,14 @@ func (_c *UserCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *UserCreate) check() error {
+	if _, ok := _c.mutation.AuthID(); !ok {
+		return &ValidationError{Name: "auth_id", err: errors.New(`ent: missing required field "User.auth_id"`)}
+	}
+	if v, ok := _c.mutation.AuthID(); ok {
+		if err := user.AuthIDValidator(v); err != nil {
+			return &ValidationError{Name: "auth_id", err: fmt.Errorf(`ent: validator failed for field "User.auth_id": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "User.name"`)}
 	}
@@ -183,20 +259,20 @@ func (_c *UserCreate) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.PasswordHash(); !ok {
-		return &ValidationError{Name: "password_hash", err: errors.New(`ent: missing required field "User.password_hash"`)}
-	}
-	if v, ok := _c.mutation.PasswordHash(); ok {
-		if err := user.PasswordHashValidator(v); err != nil {
-			return &ValidationError{Name: "password_hash", err: fmt.Errorf(`ent: validator failed for field "User.password_hash": %w`, err)}
+	if v, ok := _c.mutation.AvatarURL(); ok {
+		if err := user.AvatarURLValidator(v); err != nil {
+			return &ValidationError{Name: "avatar_url", err: fmt.Errorf(`ent: validator failed for field "User.avatar_url": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.Role(); !ok {
-		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "User.role"`)}
+	if _, ok := _c.mutation.IsSuperAdmin(); !ok {
+		return &ValidationError{Name: "is_super_admin", err: errors.New(`ent: missing required field "User.is_super_admin"`)}
 	}
-	if v, ok := _c.mutation.Role(); ok {
-		if err := user.RoleValidator(v); err != nil {
-			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "User.role": %w`, err)}
+	if _, ok := _c.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "User.status"`)}
+	}
+	if v, ok := _c.mutation.Status(); ok {
+		if err := user.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "User.status": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.Active(); !ok {
@@ -248,6 +324,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
+	if value, ok := _c.mutation.AuthID(); ok {
+		_spec.SetField(user.FieldAuthID, field.TypeString, value)
+		_node.AuthID = value
+	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(user.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -256,13 +336,17 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 		_node.Email = value
 	}
-	if value, ok := _c.mutation.PasswordHash(); ok {
-		_spec.SetField(user.FieldPasswordHash, field.TypeString, value)
-		_node.PasswordHash = value
+	if value, ok := _c.mutation.AvatarURL(); ok {
+		_spec.SetField(user.FieldAvatarURL, field.TypeString, value)
+		_node.AvatarURL = &value
 	}
-	if value, ok := _c.mutation.Role(); ok {
-		_spec.SetField(user.FieldRole, field.TypeEnum, value)
-		_node.Role = value
+	if value, ok := _c.mutation.IsSuperAdmin(); ok {
+		_spec.SetField(user.FieldIsSuperAdmin, field.TypeBool, value)
+		_node.IsSuperAdmin = value
+	}
+	if value, ok := _c.mutation.Status(); ok {
+		_spec.SetField(user.FieldStatus, field.TypeEnum, value)
+		_node.Status = value
 	}
 	if value, ok := _c.mutation.Active(); ok {
 		_spec.SetField(user.FieldActive, field.TypeBool, value)
@@ -275,6 +359,38 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := _c.mutation.ProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.ProfileTable,
+			Columns: []string{user.ProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userprofile.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.TenantMembershipsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TenantMembershipsTable,
+			Columns: []string{user.TenantMembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tenantmembership.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

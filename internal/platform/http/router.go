@@ -4,15 +4,17 @@ import (
 	"log/slog"
 	"time"
 
+	courseshttp "hexagonal-go-backend/internal/modules/courses/delivery/http/v1"
+
 	authapp "hexagonal-go-backend/internal/modules/auth/application"
 	authhttp "hexagonal-go-backend/internal/modules/auth/delivery/http/v1"
-	courseshttp "hexagonal-go-backend/internal/modules/courses/delivery/http/v1"
+	tenanthttp "hexagonal-go-backend/internal/modules/tenants/delivery/http/v1"
+	usersapp "hexagonal-go-backend/internal/modules/users/application"
 	usershttp "hexagonal-go-backend/internal/modules/users/delivery/http/v1"
-
 	"hexagonal-go-backend/internal/platform/config"
 	"hexagonal-go-backend/internal/platform/http/middleware"
 
-	_ "hexagonal-go-backend/docs"
+	"hexagonal-go-backend/docs"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -26,7 +28,6 @@ import (
 // @contact.name              API Support
 // @contact.email             soporte@empresa.com
 
-// @host                      localhost:8080
 // @BasePath                  /api/v1
 
 // @securityDefinitions.apikey BearerAuth
@@ -34,7 +35,16 @@ import (
 // @name                       Authorization
 // @description                Escribe "Bearer " seguido de tu token JWT
 
-func NewRouter(cfg config.Config, logger *slog.Logger, users *usershttp.Controller, auth *authhttp.Controller, tokens authapp.TokenProvider, courses ...*courseshttp.Controller) *gin.Engine {
+func NewRouter(cfg config.Config, logger *slog.Logger, users *usershttp.Controller, auth *authhttp.Controller, tokens authapp.TokenProvider, userRepo usersapp.UserRepository, tenants ...*tenanthttp.Controller) *gin.Engine {
+	return newRouter(cfg, logger, users, auth, nil, tokens, userRepo, tenants...)
+}
+
+func NewRouterWithCourses(cfg config.Config, logger *slog.Logger, users *usershttp.Controller, auth *authhttp.Controller, courses *courseshttp.Controller, tokens authapp.TokenProvider, userRepo usersapp.UserRepository, tenants ...*tenanthttp.Controller) *gin.Engine {
+	return newRouter(cfg, logger, users, auth, courses, tokens, userRepo, tenants...)
+}
+
+func newRouter(cfg config.Config, logger *slog.Logger, users *usershttp.Controller, auth *authhttp.Controller, courses *courseshttp.Controller, tokens authapp.TokenProvider, userRepo usersapp.UserRepository, tenants ...*tenanthttp.Controller) *gin.Engine {
+	docs.SwaggerInfo.Host = ""
 	if cfg.App.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}

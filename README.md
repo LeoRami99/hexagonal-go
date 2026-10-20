@@ -311,7 +311,7 @@ go-hexagonal-api/
 │       ├── logger/
 │       └── server/
 │
-├── migrations/            # SQL versionado generado por Atlas
+├── migrations/            # SQL versionado (formato Atlas) generado con cmd/migrate
 │   └── atlas.sum
 │
 ├── docs/
@@ -345,7 +345,7 @@ go-hexagonal-api/
 Para crear la estructura hexagonal de un módulo sin preparar cada directorio manualmente:
 
 ```bash
-make module MODULE=courses
+make module MODULE=products
 ```
 
 El nombre del módulo debe estar en `snake_case` y el comando no sobrescribe módulos existentes. Se generan las capas `domain`, `application`, `infrastructure` y `delivery/http/v1`, junto con archivos Go mínimos listos para completar.
@@ -353,10 +353,10 @@ El nombre del módulo debe estar en `snake_case` y el comando no sobrescribe mó
 Para crear un nuevo schema de Ent:
 
 ```bash
-make ent-schema NAME=Course
+make ent-schema NAME=Product
 ```
 
-`NAME` debe usar `PascalCase`. Este comando crea `internal/ent/schema/course.go` y ejecuta automáticamente `make ent-generate` para actualizar el cliente tipado. Después debes editar el schema generado para definir sus campos, relaciones e índices.
+`NAME` debe usar `PascalCase`. Este comando crea `internal/ent/schema/product.go` y ejecuta automáticamente `make ent-generate` para actualizar el cliente tipado. Después debes editar el schema generado para definir sus campos, relaciones e índices.
 
 Cuando solo modifiques un schema existente, regenera el cliente con:
 
@@ -393,9 +393,9 @@ Con `APP_ENV=development`, `make run` sincroniza automáticamente esos schemas c
 
 Las tecnologías de infraestructura pueden ser reemplazadas sin modificar el dominio.
 
-Los schemas de Ent viven en `internal/ent/schema`. Puedes crear uno con `make ent-schema NAME=Course`; después de modificarlo, regenera el cliente tipado con `make ent-generate`.
+Los schemas de Ent viven en `internal/ent/schema`. Puedes crear uno con `make ent-schema NAME=Product`; después de modificarlo, regenera el cliente tipado con `make ent-generate`.
 
-Los schemas de Ent son la fuente de verdad. En desarrollo la aplicación ejecuta `client.Schema.Create(ctx)`; en producción se aplican migraciones versionadas generadas con Atlas.
+Los schemas de Ent son la fuente de verdad. En desarrollo la aplicación ejecuta `client.Schema.Create(ctx)`; en producción se aplican migraciones versionadas generadas con `cmd/migrate`.
 
 ---
 
@@ -494,17 +494,22 @@ make ent-generate
 make run
 ```
 
-Flujo para preparar producción:
+Flujo para preparar producción. Las migraciones se gestionan con `cmd/migrate`, una herramienta en Go que usa la librería de Atlas: no requiere instalar Atlas CLI, ni `sh`, ni Docker, y funciona igual en Linux, macOS y Windows. Cada target de `make` equivale a `go run ./cmd/migrate <comando>`, por lo que en Windows sin `make` puedes ejecutarlo directamente:
 
 ```bash
 # Generar una migración comparando los schemas Ent con el estado anterior.
-make migration-diff NAME=add_courses
+make migration-diff NAME=add_products
 
 # Revisar los archivos SQL generados y versionarlos.
 
 # Consultar y aplicar migraciones usando DATABASE_URL de .env.
 make migrate-status
 make migrate-apply
+
+# Equivalente sin make (cualquier SO):
+go run ./cmd/migrate diff add_products
+go run ./cmd/migrate status
+go run ./cmd/migrate apply
 ```
 
 Si la base ya había sido creada automáticamente por Ent antes de adoptar las migraciones versionadas, registra una única vez la migración inicial como baseline, usando el prefijo numérico del archivo:
@@ -513,9 +518,13 @@ Si la base ya había sido creada automáticamente por Ent antes de adoptar las m
 make migrate-baseline VERSION=20260925003527
 ```
 
-No uses `--allow-dirty`: intentaría ejecutar la migración inicial sobre tablas existentes. El baseline no ejecuta ese SQL; registra que la base ya se encuentra en esa versión. En bases de producción nuevas y vacías no se usa baseline, sino `make migrate-apply`.
+El baseline no ejecuta ese SQL; registra que la base ya se encuentra en esa versión. En bases de producción nuevas y vacías no se usa baseline, sino `make migrate-apply`.
 
-`migration-diff` usa Atlas y una base PostgreSQL temporal en Docker. Los cambios destructivos deben revisarse y probarse antes de aplicarlos. En producción, ejecuta `make migrate-apply` como paso de despliegue antes de iniciar la nueva versión de la API.
+`cmd/migrate` lee `DATABASE_URL` del entorno o de `.env`. `migration-diff` reproduce `migrations/` en una base vacía y la compara con los schemas Ent generados (ejecuta antes `make ent-generate`): usa `DEV_DATABASE_URL` si está definida o, si no, crea una base temporal en el servidor de `DATABASE_URL` (requiere permiso `CREATEDB`) y la elimina al terminar. Cada migración se aplica en su propia transacción, salvo que el archivo declare `-- atlas:txmode none`. El historial se guarda en `atlas_schema_revisions`, igual que Atlas CLI, así que ambas herramientas son compatibles.
+
+Si editas a mano un archivo SQL, recalcula `migrations/atlas.sum` con `make migrate-hash`; si no, `apply` y `status` fallarán por checksum.
+
+Los cambios destructivos deben revisarse y probarse antes de aplicarlos. En producción, ejecuta `make migrate-apply` como paso de despliegue antes de iniciar la nueva versión de la API.
 
 ---
 
@@ -1455,10 +1464,11 @@ make build
 make test
 make lint
 make ent-generate
-make migration-diff NAME=add_courses
+make migration-diff NAME=add_products
 make migrate-baseline VERSION=20260925003527
 make migrate-status
 make migrate-apply
+make migrate-hash
 make docker-up
 make docker-down
 ```
@@ -1489,14 +1499,9 @@ build:
 * Git
 * Docker y Docker Compose
 * PostgreSQL
-* Atlas CLI para migraciones versionadas de producción
 * Redis, si está habilitado
 
-En macOS, instala Atlas con:
-
-```bash
-brew install ariga/tap/atlas
-```
+Las migraciones no requieren instalar nada adicional: se ejecutan con Go (`go run ./cmd/migrate`).
 
 ---
 
@@ -1517,7 +1522,7 @@ cp .env.example .env
 
 Completar las variables requeridas.
 
-> `make run`, `make migrate-status` y `make migrate-apply` cargan automáticamente `.env`. Si ejecutas `go run` directamente, debes exportar las variables antes:
+> `make run` y los comandos de migración (`make migrate-*` o `go run ./cmd/migrate`) cargan automáticamente `.env`. Si ejecutas `go run` directamente, debes exportar las variables antes:
 >
 > ```bash
 > set -a
