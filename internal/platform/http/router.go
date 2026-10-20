@@ -56,9 +56,12 @@ func newRouter(cfg config.Config, logger *slog.Logger, users *usershttp.Controll
 
 	v1 := router.Group("/api/v1")
 	authhttp.RegisterRoutes(v1, auth)
-	usershttp.RegisterRoutes(v1, users, tokens)
-	if len(courses) > 0 && courses[0] != nil {
-		courseshttp.RegisterRoutes(v1, courses[0])
+	usershttp.RegisterRoutes(v1, users, tokens, userRepo)
+	if courses != nil {
+		courseshttp.RegisterRoutes(v1, courses)
+	}
+	if len(tenants) > 0 && tenants[0] != nil {
+		tenants[0].RegisterRoutes(v1)
 	}
 	return router
 }
