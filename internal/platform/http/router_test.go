@@ -63,6 +63,26 @@ func TestLoginAndProtectedUsers(t *testing.T) {
 	cfg := config.Config{App: config.AppConfig{Env: "test"}, Security: config.SecurityConfig{RateLimit: 100}}
 	router := httpplatform.NewRouter(cfg, slog.New(slog.NewTextHandler(io.Discard, nil)), usershttp.NewController(users), authhttp.NewController(auth), tokens, courseshttp.NewController(catalogStub{}))
 
+	routes := make(map[string]bool)
+	for _, route := range router.Routes() {
+		routes[route.Method+" "+route.Path] = true
+	}
+	for _, route := range []string{
+		"POST /api/v1/auth/login", "POST /api/v1/auth/refresh", "POST /api/v1/auth/logout",
+		"GET /api/v1/users/:id", "POST /api/v1/users", "GET /api/v1/users",
+		"PUT /api/v1/users/:id", "DELETE /api/v1/users/:id",
+		"POST /api/v1/courses", "GET /api/v1/courses/:id",
+		"GET /api/v1/courses/categories", "GET /api/v1/courses/templates",
+		"GET /api/v1/courses/templates/:id", "GET /api/v1/courses/templates/:id/versions",
+		"GET /api/v1/courses/versions/:id/syllabus", "POST /api/v1/courses/categories",
+		"POST /api/v1/courses/templates", "POST /api/v1/courses/templates/:id/versions",
+		"PUT /api/v1/courses/versions/:id/syllabus",
+	} {
+		if !routes[route] {
+			t.Errorf("missing route %s", route)
+		}
+	}
+
 	for _, tc := range []struct {
 		method, path, body string
 		want               int
@@ -79,6 +99,12 @@ func TestLoginAndProtectedUsers(t *testing.T) {
 		if recorder.Code != tc.want {
 			t.Errorf("%s %s without token: status=%d body=%s", tc.method, tc.path, recorder.Code, recorder.Body.String())
 		}
+	}
+
+	unauthorized := httptest.NewRecorder()
+	router.ServeHTTP(unauthorized, httptest.NewRequest(http.MethodGet, "/api/v1/users/example-id", nil))
+	if unauthorized.Code != http.StatusUnauthorized {
+		t.Errorf("user route without token: status=%d", unauthorized.Code)
 	}
 
 	login := httptest.NewRecorder()
