@@ -1704,9 +1704,9 @@ source code
 
 # 🧩 Dependency Injection
 
-`cmd/api/main.go` funciona como **Composition Root**.
+`cmd/api/main.go` se encarga de iniciar y detener el servidor. `cmd/api/bootstrap.go` funciona como **Composition Root** y construye las dependencias.
 
-Su responsabilidad es construir las dependencias.
+`internal/platform/http/router.go` configura los middleware globales y agrupa `/api/v1`; cada módulo registra sus endpoints en `internal/modules/{auth,users,courses}/delivery/http/v1/routes.go`.
 
 Conceptualmente:
 
